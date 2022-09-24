@@ -1,0 +1,47 @@
+{
+	"compilerOptions": {
+		"lib": [
+			"ESNext"
+		],
+		"noPropertyAccessFromIndexSignature": true,
+		"useUnknownInCatchVariables": true,
+		"noFallthroughCasesInSwitch": true,
+		"exactOptionalPropertyTypes": true,
+		"noUncheckedIndexedAccess": true,
+		"useDefineForClassFields": true,
+		"strictFunctionTypes": true,
+		"skipDefaultLibCheck": true,
+		"strictBindCallApply": true,
+		"moduleResolution": "Node",
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"resolveJsonModule": true,
+		"listEmittedFiles": true,
+		"strictNullChecks": true,
+		"isolatedModules": true,
+		"esModuleInterop": true,
+		"removeComments": false,
+		"noUnusedLocals": true,
+		"noImplicitThis": true,
+		"importHelpers": true,
+		"noImplicitAny": true,
+		"alwaysStrict": true,
+		"skipLibCheck": true,
+		"diagnostics": true,
+		"module": "ESNext",
+		"target": "ESNext",
+		"sourceMap": true,
+		"baseUrl": "./",
+		"pretty": true,
+		"strict": true,
+		"noEmit": true,
+		"paths": {
+			"@js-code-gen/*": [
+				"src/js-code-gen/*"
+			]
+		}
+	},
+	"include": [
+		"src"
+	]
+}
