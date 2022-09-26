@@ -15,44 +15,42 @@ export function findPathOrExit(
 	process.exit();
 }
 
-const hmrElectronConfig = "./hmr-electron.config";
 export const defaultPathsForConfig = [
-	`${hmrElectronConfig}.json`,
+	"./hmr-electron.config.json",
 
-	`${hmrElectronConfig}.cts`,
-	`${hmrElectronConfig}.mts`,
-	`${hmrElectronConfig}.ts`,
+	"./hmr-electron.config.cts",
+	"./hmr-electron.config.mts",
+	"./hmr-electron.config.ts",
 
-	`${hmrElectronConfig}.cjs`,
-	`${hmrElectronConfig}.mjs`,
-	`${hmrElectronConfig}.js`,
+	"./hmr-electron.config.cjs",
+	"./hmr-electron.config.mjs",
+	"./hmr-electron.config.js",
 ];
 
-const viteConfig = "vite.config";
 export const defaultPathsForViteConfigFile = [
-	`./src/renderer/${viteConfig}.cts"`,
-	`./src/renderer/${viteConfig}.mts"`,
-	`./src/renderer/${viteConfig}.ts"`,
+	"./src/renderer/vite.config.cts",
+	"./src/renderer/vite.config.mts",
+	"./src/renderer/vite.config.ts",
 
-	`./src/renderer/${viteConfig}.cjs"`,
-	`./src/renderer/${viteConfig}.mjs"`,
-	`./src/renderer/${viteConfig}.js"`,
+	"./src/renderer/vite.config.cjs",
+	"./src/renderer/vite.config.mjs",
+	"./src/renderer/vite.config.js",
 
-	`./src/${viteConfig}.cts"`,
-	`./src/${viteConfig}.mts"`,
-	`./src/${viteConfig}.ts"`,
+	"./src/vite.config.cts",
+	"./src/vite.config.mts",
+	"./src/vite.config.ts",
 
-	`./src/${viteConfig}.cjs"`,
-	`./src/${viteConfig}.mjs"`,
-	`./src/${viteConfig}.js"`,
+	"./src/vite.config.cjs",
+	"./src/vite.config.mjs",
+	"./src/vite.config.js",
 
-	`./${viteConfig}.cts"`,
-	`./${viteConfig}.mts"`,
-	`./${viteConfig}.ts"`,
+	"./vite.config.cts",
+	"./vite.config.mts",
+	"./vite.config.ts",
 
-	`./${viteConfig}.cjs"`,
-	`./${viteConfig}.mjs"`,
-	`./${viteConfig}.js"`,
+	"./vite.config.cjs",
+	"./vite.config.mjs",
+	"./vite.config.js",
 ];
 
 export const entryFileDefaultPlaces = [

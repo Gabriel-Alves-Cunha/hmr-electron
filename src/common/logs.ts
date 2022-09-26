@@ -1,12 +1,27 @@
-import { bgYellow, black, green, red } from "yoctocolors";
+import {
+	underline,
+	bgYellow,
+	borderY,
+	black,
+	green,
+	blue,
+	red,
+} from "#utils/cli-colors";
 
 export const consoleMessagePrefix = bgYellow(black("[hmr-electron]"));
 
 export const entryFilePathNotFound = (path: string | undefined) =>
-	() => new Error(red(`entryFilePath not found. Received: ${path}`));
+	() =>
+		new Error(red(`\
+${borderY}
+${underline("entryFilePath")} not found. Received: ${blue(String(path))}
+${borderY}`));
 
 export const fileNotFound = (file: string, path: string | undefined) =>
-	new Error(red(`${file} not found. Received: ${path}`));
+	new Error(red(`\
+${borderY}
+${underline(file)} not found. Received: ${blue(String(path))}
+${borderY}`));
 
 export const finishBuildMessage = green(
 	`${consoleMessagePrefix} Build finished.`,
@@ -14,4 +29,7 @@ export const finishBuildMessage = green(
 
 export const viteConfigFileNotFound = (cwd: string) =>
 	() =>
-		new Error(red(`Vite config file for main process in "${cwd}" NOT found.`));
+		new Error(red(`\
+${borderY}
+Vite config file for main process in "${cwd}" ${underline("NOT")} found.
+${borderY}`));

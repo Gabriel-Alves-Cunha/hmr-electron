@@ -1,6 +1,5 @@
 import { ChildProcess, spawn } from "node:child_process";
 import { Transform } from "node:stream";
-import { gray } from "yoctocolors";
 
 import { removeJunkTransformOptions } from "#utils/removeJunkLogs";
 
@@ -27,7 +26,7 @@ export async function runElectron(
 		"exit",
 		code => {
 			if (!exitByScript) {
-				console.log(gray(`Electron exited with code ${code}.`));
+				console.log(`%cElectron exited with code ${code}.`, "color: gray;");
 				process.exit();
 			}
 

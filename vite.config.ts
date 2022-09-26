@@ -20,8 +20,22 @@ export default defineConfig(({ mode }) => {
 					"node:perf_hooks",
 					"node:readline",
 					"node:stream",
+					"node:buffer",
+					"node:module",
+					"node:crypto",
+					"node:https",
+					"node:http",
 					"node:path",
+					"node:util",
+					"node:zlib",
+					"node:url",
+					"node:dns",
 					"node:fs",
+					"module",
+					"util",
+					"path",
+					"url",
+					"fs",
 				],
 				treeshake: true,
 
@@ -72,18 +86,11 @@ export default defineConfig(({ mode }) => {
 
 		resolve: {
 			alias: [
-				{
-					find: "#validation",
-					replacement: resolve(__dirname, "src/validation"),
-				},
-				{
-					find: "#subCommands",
-					replacement: resolve(__dirname, "src/subCommands"),
-				},
-				{ find: "#commands", replacement: resolve(__dirname, "src/commands") },
-				{ find: "#common", replacement: resolve(__dirname, "src/common") },
-				{ find: "#types", replacement: resolve(__dirname, "src/#types") },
-				{ find: "#utils", replacement: resolve(__dirname, "src/#utils") },
+				{ find: "#validation", replacement: resolve("src/validation") },
+				{ find: "#commands", replacement: resolve("src/commands") },
+				{ find: "#common", replacement: resolve("src/common") },
+				{ find: "#types", replacement: resolve("src/#types") },
+				{ find: "#utils", replacement: resolve("src/utils") },
 			],
 		},
 	};

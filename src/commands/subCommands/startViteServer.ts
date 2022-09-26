@@ -1,6 +1,5 @@
 import type { ConfigProps } from "#types/config";
 
-import { bgGreen, green } from "yoctocolors";
 import { createServer } from "vite";
 
 import { electronPreloadSourceMapVitePlugin } from "#utils/electronPreloadSourceMapVitePlugin";
@@ -23,8 +22,10 @@ export async function startViteServer(config: ConfigProps): Promise<void> {
 		const { port } = address;
 
 		console.log(
-			bgGreen("[VITE]"),
-			green(`Dev server running at port ${port}.`),
+			"%c[VITE]",
+			"background-color: green; color: white;",
+			`%cDev server running at port ${port}.`,
+			"color: green;",
 		);
 	}
 }

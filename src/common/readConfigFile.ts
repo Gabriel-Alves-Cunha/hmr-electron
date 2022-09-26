@@ -5,7 +5,9 @@ import { existsSync } from "node:fs";
 import { validateConfigFile } from "#validation";
 
 /** Loads the config from the file as a default export. */
-export async function readConfigFile(filePath: string): Promise<UserProvidedConfigProps> {
+export async function readConfigFile(
+	filePath: string,
+): Promise<UserProvidedConfigProps> {
 	if (!filePath || !existsSync(filePath))
 		throw new Error(`There must be a config file! Received: '${filePath}'`);
 

@@ -1,7 +1,6 @@
-import { magenta } from "yoctocolors";
-
 import { type CompileError, formatCompileError } from "#common/compileError";
 import { consoleMessagePrefix } from "./logs";
+import { borderY, magenta } from "#utils/cli-colors";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -33,6 +32,7 @@ function formatDiagnosticsMessage(errors: CompileError[]): string {
 	});
 
 	const result = `\
+${borderY}
 ${
 		magenta(
 			`${consoleMessagePrefix} Some typescript compilation errors occurred:`,

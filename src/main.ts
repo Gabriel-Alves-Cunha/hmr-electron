@@ -1,8 +1,8 @@
-import commander from "commander";
+import { Command } from "commander";
 
 import { defaultPathsForConfig, findPathOrExit } from "#common/findPathOrExit";
-import { makeDefaultConfigPropsWhereNeeded } from "#common/config";
 import { entryFilePathNotFound } from "#common/logs";
+import { makeConfigProps } from "#common/config";
 import { readConfigFile } from "#common/readConfigFile";
 import { cleanCache } from "#commands/cleanCache";
 import { runBuild } from "#commands/runBuild";
@@ -14,7 +14,7 @@ import pkg from "../package.json";
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 
-const program = new commander.Command(pkg.name).version(pkg.version);
+const program = new Command(pkg.name).version(pkg.version);
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -35,10 +35,9 @@ program
 				entryFilePathNotFound(configFilePath),
 			);
 
-			const config = await readConfigFile(configFilePath);
+			const useConfig = await readConfigFile(configFilePath);
 
-			// TODO: make a fn to resolve the paths when the user has provided the config file and see if they exist.
-			const configProps = makeDefaultConfigPropsWhereNeeded(config);
+			const configProps = makeConfigProps(useConfig);
 
 			if (cli_options.cleanCache) await cleanCache(configProps);
 
@@ -58,7 +57,7 @@ program
 		);
 
 		const config = await readConfigFile(configFilePath);
-		const configProps = makeDefaultConfigPropsWhereNeeded(config);
+		const configProps = makeConfigProps(config);
 
 		await cleanCache(configProps);
 

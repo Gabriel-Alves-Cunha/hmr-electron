@@ -1,4 +1,4 @@
-import { cyan, gray, red, yellow } from "yoctocolors";
+import { cyan, gray, red, yellow } from "#utils/cli-colors";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////

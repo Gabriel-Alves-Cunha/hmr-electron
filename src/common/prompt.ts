@@ -1,5 +1,6 @@
 import { createInterface } from "node:readline";
-import { green } from "yoctocolors";
+
+import { green } from "#utils/cli-colors";
 
 export function prompt(
 	question: string,

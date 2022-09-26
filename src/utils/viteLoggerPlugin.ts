@@ -1,7 +1,8 @@
 import type { Plugin } from "vite";
 
-import { bgBlue, gray, white, yellow } from "yoctocolors";
 import { basename } from "node:path";
+
+import { bgBlue, gray, white, yellow } from "#utils/cli-colors";
 
 export function LoggerPlugin(srcPath: string): Plugin {
 	const plugin: Plugin = {

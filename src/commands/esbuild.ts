@@ -1,8 +1,7 @@
 import type { CompileError } from "#common/compileError";
 import type { ConfigProps } from "#types/config";
 
-import { build, type BuildFailure } from "esbuild";
-import { bgGreen, red, white } from "yoctocolors";
+import { type BuildFailure, build } from "esbuild";
 import { existsSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
@@ -29,7 +28,8 @@ export async function runEsbuildForMainProcess(
 		entryPoints.push(props.preloadFilePath);
 
 		console.log(
-			bgGreen(white(`Using preload file: "${props.preloadFilePath}"`)),
+			`%cUsing preload file: "${props.preloadFilePath}"`,
+			"background-color: green; color: white;",
 		);
 	}
 
@@ -78,7 +78,10 @@ export async function runEsbuildForMainProcess(
 
 async function findExternals(props: BuildProps): Promise<string[]> {
 	if (!(existsSync(props.packageJsonPath))) {
-		console.error(red("Could not find a valid 'package.json'!"));
+		console.error(
+			"%cCould not find a valid package.json",
+			"background-color: red; color: black;",
+		);
 		process.exit();
 	}
 
