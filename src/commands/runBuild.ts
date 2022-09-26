@@ -1,8 +1,9 @@
+import type { ConfigProps } from "#types/config";
+
 import { runEsbuildForMainProcess } from "./esbuild";
 import { finishBuildMessage } from "#common/logs";
 import { diagnoseErrors } from "#common/diagnoseErrors";
-import { runElectron } from "#subCommands/electron/runElectron";
-import { ConfigProps } from "#types/config";
+import { runElectron } from "#commands/subCommands/runElectron";
 import { prompt } from "#common/prompt";
 
 ///////////////////////////////////////////
@@ -10,13 +11,11 @@ import { prompt } from "#common/prompt";
 ///////////////////////////////////////////
 // Main function:
 
-export async function runBuild(
-	configProps: Required<ConfigProps>,
-): Promise<void> {
+export async function runBuild(config: ConfigProps): Promise<void> {
 	await runEsbuildForMainProcess(
-		{ ...configProps, isBuild: true },
+		{ ...config, isBuild: true },
 		diagnoseErrors,
-		buildComplete,
+		promptToRerunElectron,
 	);
 }
 
@@ -27,7 +26,10 @@ export async function runBuild(
 
 let stopPromptToRunElectron: () => void = () => {};
 
-async function buildComplete(electronEntryFile: string, count: number) {
+export async function promptToRerunElectron(
+	electronEntryFile: string,
+	count: number,
+) {
 	stopPromptToRunElectron();
 
 	console.log(finishBuildMessage);

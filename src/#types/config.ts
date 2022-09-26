@@ -1,7 +1,8 @@
 import type { BuildOptions } from "esbuild";
 
-export type ConfigProps = {
-	preloadMapFilePath?: string | undefined;
+export type UserProvidedConfigProps = {
+	preloadSourceMapFilePath?: string | undefined;
+	preloadFilePath?: string | undefined;
 	buildRendererOutputPath?: string;
 	rendererTSconfigPath?: string;
 	buildMainOutputPath?: string;
@@ -10,7 +11,6 @@ export type ConfigProps = {
 	mainTSconfigPath?: string;
 	nodeModulesPath?: string;
 	packageJsonPath?: string;
-	preloadFilePath?: string;
 	buildOutputPath?: string;
 	hmrElectronPath?: string;
 	viteConfigPath?: string;
@@ -21,3 +21,5 @@ export type ConfigProps = {
 	srcPath?: string;
 	cwd?: string;
 };
+
+export type ConfigProps = Readonly<Required<UserProvidedConfigProps>>;

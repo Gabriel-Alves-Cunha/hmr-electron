@@ -1,19 +1,23 @@
-import type { ConfigProps } from "#types/config";
+import type { ConfigProps, UserProvidedConfigProps } from "#types/config";
 
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 
+import { fileNotFound } from "./logs";
 import { dbg } from "#utils/debug";
 
-export function makeDefaultConfigProps(
-	props: ConfigProps,
-): Required<ConfigProps> {
+export function makeDefaultConfigPropsWhereNeeded(
+	props: UserProvidedConfigProps,
+): ConfigProps {
 	props.cwd ||= process.cwd();
 	props.srcPath ||= join(props.cwd, "src");
 	props.mainPath ||= join(props.srcPath, main);
 	props.rendererPath ||= join(props.srcPath, "renderer");
 
 	props.devOutputPath ||= join(props.cwd, build);
-	props.preloadMapFilePath ||= Boolean(props.preloadFilePath) ?
+	props.preloadFilePath ||= undefined;
+
+	props.preloadSourceMapFilePath ||= props.preloadFilePath ?
 		join(props.devOutputPath, "preload.js.map") :
 		undefined;
 
@@ -24,15 +28,38 @@ export function makeDefaultConfigProps(
 	props.packageJsonPath ||= join(props.cwd, "package.json");
 	props.baseTSconfigPath ||= join(props.cwd, tsconfigJson);
 	props.buildOutputPath ||= join(props.cwd, build);
-	props.buildMainOutputPath ||= join(props.buildOutputPath, main);
+
 	props.buildRendererOutputPath ||= join(props.buildOutputPath, "renderer");
 	props.hmrElectronPath ||= join(props.nodeModulesPath, "hmr-electron");
+	props.buildMainOutputPath ||= join(props.buildOutputPath, main);
 
 	props.esbuildConfig ||= {};
 
-	dbg("Config props:", props);
+	///////////////////////////////////////////////
+	///////////////////////////////////////////////
+	// Validate if all the files exist:
 
-	return props as Required<ConfigProps>;
+	{
+		let exit = false;
+
+		Object.entries(props).forEach(([filePathKey, filePath]) => {
+			if (!filePathKey || !filePath || typeof filePathKey === "object") return;
+
+			if (!existsSync(filePath as string)) {
+				console.error(fileNotFound(filePathKey, filePath as string));
+				exit = true;
+			}
+		});
+
+		if (exit) {
+			console.log("Resolved config props:", props);
+			process.exit();
+		}
+	}
+
+	dbg("Resolved config props:", props);
+
+	return props as ConfigProps;
 }
 
 export const tsconfigJson = "tsconfig.json";

@@ -55,8 +55,8 @@
 				"src/utils/*"
 			],
 			"#subCommands/*": [
-				"src/subCommands/*"
-			],
+				"src/commands/subCommands/*"
+			]
 		}
 	},
 	"include": [

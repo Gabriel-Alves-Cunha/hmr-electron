@@ -1,11 +1,11 @@
-import type { ConfigProps } from "#types/config";
+import type { UserProvidedConfigProps } from "#types/config";
 
 import { existsSync } from "node:fs";
 
 import { validateConfigFile } from "#validation";
 
 /** Loads the config from the file as a default export. */
-export async function readConfigFile(filePath: string): Promise<ConfigProps> {
+export async function readConfigFile(filePath: string): Promise<UserProvidedConfigProps> {
 	if (!filePath || !existsSync(filePath))
 		throw new Error(`There must be a config file! Received: '${filePath}'`);
 
@@ -16,7 +16,7 @@ export async function readConfigFile(filePath: string): Promise<ConfigProps> {
 
 		if (isValidOrErrors !== true) throw new Error(String(isValidOrErrors));
 
-		return config as ConfigProps;
+		return config as UserProvidedConfigProps;
 	} catch (error) {
 		console.error(error);
 		process.exit();

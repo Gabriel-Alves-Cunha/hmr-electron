@@ -1,4 +1,4 @@
-import type { ConfigProps } from "#types/config";
+import type { UserProvidedConfigProps } from "#types/config";
 
 import { ValidationSchema } from "fastest-validator";
 
@@ -6,19 +6,19 @@ import { validator } from "./validator";
 
 validator.alias("optionalString", {
 	singleLine: true,
-	type: "string",
 	optional: true,
+	type: "string",
 	empty: false,
 });
 
-export const configFileSchema: ValidationSchema<ConfigProps> = {
+export const configFileSchema: ValidationSchema<UserProvidedConfigProps> = {
 	entryFilePath: { type: "string", empty: false, singleLine: true },
 	esbuildConfig: { type: "record", optional: true },
 
+	preloadSourceMapFilePath: "optionalString",
 	buildRendererOutputPath: "optionalString",
 	rendererTSconfigPath: "optionalString",
 	buildMainOutputPath: "optionalString",
-	preloadMapFilePath: "optionalString",
 	mainTSconfigPath: "optionalString",
 	baseTSconfigPath: "optionalString",
 	nodeModulesPath: "optionalString",

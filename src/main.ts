@@ -1,11 +1,12 @@
 import commander from "commander";
 
-import { defaultPathsForConfig, findPathOrExit } from "#common/findConfigFile";
-import { makeDefaultConfigProps } from "#common/config";
+import { defaultPathsForConfig, findPathOrExit } from "#common/findPathOrExit";
+import { makeDefaultConfigPropsWhereNeeded } from "#common/config";
 import { entryFilePathNotFound } from "#common/logs";
 import { readConfigFile } from "#common/readConfigFile";
 import { cleanCache } from "#commands/cleanCache";
 import { runBuild } from "#commands/runBuild";
+import { runDev } from "#commands/runDev";
 
 import pkg from "../package.json";
 
@@ -20,12 +21,14 @@ const program = new commander.Command(pkg.name).version(pkg.version);
 
 program
 	.command("dev <configFilePath>", { isDefault: true })
-	.description("⚡ Start developing your Electron app.")
-	.option("--clean-cache", "Clean build cache.")
+	.description(
+		"⚡ Start developing your Electron app.\n\n\tYou must have an 'hmr-electron.config.(ts|js|json)' file at the root of your package.",
+	)
+	.option("--clean-cache")
 	.action(
 		async (
 			configFilePath: string | undefined,
-			options: { cleanCache: boolean; },
+			cli_options: { cleanCache: boolean; },
 		) => {
 			configFilePath ||= findPathOrExit(
 				defaultPathsForConfig,
@@ -34,12 +37,12 @@ program
 
 			const config = await readConfigFile(configFilePath);
 
-			// TODO: make a fn to resolve the paths when the user has provided the config file.
-			const configProps = makeDefaultConfigProps(config);
+			// TODO: make a fn to resolve the paths when the user has provided the config file and see if they exist.
+			const configProps = makeDefaultConfigPropsWhereNeeded(config);
 
-			if (options.cleanCache) await cleanCache(configProps);
+			if (cli_options.cleanCache) await cleanCache(configProps);
 
-			await runDev(config);
+			await runDev(configProps);
 		},
 	);
 
@@ -55,7 +58,7 @@ program
 		);
 
 		const config = await readConfigFile(configFilePath);
-		const configProps = makeDefaultConfigProps(config);
+		const configProps = makeDefaultConfigPropsWhereNeeded(config);
 
 		await cleanCache(configProps);
 

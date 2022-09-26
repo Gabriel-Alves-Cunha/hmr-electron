@@ -16,8 +16,8 @@ import { tsconfigJson } from "#common/config";
 
 export async function runEsbuildForMainProcess(
 	props: BuildProps,
-	reportError: (errors: CompileError[]) => void,
-	buildComplete: (buildOutputPath: string, count: number) => void,
+	onError: (errors: CompileError[]) => void,
+	onBuildComplete: (buildOutputPath: string, count: number) => void,
 ): Promise<void> {
 	const tsconfigPath = join(props.mainPath, tsconfigJson) ||
 		props.baseTSconfigPath;
@@ -49,10 +49,10 @@ export async function runEsbuildForMainProcess(
 			watch: !props.isBuild ?
 				{
 					onRebuild: async error => {
-						if (error) reportError(transformErrors(error));
+						if (error) onError(transformErrors(error));
 						else {
 							++count;
-							buildComplete(props.buildOutputPath, count);
+							onBuildComplete(props.buildOutputPath, count);
 						}
 					},
 				} :
@@ -63,10 +63,10 @@ export async function runEsbuildForMainProcess(
 
 		console.log("Build result:", buildResult);
 
-		buildComplete(props.buildOutputPath, count);
+		onBuildComplete(props.buildOutputPath, count);
 	} catch (error) {
 		if (isBuildFailure(error))
-			reportError(transformErrors(error));
+			onError(transformErrors(error));
 		else
 			console.error(error);
 	}
@@ -123,6 +123,4 @@ function isBuildFailure(err: unknown): err is BuildFailure {
 ///////////////////////////////////////////
 // Types:
 
-type BuildProps = Readonly<
-	Required<ConfigProps> & { readonly isBuild: boolean; }
->;
+type BuildProps = Readonly<ConfigProps & { isBuild: boolean; }>;

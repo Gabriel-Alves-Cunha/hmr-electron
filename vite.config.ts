@@ -1,4 +1,5 @@
 import { type UserConfigExport, defineConfig } from "vite";
+
 import { resolve } from "node:path";
 
 export default defineConfig(({ mode }) => {
@@ -13,7 +14,15 @@ export default defineConfig(({ mode }) => {
 			rollupOptions: {
 				// make sure to externalize deps that shouldn't be bundled
 				// into your library
-				external: ["debug", "node:perf_hooks", "node:fs"],
+				external: [
+					"node:child_process",
+					"node:fs/promises",
+					"node:perf_hooks",
+					"node:readline",
+					"node:stream",
+					"node:path",
+					"node:fs",
+				],
 				treeshake: true,
 
 				output: {
