@@ -1,5 +1,12 @@
 import commander from "commander";
 
+import { defaultPathsForConfig, findPathOrExit } from "#common/findConfigFile";
+import { makeDefaultConfigProps } from "#common/config";
+import { entryFilePathNotFound } from "#common/logs";
+import { readConfigFile } from "#common/readConfigFile";
+import { cleanCache } from "#commands/cleanCache";
+import { runBuild } from "#commands/runBuild";
+
 import pkg from "../package.json";
 
 ///////////////////////////////////////////
@@ -9,57 +16,53 @@ import pkg from "../package.json";
 const program = new commander.Command(pkg.name).version(pkg.version);
 
 ///////////////////////////////////////////
+///////////////////////////////////////////
 
 program
-	.command("dev <entry>", { isDefault: true })
+	.command("dev <configFilePath>", { isDefault: true })
 	.description("⚡ Start developing your Electron app.")
-	.option("--vite [root dir]", "Open Vite server.")
-	.option(
-		"--preload <file>",
-		"Electron preload file relative to the main source",
-	)
-	.option(
-		"--esbuild-config-file <file>",
-		"Custom config js|json file to configure Esbuild.",
-	)
 	.option("--clean-cache", "Clean build cache.")
-	.action(async (entryFile: string | undefined, options: DevOptions) => {
-		const withVite = Boolean(options.vite);
-		let viteRootPath: string | undefined;
+	.action(
+		async (
+			configFilePath: string | undefined,
+			options: { cleanCache: boolean; },
+		) => {
+			configFilePath ||= findPathOrExit(
+				defaultPathsForConfig,
+				entryFilePathNotFound(configFilePath),
+			);
 
-		if (typeof options.vite === "string") viteRootPath = options.vite;
+			const config = await readConfigFile(configFilePath);
 
-		if (options.cleanCache) await cleanCache();
+			// TODO: make a fn to resolve the paths when the user has provided the config file.
+			const configProps = makeDefaultConfigProps(config);
 
-		await run({
-			esbuildConfigFile: options.esbuildConfigFile,
-			preloadFile: options.preload,
-			viteRootPath,
-			entryFile,
-			withVite,
-		});
-	});
+			if (options.cleanCache) await cleanCache(configProps);
+
+			await runDev(config);
+		},
+	);
 
 ///////////////////////////////////////////
 
 program
-	.command("build [entry]")
+	.command("build <configFilePath>")
 	.description("Build your Electron main process code in main source.")
-	.option(
-		"--preload <file>",
-		"Electron preload file relative to the main source",
-	)
-	.option(
-		"--esbuild-config-file <file>",
-		"Custom config js|json file to configure Esbuild.",
-	)
-	.action(async (entryFile: string | undefined, options: BuildOptions) => {
-		await build({
-			esbuildConfigFile: options.esbuildConfigFile,
-			preload: options.preload,
-			entryFile,
-		});
+	.action(async (configFilePath: string | undefined) => {
+		configFilePath ||= findPathOrExit(
+			defaultPathsForConfig,
+			entryFilePathNotFound(configFilePath),
+		);
+
+		const config = await readConfigFile(configFilePath);
+		const configProps = makeDefaultConfigProps(config);
+
+		await cleanCache(configProps);
+
+		await runBuild(configProps);
 	});
+
+///////////////////////////////////////////
 
 program.command("clean").action(cleanCache);
 
@@ -68,21 +71,6 @@ program.command("clean").action(cleanCache);
 program.addHelpText("beforeAll", `Repository: ${pkg.repository}\n`);
 
 ///////////////////////////////////////////
+///////////////////////////////////////////
 
 program.parseAsync(process.argv).then();
-
-///////////////////////////////////////////
-///////////////////////////////////////////
-///////////////////////////////////////////
-// Types:
-
-type DevOptions = Readonly<
-	{
-		esbuildConfigFile: string;
-		vite: string | boolean;
-		cleanCache: boolean;
-		preload: string;
-	}
->;
-
-type BuildOptions = Readonly<{ esbuildConfigFile: string; preload: string; }>;

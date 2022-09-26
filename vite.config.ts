@@ -62,10 +62,20 @@ export default defineConfig(({ mode }) => {
 		// },
 
 		resolve: {
-			alias: [{
-				find: "#src",
-				replacement: resolve(__dirname, "src/token-stream"),
-			}],
+			alias: [
+				{
+					find: "#validation",
+					replacement: resolve(__dirname, "src/validation"),
+				},
+				{
+					find: "#subCommands",
+					replacement: resolve(__dirname, "src/subCommands"),
+				},
+				{ find: "#commands", replacement: resolve(__dirname, "src/commands") },
+				{ find: "#common", replacement: resolve(__dirname, "src/common") },
+				{ find: "#types", replacement: resolve(__dirname, "src/#types") },
+				{ find: "#utils", replacement: resolve(__dirname, "src/#utils") },
+			],
 		},
 	};
 

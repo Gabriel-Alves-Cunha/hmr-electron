@@ -36,9 +36,27 @@
 		"strict": true,
 		"noEmit": true,
 		"paths": {
-			"@js-code-gen/*": [
-				"src/js-code-gen/*"
-			]
+			"#common/*": [
+				"src/common/*"
+			],
+			"#commands/*": [
+				"src/commands/*"
+			],
+			"#types/*": [
+				"src/#types/*"
+			],
+			"#validation/*": [
+				"src/validation/*"
+			],
+			"#validation": [
+				"src/validation/index"
+			],
+			"#utils/*": [
+				"src/utils/*"
+			],
+			"#subCommands/*": [
+				"src/subCommands/*"
+			],
 		}
 	},
 	"include": [
