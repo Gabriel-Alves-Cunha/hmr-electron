@@ -2,8 +2,6 @@ import type { UserProvidedConfigProps } from "#types/config";
 
 import { existsSync } from "node:fs";
 
-import { validateConfigFile } from "#validation";
-
 /** Loads the config from the file as a default export. */
 export async function readConfigFile(
 	filePath: string,
@@ -13,10 +11,6 @@ export async function readConfigFile(
 
 	try {
 		const config = await import(filePath);
-
-		const isValidOrErrors = validateConfigFile(config);
-
-		if (isValidOrErrors !== true) throw new Error(String(isValidOrErrors));
 
 		return config as UserProvidedConfigProps;
 	} catch (error) {

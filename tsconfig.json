@@ -28,9 +28,9 @@
 		"alwaysStrict": true,
 		"skipLibCheck": true,
 		"diagnostics": true,
-		"module": "ESNext",
+		"module": "ES2022",
 		"target": "ESNext",
-		"sourceMap": true,
+		"sourceMap": false,
 		"baseUrl": "./",
 		"pretty": true,
 		"strict": true,
@@ -54,9 +54,6 @@
 			"#utils/*": [
 				"src/utils/*"
 			],
-			"#subCommands/*": [
-				"src/commands/subCommands/*"
-			]
 		}
 	},
 	"include": [

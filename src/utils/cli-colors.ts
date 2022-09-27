@@ -12,6 +12,7 @@ export const black = wrap(30, 39);
 export const blue = wrap(34, 39);
 export const gray = wrap(90, 39);
 export const cyan = wrap(36, 39);
+export const bold = wrap(1, 22);
 export const red = wrap(31, 39);
 
 export const borderY = "─".repeat(80);
