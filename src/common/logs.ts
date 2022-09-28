@@ -10,33 +10,41 @@ import {
 
 export const consoleMessagePrefix = bgYellow(black("[hmr-electron]"));
 
-export const entryFilePathNotFound = (path: string | undefined) =>
-	() =>
-		new Error(red(`\
-${borderY}
-${underline("entryFilePath")} not found. Received: ${blue(String(path))}
-${borderY}`));
-
-export const configFilePathNotFound = () =>
-	() =>
-		new Error(red(`\
-${borderY}
-${underline("hmr-electron.config.ts")} not found.
-${borderY}`));
-
-export const fileNotFound = (file: string, path: string | undefined) =>
-	new Error(red(`\
-${borderY}
-${underline(file)} not found. Received: ${blue(String(path))}
-${borderY}`));
-
 export const finishBuildMessage = green(
 	`${consoleMessagePrefix} Build finished.`,
 );
 
+export const entryFilePathNotFound = (path: string | undefined) =>
+	() =>
+		prettyError(
+			`${underline("entryFilePath")} not found. Received: ${
+				blue(String(path))
+			}`,
+		);
+
+export const configFilePathNotFound = () =>
+	() =>
+		prettyError(
+			`No config file ${underline("(\"hmr-electron.config.ts\")")} found.`,
+		);
+
+export const fileNotFound = (file: string, path: string | undefined) =>
+	prettyError(`${underline(file)} not found. Received: ${blue(String(path))}`);
+
 export const viteConfigFileNotFound = (cwd: string) =>
 	() =>
-		new Error(red(`\
-${borderY}
-Vite config file for main process in "${cwd}" ${underline("NOT")} found.
-${borderY}`));
+		prettyError(
+			`Vite config file for main process in "${cwd}" ${
+				underline("NOT")
+			} found.`,
+		);
+
+export function prettyError(msg: string) {
+	return new Error(red(`\n${borderY}\n${msg}\n${borderY}`));
+}
+
+export function prettyPrintStringArray<T>(arr: readonly T[]): string {
+	const s = arr.map(item => green(`"${item}"`)).join(", ");
+
+	return `[${s}]`;
+}

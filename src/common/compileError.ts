@@ -1,4 +1,4 @@
-import { cyan, gray, red, yellow } from "#utils/cli-colors";
+import { borderY, cyan, gray, red, yellow } from "#utils/cli-colors";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -8,7 +8,8 @@ import { cyan, gray, red, yellow } from "#utils/cli-colors";
 export function formatCompileError(err: CompileError): string {
 	if (!err.location) return err.message;
 
-	const categoryMessage = red("[ERROR]\n");
+	const border = red(borderY);
+	const categoryMessage = red("[ERROR]");
 	const pathMessage = `\
 file: ${cyan(err.location.file)}
 line: ${yellow(String(err.location.line))}
@@ -26,7 +27,7 @@ ${red("~".repeat(err.location.length))} ${
 		)
 	}`;
 
-	return `${categoryMessage} - ${pathMessage} ${err.message} \n ${code}`;
+	return `${categoryMessage} ${border} - ${pathMessage} ${err.message}\n\n${code}\n${border}`;
 }
 
 ///////////////////////////////////////////

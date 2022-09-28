@@ -9,13 +9,15 @@ import { dbg } from "#utils/debug";
 export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 	props.cwd ||= process.cwd();
 
+	props.electronEntryFilePath = resolve(props.electronEntryFilePath);
+
 	props.srcPath = props.srcPath ?
 		resolve(props.srcPath) :
 		join(props.cwd, "src");
 
 	props.mainPath = props.mainPath ?
 		resolve(props.mainPath) :
-		join(props.srcPath, main);
+		join(props.srcPath, "main");
 
 	props.rendererPath = props.rendererPath ?
 		resolve(props.rendererPath) :
@@ -23,7 +25,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 
 	props.devOutputPath = props.devOutputPath ?
 		resolve(props.devOutputPath) :
-		join(props.cwd, build);
+		join(props.cwd, "build");
 
 	props.preloadFilePath = props.preloadFilePath ?
 		resolve(props.preloadFilePath) :
@@ -37,11 +39,11 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 
 	props.rendererTSconfigPath = props.rendererTSconfigPath ?
 		resolve(props.rendererTSconfigPath) :
-		join(props.rendererPath, tsconfigJson);
+		join(props.rendererPath, "tsconfig.json");
 
 	props.mainTSconfigPath = props.mainTSconfigPath ?
 		resolve(props.mainTSconfigPath) :
-		join(props.mainPath, tsconfigJson);
+		join(props.mainPath, "tsconfig.json");
 
 	props.nodeModulesPath = props.nodeModulesPath ?
 		resolve(props.nodeModulesPath) :
@@ -57,11 +59,11 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 
 	props.baseTSconfigPath = props.baseTSconfigPath ?
 		resolve(props.baseTSconfigPath) :
-		join(props.cwd, tsconfigJson);
+		join(props.cwd, "tsconfig.json");
 
 	props.buildOutputPath = props.buildOutputPath ?
 		resolve(props.buildOutputPath) :
-		join(props.cwd, build);
+		join(props.cwd, "build");
 
 	props.buildRendererOutputPath = props.buildRendererOutputPath ?
 		resolve(props.buildRendererOutputPath) :
@@ -73,7 +75,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 
 	props.buildMainOutputPath = props.buildMainOutputPath ?
 		resolve(props.buildMainOutputPath) :
-		join(props.buildOutputPath, main);
+		join(props.buildOutputPath, "main");
 
 	props.esbuildConfig ||= {};
 
@@ -81,22 +83,20 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 	///////////////////////////////////////////////
 	// Validate if all the files exist:
 
-	{
-		let exit = false;
+	let exit = false;
 
-		Object.entries(props).forEach(([filePathKey, filePath]) => {
-			if (!filePathKey || !filePath || typeof filePathKey === "object") return;
+	Object.entries(props).forEach(([key, filePath]) => {
+		if (!key || !filePath || except.includes(key)) return;
 
-			if (!existsSync(filePath as string)) {
-				console.error(fileNotFound(filePathKey, filePath as string));
-				exit = true;
-			}
-		});
-
-		if (exit) {
-			console.log("Resolved config props:", props);
-			process.exit();
+		if (!existsSync(filePath as string)) {
+			console.error(fileNotFound(key, filePath as string));
+			exit = true;
 		}
+	});
+
+	if (exit) {
+		console.log("Resolved config props:", props);
+		process.exit();
 	}
 
 	dbg("Resolved config props:", props);
@@ -104,6 +104,11 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 	return props as ConfigProps;
 }
 
-export const tsconfigJson = "tsconfig.json";
-const build = "build";
-const main = "main";
+const except = [
+	"preloadSourceMapFilePath",
+	"buildRendererOutputPath",
+	"buildMainOutputPath",
+	"buildOutputPath",
+	"devOutputPath",
+	"esbuildConfig",
+];

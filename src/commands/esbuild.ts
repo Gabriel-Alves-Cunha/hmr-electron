@@ -1,12 +1,11 @@
 import type { CompileError } from "#common/compileError";
 import type { ConfigProps } from "#types/config";
+import { bgGreen, bgRed, black, white } from "#utils/cli-colors";
 
-import { type BuildFailure, build } from "esbuild";
+import { type BuildFailure, build, analyzeMetafile } from "esbuild";
 import { existsSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
-
-import { tsconfigJson } from "#common/config";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -18,9 +17,9 @@ export async function runEsbuildForMainProcess(
 	onError: (errors: CompileError[]) => void,
 	onBuildComplete: (buildOutputPath: string, count: number) => void,
 ): Promise<void> {
-	const tsconfigPath = join(props.mainPath, tsconfigJson) ||
+	const tsconfigPath = join(props.mainPath, "tsconfig.json") ||
 		props.baseTSconfigPath;
-	const entryPoints = [props.entryFilePath];
+	const entryPoints = [props.electronEntryFilePath];
 
 	let count = 0;
 
@@ -28,24 +27,31 @@ export async function runEsbuildForMainProcess(
 		entryPoints.push(props.preloadFilePath);
 
 		console.log(
-			`%cUsing preload file: "${props.preloadFilePath}"`,
-			"background-color: green; color: white;",
+			bgGreen(black(`Using preload file: "${props.preloadFilePath}"`)),
 		);
 	}
 
 	try {
 		const buildResult = await build({
-			...props.esbuildConfig,
-			logLevel: props.esbuildConfig.logLevel || "silent",
-			sourcemap: props.esbuildConfig.sourcemap || true,
-			format: props.esbuildConfig.format || "esm",
-			logLimit: props.esbuildConfig.logLimit || 0,
-			bundle: props.esbuildConfig.bundle || true,
 			external: await findExternals(props),
 			incremental: !props.isBuild,
 			tsconfig: tsconfigPath,
+			sourcesContent: false,
+			treeShaking: true,
+			logLevel: "info",
 			platform: "node",
+			target: "esnext",
+			sourcemap: true,
+			metafile: true,
+			minify: false,
+			bundle: false,
+			format: "cjs",
+			logLimit: 10,
+			color: true,
 			entryPoints,
+
+			...props.esbuildConfig,
+
 			watch: !props.isBuild ?
 				{
 					onRebuild: async error => {
@@ -63,6 +69,14 @@ export async function runEsbuildForMainProcess(
 
 		console.log("Build result:", buildResult);
 
+		if (buildResult.metafile) {
+			const metafile = await analyzeMetafile(buildResult.metafile, {
+				verbose: true,
+			});
+
+			console.log("Esbuild build result metafile:\n\n", metafile);
+		}
+
 		onBuildComplete(props.buildOutputPath, count);
 	} catch (error) {
 		if (isBuildFailure(error))
@@ -77,16 +91,11 @@ export async function runEsbuildForMainProcess(
 // Helper functions:
 
 async function findExternals(props: BuildProps): Promise<string[]> {
-	if (!(existsSync(props.packageJsonPath))) {
-		console.error(
-			"%cCould not find a valid package.json",
-			"background-color: red; color: black;",
-		);
-		process.exit();
-	}
+	if (!(existsSync(props.packageJsonPath)))
+		throw new Error(bgRed(white(`Could not find a valid package.json`)));
 
 	const keys = ["dependencies", "devDependencies", "peerDependencies"];
-	const pkg = await import(props.packageJsonPath);
+	const pkg = await import(props.packageJsonPath, { assert: { type: "json" } });
 	const externals = new Set<string>();
 
 	keys.forEach(key => {

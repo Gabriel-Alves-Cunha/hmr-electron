@@ -1,13 +1,16 @@
+import { resolve } from "node:path";
+
+import { configFilePathNotFound, prettyPrintStringArray } from "#common/logs";
 import { defaultPathsForConfig, findPathOrExit } from "#common/findPathOrExit";
-import { blue, bold, gray, yellow } from "#utils/cli-colors";
-import { configFilePathNotFound } from "#common/logs";
+import { blue, bold, green, yellow } from "#utils/cli-colors";
+import { dbg, stringifyJson } from "#utils/debug";
 import { makeConfigProps } from "#common/config";
 import { readConfigFile } from "#common/readConfigFile";
 import { cleanCache } from "#commands/cleanCache";
 import { runBuild } from "#commands/runBuild";
 import { runDev } from "#commands/runDev";
 
-import { name, version } from "../package.json";
+import { name, version } from "../package.json" assert { type: "json" };
 
 //////////////////////////////////////////
 //////////////////////////////////////////
@@ -15,18 +18,20 @@ import { name, version } from "../package.json";
 // Main function:
 
 export async function parseCliArgs(): Promise<void> {
-	const args = process.argv;
+	const args = argsAsObj(usefullArgs());
 
 	//////////////////////////////////////////
 	// If only 'hmr-electron' was passed:
-	if (args.length === 1 && args[0] === name)
+	if (Object.keys(args).length === 0)
 		return printHelpMsg();
 
 	//////////////////////////////////////////
 	//////////////////////////////////////////
-	// Read config file:
+	// Read config file for next commands:
 
-	const configFilePath = args[2] ||
+	const configFilePathFromArgs = args["--config-file"];
+	const configFilePath = configFilePathFromArgs ?
+		resolve(configFilePathFromArgs as string) :
 		findPathOrExit(defaultPathsForConfig, configFilePathNotFound());
 
 	const userConfig = await readConfigFile(configFilePath);
@@ -37,16 +42,15 @@ export async function parseCliArgs(): Promise<void> {
 	//////////////////////////////////////////
 	// Clean command:
 
-	if (args[1] === "clean")
+	if (args["clean"])
 		return await cleanCache(configProps);
 
 	//////////////////////////////////////////
 	//////////////////////////////////////////
 	// Dev command:
 
-	if (args[1] === "dev") {
-		if (args.includes("--clean-cache"))
-			await cleanCache(configProps);
+	if (args["dev"]) {
+		if (args["--clean-cache"]) await cleanCache(configProps);
 
 		return await runDev(configProps);
 	}
@@ -55,13 +59,16 @@ export async function parseCliArgs(): Promise<void> {
 	//////////////////////////////////////////
 	// Build command:
 
-	if (args[1] === "build") {
+	if (args["build"]) {
 		await cleanCache(configProps);
 
 		return await runBuild(configProps);
 	}
 
-	console.error("No commands matched");
+	printHelpMsg();
+	console.log(
+		`No commands matched. Args = ${prettyPrintStringArray(process.argv)}`,
+	);
 }
 
 //////////////////////////////////////////
@@ -69,16 +76,71 @@ export async function parseCliArgs(): Promise<void> {
 //////////////////////////////////////////
 // Helper functions:
 
-const printHelpMsg = () =>
+function usefullArgs(): string[] {
+	const args = process.argv;
+	const reversedArgs = args.slice().reverse();
+
+	dbg(`Original args = ${prettyPrintStringArray(args)}`);
+
+	let indexToSliceFrom = 0;
+	for (const arg of reversedArgs) {
+		dbg({ arg, nameToMatch: name, index: arg.lastIndexOf(name) });
+
+		const indexOfThisPkgCommand = arg.lastIndexOf(name);
+
+		if (indexOfThisPkgCommand === -1)
+			continue;
+
+		++indexToSliceFrom;
+		break;
+	}
+
+	const argsToUse = args.slice(indexToSliceFrom + 1);
+	dbg(
+		`Modified args = ${
+			prettyPrintStringArray(argsToUse)
+		}\nindexToSliceFrom = ${indexToSliceFrom}`,
+	);
+
+	return argsToUse;
+}
+
+//////////////////////////////////////////
+
+function argsAsObj(args: string[]): Record<string, string | boolean> {
+	const obj: Record<string, string | boolean> = {};
+
+	args.forEach(arg => {
+		const [key, value] = arg.split("=");
+
+		if (!key) return;
+
+		if (!value) obj[key] = true;
+		else obj[key] = value;
+	});
+
+	console.log("argsAsObj =", stringifyJson(obj));
+
+	return obj;
+}
+
+//////////////////////////////////////////
+
+function printHelpMsg() {
 	console.log(`\
 ${bold(blue(name))} version ${version}
 
-${yellow("⚡")} Start developing your Electron app.
+${yellow("⚡")} Start developing your Electron + Vite app.
 
-		You must have an ${blue("hmr-electron.config.(ts|js|json)")}
-		file at the root of your package.
+${bold("Usage")}: ${name} [command] [options]
 
-	${gray("Usage:")}
-	${name} dev <configFilePath> [--clean-cache]
-	${name} build <configFilePath>
-	${name} clean <configFilePath>`);
+  You must have an ${blue("hmr-electron.config.(ts|js|json)")}
+  file at the root of your package.
+
+${bold("Commands:")}
+  dev   [--config-file${greenEqual}<configFilePath>] [--clean-cache]
+  build [--config-file${greenEqual}<configFilePath>]
+  clean [--config-file${greenEqual}<configFilePath>]`);
+}
+
+const greenEqual = green("=");

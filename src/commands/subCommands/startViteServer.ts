@@ -3,6 +3,7 @@ import type { ConfigProps } from "#types/config";
 import { createServer } from "vite";
 
 import { electronPreloadSourceMapVitePlugin } from "#utils/electronPreloadSourceMapVitePlugin";
+import { bgGreen, black, bold, green } from "#utils/cli-colors";
 import { LoggerPlugin } from "#utils/viteLoggerPlugin";
 
 export async function startViteServer(config: ConfigProps): Promise<void> {
@@ -22,10 +23,11 @@ export async function startViteServer(config: ConfigProps): Promise<void> {
 		const { port } = address;
 
 		console.log(
-			"%c[VITE]",
-			"background-color: green; color: white;",
-			`%cDev server running at port ${port}.`,
-			"color: green;",
+			bold(
+				green(
+					`${bgGreen(black("[VITE]"))} Dev server running at port ${port}.`,
+				),
+			),
 		);
 	}
 }

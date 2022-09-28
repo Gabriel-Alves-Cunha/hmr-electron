@@ -1,13 +1,7 @@
 import { type UserConfigExport, defineConfig } from "vite";
-
 import { resolve } from "node:path";
 
-export default defineConfig(({ mode }) => {
-	const isDev = mode === "development";
-	const isTest = mode === "test";
-	const isProd = !isTest && !isDev;
-	const isPreview = false;
-
+export default defineConfig(() => {
 	const config: UserConfigExport = {
 		build: {
 			rollupOptions: {
@@ -73,30 +67,35 @@ export default defineConfig(({ mode }) => {
 
 				// https://rollupjs.org/guide/en/#big-list-of-options
 				output: {
-					minifyInternalExports: isPreview ? false : isProd,
-					sourcemap: isPreview ? false : !isProd,
+					minifyInternalExports: false,
 					generatedCode: "es2015",
+					sourcemap: false,
 					dir: "./build",
 					format: "esm",
 				},
 			},
 
 			lib: { entry: "src/main.ts", formats: ["es"] },
-			sourcemap: isPreview ? true : !isProd,
 			chunkSizeWarningLimit: 1_000,
 			reportCompressedSize: false,
 			emptyOutDir: true,
-			minify: "esbuild",
+			sourcemap: false,
 			target: "esnext",
+			minify: false,
 		},
 
 		esbuild: {
-			minifyWhitespace: isPreview ? false : isProd,
-			minifySyntax: isPreview ? false : isProd,
-			sourcemap: isPreview ? true : !isProd,
+			minifyIdentifiers: false,
+			minifyWhitespace: false,
+			minifySyntax: false,
 			treeShaking: true,
+			logLevel: "debug",
 			target: "esnext",
+			sourcemap: false,
+			charset: "utf8",
 			format: "esm",
+			logLimit: 10,
+			color: true,
 		},
 
 		// test: {
@@ -134,7 +133,7 @@ export default defineConfig(({ mode }) => {
 	return config;
 });
 
-const log = (...args: unknown[]): void => {
+function log(...args: unknown[]): void {
 	console.dir(...args, {
 		maxStringLength: 1_000,
 		maxArrayLength: 100,
@@ -143,4 +142,4 @@ const log = (...args: unknown[]): void => {
 		colors: true,
 		depth: 10,
 	});
-};
+}

@@ -11,8 +11,7 @@ export function findPathOrExit(
 		if (existsSync(path)) return path;
 	}
 
-	console.error(notFoundMessage);
-	process.exit();
+	throw notFoundMessage();
 }
 
 export const defaultPathsForConfig = [

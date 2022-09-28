@@ -35,7 +35,9 @@ export async function promptToRerunElectron(
 	console.log(finishBuildMessage);
 
 	if (count > 1) {
-		const [readAnswer, stopPrompt] = prompt("Need to rerun Electron?");
+		const [readAnswer, stopPrompt] = prompt(
+			`[x${count}] Need to rerun Electron?`,
+		);
 		stopPromptToRunElectron = stopPrompt;
 
 		if (await readAnswer()) await runElectron({ electronEntryFile });

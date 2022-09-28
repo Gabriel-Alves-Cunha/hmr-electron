@@ -8,10 +8,8 @@ export function LoggerPlugin(srcPath: string): Plugin {
 	const plugin: Plugin = {
 		name: "electron-hmr-logger",
 		handleHotUpdate(ctx) {
-			if (!srcPath) {
-				console.error(`There must be a srcPath! Received: ${srcPath}`);
-				process.exit();
-			}
+			if (!srcPath)
+				throw new Error(`There must be a srcPath! Received: ${srcPath}`);
 
 			for (const { file } of ctx.modules) {
 				if (!file) continue;

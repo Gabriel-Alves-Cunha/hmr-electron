@@ -22,8 +22,8 @@ export async function runDev(config: ConfigProps) {
 
 	// Start dev for main process
 	findPathOrExit(
-		[config.entryFilePath, ...entryFileDefaultPlaces],
-		entryFilePathNotFound(config.entryFilePath),
+		[config.electronEntryFilePath, ...entryFileDefaultPlaces],
+		entryFilePathNotFound(config.electronEntryFilePath),
 	);
 
 	await runEsbuildForMainProcess(

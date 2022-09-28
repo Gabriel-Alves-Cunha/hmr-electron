@@ -5,6 +5,7 @@ export type UserProvidedConfigProps = {
 	preloadFilePath?: string | undefined;
 	buildRendererOutputPath?: string;
 	rendererTSconfigPath?: string;
+	electronEntryFilePath: string;
 	buildMainOutputPath?: string;
 	esbuildConfig?: BuildOptions;
 	baseTSconfigPath?: string;
@@ -15,7 +16,6 @@ export type UserProvidedConfigProps = {
 	hmrElectronPath?: string;
 	viteConfigPath?: string;
 	devOutputPath?: string;
-	entryFilePath: string;
 	rendererPath?: string;
 	mainPath?: string;
 	srcPath?: string;

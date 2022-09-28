@@ -28,13 +28,13 @@
 		"alwaysStrict": true,
 		"skipLibCheck": true,
 		"diagnostics": true,
-		"module": "ES2022",
+		"module": "ESNext",
 		"target": "ESNext",
 		"sourceMap": false,
 		"baseUrl": "./",
 		"pretty": true,
 		"strict": true,
-		"noEmit": true,
+		// "noEmit": true,
 		"paths": {
 			"#common/*": [
 				"src/common/*"
@@ -53,7 +53,7 @@
 			],
 			"#utils/*": [
 				"src/utils/*"
-			],
+			]
 		}
 	},
 	"include": [

@@ -2,6 +2,7 @@ import { ChildProcess, spawn } from "node:child_process";
 import { Transform } from "node:stream";
 
 import { removeJunkTransformOptions } from "#utils/removeJunkLogs";
+import { gray } from "#utils/cli-colors";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -9,7 +10,7 @@ import { removeJunkTransformOptions } from "#utils/removeJunkLogs";
 // Constants:
 
 const stopElectronFns: Array<() => void> = [];
-let exitByScript = false;
+let exitBecauseOfUserCode = false;
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -25,12 +26,10 @@ export async function runElectron(
 	const electronProcess = spawn("electron", ["--color", electronEntryFile]).on(
 		"exit",
 		code => {
-			if (!exitByScript) {
-				console.log(`%cElectron exited with code ${code}.`, "color: gray;");
-				process.exit();
-			}
+			if (!exitBecauseOfUserCode)
+				throw new Error(gray(`Electron exited with code ${code}.`));
 
-			exitByScript = true;
+			exitBecauseOfUserCode = true;
 		},
 	);
 
@@ -41,7 +40,7 @@ export async function runElectron(
 			if (!called && electronProcess.pid) {
 				electronProcess.removeAllListeners();
 				process.kill(electronProcess.pid);
-				exitByScript = true;
+				exitBecauseOfUserCode = true;
 			}
 
 			called = true;
