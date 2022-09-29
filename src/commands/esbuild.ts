@@ -1,11 +1,13 @@
 import type { CompileError } from "#common/compileError";
 import type { ConfigProps } from "#types/config";
-import { bgGreen, bgRed, black, white } from "#utils/cli-colors";
 
 import { type BuildFailure, build, analyzeMetafile } from "esbuild";
-import { existsSync } from "node:fs";
-import { readdir } from "node:fs/promises";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+
+import { throwPrettyError } from "#common/logs";
+import { require } from "#src/require";
+import { dbg } from "#utils/debug";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -26,9 +28,7 @@ export async function runEsbuildForMainProcess(
 	if (props.preloadFilePath) {
 		entryPoints.push(props.preloadFilePath);
 
-		console.log(
-			bgGreen(black(`Using preload file: "${props.preloadFilePath}"`)),
-		);
+		console.log(`\tUsing preload file: "${getRelativePreloadFilePath(props)}"\n`);
 	}
 
 	try {
@@ -67,7 +67,7 @@ export async function runEsbuildForMainProcess(
 
 		++count;
 
-		console.log("Build result:", buildResult);
+		dbg("Build result:", buildResult);
 
 		if (buildResult.metafile) {
 			const metafile = await analyzeMetafile(buildResult.metafile, {
@@ -88,28 +88,32 @@ export async function runEsbuildForMainProcess(
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
+///////////////////////////////////////////
 // Helper functions:
 
 async function findExternals(props: BuildProps): Promise<string[]> {
-	if (!(existsSync(props.packageJsonPath)))
-		throw new Error(bgRed(white(`Could not find a valid package.json`)));
+	if (!existsSync(props.packageJsonPath))
+		throwPrettyError("Could not find a valid package.json");
 
-	const keys = ["dependencies", "devDependencies", "peerDependencies"];
-	const pkg = await import(props.packageJsonPath, { assert: { type: "json" } });
+	const packageJson = require(props.packageJsonPath);
 	const externals = new Set<string>();
 
-	keys.forEach(key => {
-		const obj = pkg[key] ?? {};
+	dbg({ packageJson });
+
+	dependenciesKeys.forEach(depKey => {
+		const obj = packageJson[depKey] ?? {};
 
 		Object.keys(obj).forEach(name => externals.add(name));
 	});
 
 	// Find node_modules
 	if (existsSync(props.nodeModulesPath)) {
-		const modules = await readdir(props.nodeModulesPath);
+		const modules = readdirSync(props.nodeModulesPath);
 
 		modules.forEach(mod => externals.add(mod));
 	}
+
+	dbg("Modules found to use as externals:", externals);
 
 	return [...externals];
 }
@@ -129,6 +133,20 @@ function isBuildFailure(err: unknown): err is BuildFailure {
 	// @ts-ignore => For some reason ts is not narrowing the types...
 	return err && err.errors && Array.isArray(err.errors);
 }
+
+///////////////////////////////////////////
+
+function getRelativePreloadFilePath(config: ConfigProps): string {
+	return config.preloadFilePath?.substring(config.cwd.length) ?? "";
+}
+
+///////////////////////////////////////////
+
+const dependenciesKeys = [
+	"peerDependencies",
+	"devDependencies",
+	"dependencies",
+];
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////

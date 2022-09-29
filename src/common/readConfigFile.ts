@@ -4,10 +4,11 @@ import { existsSync, rmSync } from "node:fs";
 import { extname } from "node:path";
 import { build } from "esbuild";
 
+import { logDbg, logDebug, stringifyJson } from "#utils/debug";
 import { makeTempFileWithData } from "#utils/makeTempFileWithData";
-import { blue, bold, green } from "#utils/cli-colors";
-import { stringifyJson } from "#utils/debug";
-import { prettyError } from "./logs";
+import { throwPrettyError } from "./logs";
+import { bold, green } from "#utils/cli-colors";
+import { require } from "#src/require";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -19,7 +20,7 @@ export async function readConfigFile(
 	filePath: string,
 ): Promise<UserProvidedConfigProps> {
 	if (!filePath || !existsSync(filePath))
-		throw new Error(`There must be a config file! Received: "${filePath}"`);
+		throwPrettyError(`There must be a config file! Received: "${filePath}"`);
 
 	let filenameChanged = false;
 
@@ -29,11 +30,19 @@ export async function readConfigFile(
 		// Transpiling from ts -> js:
 
 		if (tsExtensions.includes(extname(filePath))) {
-			console.log(blue("Transpiling config file!"));
-
 			const buildResult = await build({
+				logLevel: logDebug ? "debug" : "silent",
+				minifyIdentifiers: false,
+				minifyWhitespace: false,
 				entryPoints: [filePath],
-				format: "esm",
+				minifySyntax: false,
+				treeShaking: true,
+				target: "esnext",
+				sourcemap: false,
+				platform: "node",
+				charset: "utf8",
+				format: "cjs",
+				logLimit: 10,
 				write: false,
 				color: true,
 			});
@@ -41,7 +50,7 @@ export async function readConfigFile(
 			const [outputFile] = buildResult.outputFiles;
 
 			if (!outputFile)
-				throw prettyError(
+				throwPrettyError(
 					`Output for transpiling ts -> js on 'readConfigFile()' not present! ${
 						stringifyJson(buildResult)
 					}`,
@@ -49,41 +58,40 @@ export async function readConfigFile(
 
 			const { text } = outputFile;
 
-			console.log(green(`Text result from readConfigFile:\n\n${bold(text)}`));
+			logDbg(green(`Text result from readConfigFile():\n\n${bold(text)}`));
 
 			///////////////////////////////////////////
 			///////////////////////////////////////////
 			// Writing to a temp file to be read by js native dyn import:
 
-			filePath = makeTempFileWithData(".mjs", text);
+			filePath = makeTempFileWithData(".js", text);
 			filenameChanged = true;
-
-			console.log(blue("Done transpiling config file!"));
 		}
 
 		///////////////////////////////////////////
 		///////////////////////////////////////////
 
-		const options = filenameChanged ? {} : { assert: { type: "json" } };
-		const { default: config }: ConfigFromModule = await import(
-			filePath,
-			options
-		);
+		const { default: userConfig }: ConfigFromModule = require(filePath);
 
-		console.log(green(`Config = ${stringifyJson(config)}`));
+		logDbg(green(`Config = ${stringifyJson(userConfig)}`));
 
-		if (!config)
-			throw prettyError("Config file is required!");
-		if (!config.electronEntryFilePath)
-			throw prettyError("config.electronEntryFilePath is required!");
+		if (!userConfig)
+			throwPrettyError("Config file is required!");
+		if (!userConfig.electronEntryFilePath)
+			throwPrettyError("config.electronEntryFilePath is required!");
 
-		return config;
+		return userConfig;
 	} catch (error) {
-		throw prettyError(String(error));
+		return throwPrettyError(String(error));
 	} finally {
 		if (filenameChanged) rmSync(filePath);
 	}
 }
+
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+// Helpers:
 
 const tsExtensions = [".ts", ".mts", ".cts"];
 

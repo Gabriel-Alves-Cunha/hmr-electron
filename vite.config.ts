@@ -1,5 +1,9 @@
 import { type UserConfigExport, defineConfig } from "vite";
+import { builtinModules } from "node:module";
 import { resolve } from "node:path";
+
+const builtinModulesWithNode = builtinModules.map(mod => `node:${mod}`);
+const allBuiltinModules = builtinModulesWithNode.concat(builtinModules);
 
 export default defineConfig(() => {
 	const config: UserConfigExport = {
@@ -7,68 +11,18 @@ export default defineConfig(() => {
 			rollupOptions: {
 				// make sure to externalize deps that shouldn't be bundled
 				// into your library
-				external: [
-					"esbuild",
-					"vite",
-
-					"node:child_process",
-					"node:fs/promises",
-					"node:querystring",
-					"node:perf_hooks",
-					"node:readline",
-					"node:stream",
-					"node:buffer",
-					"node:module",
-					"node:crypto",
-					"node:assert",
-					"node:events",
-					"node:buffer",
-					"node:https",
-					"node:http",
-					"node:path",
-					"node:util",
-					"node:zlib",
-					"node:net",
-					"node:tls",
-					"node:url",
-					"node:dns",
-					"node:tty",
-					"node:os",
-					"node:fs",
-
-					"child_process",
-					"fs/promises",
-					"querystring",
-					"perf_hooks",
-					"readline",
-					"stream",
-					"buffer",
-					"module",
-					"crypto",
-					"assert",
-					"events",
-					"buffer",
-					"https",
-					"http",
-					"path",
-					"util",
-					"zlib",
-					"net",
-					"tls",
-					"url",
-					"dns",
-					"tty",
-					"fs",
-					"os",
-					"fs",
-				],
+				external: ["esbuild", "vite", ...allBuiltinModules],
 				preserveEntrySignatures: "strict",
 				strictDeprecations: true,
 
 				// https://rollupjs.org/guide/en/#big-list-of-options
 				output: {
+					generatedCode: {
+						objectShorthand: true,
+						constBindings: true,
+						preset: "es2015",
+					},
 					minifyInternalExports: false,
-					generatedCode: "es2015",
 					sourcemap: false,
 					dir: "./build",
 					format: "esm",
@@ -124,11 +78,12 @@ export default defineConfig(() => {
 				{ find: "#common", replacement: resolve("src/common") },
 				{ find: "#types", replacement: resolve("src/#types") },
 				{ find: "#utils", replacement: resolve("src/utils") },
+				{ find: "#src", replacement: resolve("src/") },
 			],
 		},
 	};
 
-	log(config);
+	// log(config);
 
 	return config;
 });

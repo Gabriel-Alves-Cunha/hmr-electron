@@ -20,28 +20,29 @@ export function diagnoseErrors(errors: CompileError[]): void {
 
 function formatDiagnosticsMessage(errors: CompileError[]): string {
 	const errorMessage =
-		`Found ${errors.length} errors. Watching for file changes.`;
+		`Found ${errors.length} errors. Watching for file changes...`;
 	const messages = errors.map(e => formatCompileError(e));
 
 	let diagnosticDetail = "";
 	messages.forEach((msg, index, { length }) => {
-		diagnosticDetail += msg.split(newLine).map(i => "  " + i).join(newLine);
+		diagnosticDetail += msg.split("\n").map(detail => `  • ${detail}.`).join(
+			"\n",
+		);
 
 		if (index + 1 !== length)
-			diagnosticDetail += newLine;
+			diagnosticDetail += "\n";
 	});
 
 	const result = `\
 ${borderY}
-${
-		magenta(
-			`${consoleMessagePrefix} Some typescript compilation errors occurred:`,
-		)
+${consoleMessagePrefix} ${
+		magenta("Some typescript compilation errors occurred:")
 	}
+
 ${diagnosticDetail}
-${magenta(errorMessage)}`;
+
+${magenta(errorMessage)}
+${borderY}`;
 
 	return result;
 }
-
-const newLine = "\n";

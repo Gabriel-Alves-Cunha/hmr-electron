@@ -5,6 +5,7 @@ import { finishBuildMessage } from "#common/logs";
 import { diagnoseErrors } from "#common/diagnoseErrors";
 import { runElectron } from "#commands/subCommands/runElectron";
 import { prompt } from "#common/prompt";
+import { green } from "#utils/cli-colors";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -36,7 +37,9 @@ export async function promptToRerunElectron(
 
 	if (count > 1) {
 		const [readAnswer, stopPrompt] = prompt(
-			`[x${count}] Need to rerun Electron?`,
+			green(
+				`[x${count}  ${Date.now().toLocaleString()}] Need to rerun Electron?`,
+			),
 		);
 		stopPromptToRunElectron = stopPrompt;
 

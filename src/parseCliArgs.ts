@@ -3,14 +3,14 @@ import { resolve } from "node:path";
 import { configFilePathNotFound, prettyPrintStringArray } from "#common/logs";
 import { defaultPathsForConfig, findPathOrExit } from "#common/findPathOrExit";
 import { blue, bold, green, yellow } from "#utils/cli-colors";
-import { dbg, stringifyJson } from "#utils/debug";
+import { logDbg, stringifyJson } from "#utils/debug";
 import { makeConfigProps } from "#common/config";
 import { readConfigFile } from "#common/readConfigFile";
 import { cleanCache } from "#commands/cleanCache";
 import { runBuild } from "#commands/runBuild";
 import { runDev } from "#commands/runDev";
 
-import { name, version } from "../package.json" assert { type: "json" };
+import { name, version } from "../package.json";
 
 //////////////////////////////////////////
 //////////////////////////////////////////
@@ -80,11 +80,11 @@ function usefullArgs(): string[] {
 	const args = process.argv;
 	const reversedArgs = args.slice().reverse();
 
-	dbg(`Original args = ${prettyPrintStringArray(args)}`);
+	logDbg(`Original args = ${prettyPrintStringArray(args)}`);
 
 	let indexToSliceFrom = 0;
 	for (const arg of reversedArgs) {
-		dbg({ arg, nameToMatch: name, index: arg.lastIndexOf(name) });
+		logDbg({ arg, nameToMatch: name, index: arg.lastIndexOf(name) });
 
 		const indexOfThisPkgCommand = arg.lastIndexOf(name);
 
@@ -96,7 +96,7 @@ function usefullArgs(): string[] {
 	}
 
 	const argsToUse = args.slice(indexToSliceFrom + 1);
-	dbg(
+	logDbg(
 		`Modified args = ${
 			prettyPrintStringArray(argsToUse)
 		}\nindexToSliceFrom = ${indexToSliceFrom}`,
@@ -119,7 +119,7 @@ function argsAsObj(args: string[]): Record<string, string | boolean> {
 		else obj[key] = value;
 	});
 
-	console.log("argsAsObj =", stringifyJson(obj));
+	logDbg("argsAsObj =", stringifyJson(obj));
 
 	return obj;
 }
@@ -134,7 +134,7 @@ ${yellow("⚡")} Start developing your Electron + Vite app.
 
 ${bold("Usage")}: ${name} [command] [options]
 
-  You must have an ${blue("hmr-electron.config.(ts|js|json)")}
+  You must have an ${blue("hmr-electron.config.(ts|js)")}
   file at the root of your package.
 
 ${bold("Commands:")}

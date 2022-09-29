@@ -2,6 +2,7 @@ import { ChildProcess, spawn } from "node:child_process";
 import { Transform } from "node:stream";
 
 import { removeJunkTransformOptions } from "#utils/removeJunkLogs";
+import { throwPrettyError } from "#common/logs";
 import { gray } from "#utils/cli-colors";
 
 ///////////////////////////////////////////
@@ -23,15 +24,16 @@ export async function runElectron(
 	stopElectronFns.forEach(stopElectron => stopElectron());
 
 	// TODO: maybe: import electron
-	const electronProcess = spawn("electron", ["--color", electronEntryFile]).on(
-		"exit",
-		code => {
+	const electronProcess = spawn("electron", ["--color", electronEntryFile])
+		.on("exit", code => {
 			if (!exitBecauseOfUserCode)
 				throw new Error(gray(`Electron exited with code ${code}.`));
 
 			exitBecauseOfUserCode = true;
-		},
-	);
+		})
+		.on("error", err => {
+			throw throwPrettyError(String(err));
+		});
 
 	function createStopElectronFn(): () => void {
 		let called = false;

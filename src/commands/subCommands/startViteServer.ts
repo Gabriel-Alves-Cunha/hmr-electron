@@ -3,17 +3,32 @@ import type { ConfigProps } from "#types/config";
 import { createServer } from "vite";
 
 import { electronPreloadSourceMapVitePlugin } from "#utils/electronPreloadSourceMapVitePlugin";
-import { bgGreen, black, bold, green } from "#utils/cli-colors";
+import { viteConsoleMessagePrefix } from "#common/logs";
 import { LoggerPlugin } from "#utils/viteLoggerPlugin";
+import { bold, green } from "#utils/cli-colors";
+import { logDebug } from "#utils/debug";
 
 export async function startViteServer(config: ConfigProps): Promise<void> {
 	const server = await createServer({
+		esbuild: {
+			logLevel: logDebug ? "debug" : "silent",
+			minifyIdentifiers: false,
+			minifyWhitespace: false,
+			minifySyntax: false,
+			treeShaking: true,
+			target: "esnext",
+			sourcemap: false,
+			charset: "utf8",
+			format: "esm",
+			logLimit: 10,
+			color: true,
+		},
 		plugins: [
 			electronPreloadSourceMapVitePlugin(config.preloadSourceMapFilePath),
 			LoggerPlugin(config.cwd),
 		],
-		configFile: config.viteConfigPath,
 		logLevel: "info",
+		configFile: config.viteConfigPath,
 	});
 
 	await server.listen();
@@ -25,7 +40,7 @@ export async function startViteServer(config: ConfigProps): Promise<void> {
 		console.log(
 			bold(
 				green(
-					`${bgGreen(black("[VITE]"))} Dev server running at port ${port}.`,
+					`${viteConsoleMessagePrefix} Dev server running at port ${port}.`,
 				),
 			),
 		);

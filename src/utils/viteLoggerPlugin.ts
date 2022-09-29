@@ -2,7 +2,8 @@ import type { Plugin } from "vite";
 
 import { basename } from "node:path";
 
-import { bgBlue, gray, white, yellow } from "#utils/cli-colors";
+import { viteConsoleMessagePrefix } from "#common/logs";
+import { gray, underline, yellow } from "#utils/cli-colors";
 
 export function LoggerPlugin(srcPath: string): Plugin {
 	const plugin: Plugin = {
@@ -11,13 +12,15 @@ export function LoggerPlugin(srcPath: string): Plugin {
 			if (!srcPath)
 				throw new Error(`There must be a srcPath! Received: ${srcPath}`);
 
-			for (const { file } of ctx.modules) {
-				if (!file) continue;
+			ctx.modules.forEach(({ file }) => {
+				if (!file) return;
 
-				const path = basename(srcPath);
-
-				console.log(bgBlue(white("[VITE]")), yellow("hmr update"), gray(path));
-			}
+				console.log(
+					viteConsoleMessagePrefix,
+					yellow("HMR update on:"),
+					underline(gray(basename(srcPath))),
+				);
+			});
 
 			return ctx.modules;
 		},

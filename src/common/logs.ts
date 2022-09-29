@@ -1,46 +1,57 @@
 import {
 	underline,
 	bgYellow,
+	bgGreen,
 	borderY,
 	black,
 	green,
 	blue,
+	bold,
 	red,
 } from "#utils/cli-colors";
 
-export const consoleMessagePrefix = bgYellow(black("[hmr-electron]"));
+export const consoleMessagePrefix = bgYellow(bold(black("[hmr-electron]")));
+export const viteConsoleMessagePrefix = bgGreen(bold(black("[VITE]")));
 
 export const finishBuildMessage = green(
 	`${consoleMessagePrefix} Build finished.`,
 );
 
-export const entryFilePathNotFound = (path: string | undefined) =>
-	() =>
-		prettyError(
+export function entryFilePathNotFound(path: string | undefined) {
+	return () =>
+		throwPrettyError(
 			`${underline("entryFilePath")} not found. Received: ${
 				blue(String(path))
 			}`,
 		);
+}
 
-export const configFilePathNotFound = () =>
-	() =>
-		prettyError(
-			`No config file ${underline("(\"hmr-electron.config.ts\")")} found.`,
+export function configFilePathNotFound() {
+	return () =>
+		throwPrettyError(
+			`No config file (${underline("'hmr-electron.config.ts'")}) found.`,
 		);
+}
 
-export const fileNotFound = (file: string, path: string | undefined) =>
-	prettyError(`${underline(file)} not found. Received: ${blue(String(path))}`);
+export function fileNotFound(file: string, path: string | undefined): never {
+	throwPrettyError(
+		`File ${underline(green(`"${file}"`))} not found. Received: ${
+			blue(String(path))
+		}`,
+	);
+}
 
-export const viteConfigFileNotFound = (cwd: string) =>
-	() =>
-		prettyError(
+export function viteConfigFileNotFound(cwd: string) {
+	return () =>
+		throwPrettyError(
 			`Vite config file for main process in "${cwd}" ${
 				underline("NOT")
 			} found.`,
 		);
+}
 
-export function prettyError(msg: string) {
-	return new Error(red(`\n${borderY}\n${msg}\n${borderY}`));
+export function throwPrettyError(msg: string): never {
+	throw new Error(red(`\n${borderY}\n${msg}\n${borderY}`));
 }
 
 export function prettyPrintStringArray<T>(arr: readonly T[]): string {

@@ -5,11 +5,12 @@ import { borderY, cyan, gray, red, yellow } from "#utils/cli-colors";
 ///////////////////////////////////////////
 // Main function:
 
+const categoryMessage = red("[ERROR]");
+const border = red(borderY);
+
 export function formatCompileError(err: CompileError): string {
 	if (!err.location) return err.message;
 
-	const border = red(borderY);
-	const categoryMessage = red("[ERROR]");
 	const pathMessage = `\
 file: ${cyan(err.location.file)}
 line: ${yellow(String(err.location.line))}
