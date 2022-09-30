@@ -4,6 +4,7 @@ import { Transform } from "node:stream";
 import { removeJunkTransformOptions } from "#utils/removeJunkLogs";
 import { throwPrettyError } from "#common/logs";
 import { gray } from "#utils/cli-colors";
+import { ConfigProps } from "#types/config";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -19,21 +20,55 @@ let exitBecauseOfUserCode = false;
 // Main function:
 
 export async function runElectron(
-	{ electronEntryFile, silent = false }: StartElectronProps,
+	{
+		electronEnviromentVariables,
+		electronBuiltEntryFile,
+		electronOptions,
+		silent = false,
+	}: StartElectronProps,
 ): Promise<Readonly<[ChildProcess, StopElectronFn]>> {
 	stopElectronFns.forEach(stopElectron => stopElectron());
 
-	// TODO: maybe: import electron
-	const electronProcess = spawn("electron", ["--color", electronEntryFile])
+	if (electronOptions.length === 0)
+		electronOptions = [
+			"--enable-source-maps",
+			"--node-memory-debug",
+			"--trace-warnings",
+			"--trace-uncaught",
+			"--trace-warnings",
+		];
+
+	if (Object.keys(electronEnviromentVariables).length === 0)
+		electronEnviromentVariables = { ...process.env, FORCE_COLOR: "2" };
+	else
+		electronEnviromentVariables = {
+			...electronEnviromentVariables,
+			...process.env,
+		};
+
+	const electronProcess = spawn("electron", [
+		...electronOptions,
+		electronBuiltEntryFile,
+	], { env: electronEnviromentVariables })
 		.on("exit", code => {
 			if (!exitBecauseOfUserCode)
 				throw new Error(gray(`Electron exited with code ${code}.`));
 
 			exitBecauseOfUserCode = true;
 		})
+		.on("close", (code, signal) => {
+			console.log(`Process closed with code ${code}, ${signal}`);
+			process.exit(code ?? undefined);
+		})
 		.on("error", err => {
-			throw throwPrettyError(String(err));
+			throw throwPrettyError(
+				"Error from child_process running Electron:\n" + String(err),
+			);
 		});
+
+	electronProcess.stdout.on("data", data => {
+		console.log(data);
+	});
 
 	function createStopElectronFn(): () => void {
 		let called = false;
@@ -76,9 +111,7 @@ export async function runElectron(
 ///////////////////////////////////////////
 // Types:
 
-export type StartElectronProps = Readonly<
-	{ electronEntryFile: string; silent?: boolean; }
->;
+export type StartElectronProps = Readonly<ConfigProps & { silent?: boolean; }>;
 
 ///////////////////////////////////////////
 

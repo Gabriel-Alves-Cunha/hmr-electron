@@ -10,6 +10,7 @@ export declare type UserProvidedConfigProps = {
     electronEntryFilePath: string;
     buildMainOutputPath?: string;
     esbuildConfig?: BuildOptions;
+	electronOptions?: string[];
     baseTSconfigPath?: string;
     mainTSconfigPath?: string;
     nodeModulesPath?: string;

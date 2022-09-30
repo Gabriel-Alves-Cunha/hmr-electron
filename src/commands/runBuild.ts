@@ -1,11 +1,11 @@
 import type { ConfigProps } from "#types/config";
 
+import { bgYellow, black, bold, green } from "#utils/cli-colors";
 import { runEsbuildForMainProcess } from "./esbuild";
 import { finishBuildMessage } from "#common/logs";
 import { diagnoseErrors } from "#common/diagnoseErrors";
 import { runElectron } from "#commands/subCommands/runElectron";
 import { prompt } from "#common/prompt";
-import { green } from "#utils/cli-colors";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -23,12 +23,12 @@ export async function runBuild(config: ConfigProps): Promise<void> {
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 ///////////////////////////////////////////
-// Helper function:
+// Helper functions:
 
 let stopPromptToRunElectron: () => void = () => {};
 
 export async function promptToRerunElectron(
-	electronEntryFile: string,
+	config: ConfigProps,
 	count: number,
 ) {
 	stopPromptToRunElectron();
@@ -37,14 +37,37 @@ export async function promptToRerunElectron(
 
 	if (count > 1) {
 		const [readAnswer, stopPrompt] = prompt(
-			green(
-				`[x${count}  ${Date.now().toLocaleString()}] Need to rerun Electron?`,
-			),
+			bgYellow(black(bold(`[${count}x | ${dateFormatted()}]`))) +
+				needToRerunElectron,
 		);
 		stopPromptToRunElectron = stopPrompt;
 
-		if (await readAnswer()) await runElectron({ electronEntryFile });
+		if (await readAnswer())
+			await runElectron(config);
 	} else {
-		await runElectron({ electronEntryFile });
+		await runElectron(config);
 	}
+}
+
+///////////////////////////////////////////
+
+function dateFormatted() {
+	const date = new Date();
+
+	return [
+		padTo2Digits(date.getHours()),
+		padTo2Digits(date.getMinutes()),
+		padTo2Digits(date.getSeconds()),
+	]
+		.join(":");
+}
+
+///////////////////////////////////////////
+
+const needToRerunElectron = green("Need to rerun Electron?");
+
+///////////////////////////////////////////
+
+function padTo2Digits(num: number) {
+	return num.toString().padStart(2, "0");
 }

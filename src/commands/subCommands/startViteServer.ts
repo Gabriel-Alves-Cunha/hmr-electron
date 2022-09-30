@@ -17,17 +17,22 @@ export async function startViteServer(config: ConfigProps): Promise<void> {
 			minifySyntax: false,
 			treeShaking: true,
 			target: "esnext",
-			sourcemap: false,
+			sourcemap: true,
 			charset: "utf8",
 			format: "esm",
 			logLimit: 10,
 			color: true,
 		},
+
 		plugins: [
 			electronPreloadSourceMapVitePlugin(config.preloadSourceMapFilePath),
 			LoggerPlugin(config.cwd),
 		],
+
 		logLevel: "info",
+
+		build: { outDir: "src/renderer" },
+
 		configFile: config.viteConfigPath,
 	});
 

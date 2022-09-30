@@ -5,9 +5,9 @@
 	"type": "module",
 	"scripts": {
 		"wip": "rm -rf node_modules/ && yarn add ../../ && DEBUG=hmr-electron yarn dev",
-		"dev": "hmr-electron dev",
 		"build": "hmr-electron build",
-		"clean": "hmr-electron clean"
+		"clean": "hmr-electron clean",
+		"dev": "hmr-electron dev"
 	},
 	"devDependencies": {
 		"@types/node": "^18.7.23",

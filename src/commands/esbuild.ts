@@ -6,6 +6,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 import { throwPrettyError } from "#common/logs";
+import { cleanCache } from "./cleanCache";
 import { require } from "#src/require";
 import { dbg } from "#utils/debug";
 
@@ -17,7 +18,7 @@ import { dbg } from "#utils/debug";
 export async function runEsbuildForMainProcess(
 	props: BuildProps,
 	onError: (errors: CompileError[]) => void,
-	onBuildComplete: (buildOutputPath: string, count: number) => void,
+	onBuildComplete: (config: ConfigProps, count: number) => void,
 ): Promise<void> {
 	const tsconfigPath = join(props.mainPath, "tsconfig.json") ||
 		props.baseTSconfigPath;
@@ -28,41 +29,46 @@ export async function runEsbuildForMainProcess(
 	if (props.preloadFilePath) {
 		entryPoints.push(props.preloadFilePath);
 
-		console.log(`\tUsing preload file: "${getRelativePreloadFilePath(props)}"\n`);
+		console.log(
+			`\tUsing preload file: "${getRelativePreloadFilePath(props)}"\n`,
+		);
 	}
 
 	try {
+		// Clean prev build output:
+		await cleanCache(props);
+
 		const buildResult = await build({
+			outdir: props.isBuild ?
+				props.buildMainOutputPath :
+				join(props.devOutputPath, "main"),
 			external: await findExternals(props),
+			outExtension: { ".js": ".cjs" },
 			incremental: !props.isBuild,
 			tsconfig: tsconfigPath,
 			sourcesContent: false,
 			treeShaking: true,
-			logLevel: "info",
+			logLevel: "debug",
 			platform: "node",
 			target: "esnext",
 			sourcemap: true,
 			metafile: true,
 			minify: false,
-			bundle: false,
 			format: "cjs",
+			bundle: true,
 			logLimit: 10,
 			color: true,
 			entryPoints,
 
 			...props.esbuildConfig,
 
-			watch: !props.isBuild ?
-				{
-					onRebuild: async error => {
-						if (error) onError(transformErrors(error));
-						else {
-							++count;
-							onBuildComplete(props.buildOutputPath, count);
-						}
-					},
-				} :
-				false,
+			watch: props.isBuild ? false : {
+				onRebuild: async error => {
+					error ?
+						onError(transformErrors(error)) :
+						onBuildComplete(props, count++);
+				},
+			},
 		});
 
 		++count;
@@ -74,10 +80,10 @@ export async function runEsbuildForMainProcess(
 				verbose: true,
 			});
 
-			console.log("Esbuild build result metafile:\n\n", metafile);
+			console.log("Esbuild build result metafile:\n", metafile);
 		}
 
-		onBuildComplete(props.buildOutputPath, count);
+		onBuildComplete(props, count);
 	} catch (error) {
 		if (isBuildFailure(error))
 			onError(transformErrors(error));

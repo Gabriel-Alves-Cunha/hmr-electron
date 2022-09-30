@@ -3,81 +3,116 @@ import type { ConfigProps, UserProvidedConfigProps } from "#types/config";
 import { join, resolve } from "node:path";
 import { existsSync } from "node:fs";
 
-import { fileNotFound } from "./logs";
-import { dbg } from "#utils/debug";
+import { fileNotFound, throwPrettyError } from "./logs";
+import { logDbg, stringifyJson } from "#utils/debug";
 
 export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
-	props.cwd ||= process.cwd();
+	const cwd = props.cwd || process.cwd();
 
-	props.electronEntryFilePath = resolve(props.electronEntryFilePath);
+	const electronEntryFilePath = resolve(props.electronEntryFilePath);
 
-	props.srcPath = props.srcPath ?
-		resolve(props.srcPath) :
-		join(props.cwd, "src");
+	const srcPath = props.srcPath ? resolve(props.srcPath) : join(cwd, "src");
 
-	props.mainPath = props.mainPath ?
+	const mainPath = props.mainPath ?
 		resolve(props.mainPath) :
-		join(props.srcPath, "main");
+		join(srcPath, "main");
 
-	props.rendererPath = props.rendererPath ?
+	const rendererPath = props.rendererPath ?
 		resolve(props.rendererPath) :
-		join(props.srcPath, "renderer");
+		join(srcPath, "renderer");
 
-	props.devOutputPath = props.devOutputPath ?
+	const devOutputPath = props.devOutputPath ?
 		resolve(props.devOutputPath) :
-		join(props.cwd, "build");
+		join(cwd, "dev-build");
 
-	props.preloadFilePath = props.preloadFilePath ?
+	const preloadFilePath = props.preloadFilePath ?
 		resolve(props.preloadFilePath) :
 		undefined;
 
+	let preloadSourceMapFilePath: string | undefined;
 	if (props.preloadFilePath) {
-		props.preloadSourceMapFilePath = props.preloadSourceMapFilePath ?
+		preloadSourceMapFilePath = props.preloadSourceMapFilePath ?
 			resolve(props.preloadSourceMapFilePath) :
-			join(props.devOutputPath, "preload.js.map");
+			join(devOutputPath, "preload.js.map");
 	}
 
-	props.rendererTSconfigPath = props.rendererTSconfigPath ?
+	const rendererTSconfigPath = props.rendererTSconfigPath ?
 		resolve(props.rendererTSconfigPath) :
-		join(props.rendererPath, "tsconfig.json");
+		join(rendererPath, "tsconfig.json");
 
-	props.mainTSconfigPath = props.mainTSconfigPath ?
+	const mainTSconfigPath = props.mainTSconfigPath ?
 		resolve(props.mainTSconfigPath) :
-		join(props.mainPath, "tsconfig.json");
+		join(mainPath, "tsconfig.json");
 
-	props.nodeModulesPath = props.nodeModulesPath ?
+	const nodeModulesPath = props.nodeModulesPath ?
 		resolve(props.nodeModulesPath) :
-		join(props.cwd, "./node_modules");
+		join(cwd, "./node_modules");
 
-	props.viteConfigPath = props.viteConfigPath ?
+	const viteConfigPath = props.viteConfigPath ?
 		resolve(props.viteConfigPath) :
-		join(props.cwd, "vite.config.ts");
+		join(cwd, "vite.config.ts");
 
-	props.packageJsonPath = props.packageJsonPath ?
+	const packageJsonPath = props.packageJsonPath ?
 		resolve(props.packageJsonPath) :
-		join(props.cwd, "package.json");
+		join(cwd, "package.json");
 
-	props.baseTSconfigPath = props.baseTSconfigPath ?
+	const baseTSconfigPath = props.baseTSconfigPath ?
 		resolve(props.baseTSconfigPath) :
-		join(props.cwd, "tsconfig.json");
+		join(cwd, "tsconfig.json");
 
-	props.buildOutputPath = props.buildOutputPath ?
+	const buildOutputPath = props.buildOutputPath ?
 		resolve(props.buildOutputPath) :
-		join(props.cwd, "build");
+		join(cwd, "build");
 
-	props.buildRendererOutputPath = props.buildRendererOutputPath ?
+	const buildRendererOutputPath = props.buildRendererOutputPath ?
 		resolve(props.buildRendererOutputPath) :
-		join(props.buildOutputPath, "renderer");
+		join(buildOutputPath, "renderer");
 
-	props.hmrElectronPath = props.hmrElectronPath ?
+	const hmrElectronPath = props.hmrElectronPath ?
 		resolve(props.hmrElectronPath) :
-		join(props.nodeModulesPath, "hmr-electron");
+		join(nodeModulesPath, "hmr-electron");
 
-	props.buildMainOutputPath = props.buildMainOutputPath ?
+	const buildMainOutputPath = props.buildMainOutputPath ?
 		resolve(props.buildMainOutputPath) :
-		join(props.buildOutputPath, "main");
+		join(buildOutputPath, "main");
 
-	props.esbuildConfig ||= {};
+	const esbuildConfig = props.esbuildConfig || {};
+
+	const electronOptions = Array.isArray(props.electronOptions) ?
+		props.electronOptions :
+		[];
+
+	const electronBuiltEntryFile = join(devOutputPath, "main", "index.cjs");
+
+	let electronEnviromentVariables: NodeJS.ProcessEnv = {};
+	if (props.electronEnviromentVariables) {
+		electronEnviromentVariables = props.electronEnviromentVariables;
+	}
+
+	const newProps: ConfigProps = {
+		electronEnviromentVariables,
+		preloadSourceMapFilePath,
+		buildRendererOutputPath,
+		electronBuiltEntryFile,
+		electronEntryFilePath,
+		rendererTSconfigPath,
+		buildMainOutputPath,
+		baseTSconfigPath,
+		mainTSconfigPath,
+		electronOptions,
+		buildOutputPath,
+		hmrElectronPath,
+		packageJsonPath,
+		nodeModulesPath,
+		preloadFilePath,
+		viteConfigPath,
+		devOutputPath,
+		esbuildConfig,
+		rendererPath,
+		mainPath,
+		srcPath,
+		cwd,
+	};
 
 	///////////////////////////////////////////////
 	///////////////////////////////////////////////
@@ -86,7 +121,11 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 	let exit = false;
 
 	Object.entries(props).forEach(([key, filePath]) => {
-		if (!key || !filePath || except.includes(key)) return;
+		if (
+			!key || !filePath /* This apparently gives: !{} => false */ || except
+				.includes(key)
+		)
+			return;
 
 		if (!existsSync(filePath as string)) {
 			console.error(fileNotFound(key, filePath as string));
@@ -95,13 +134,13 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 	});
 
 	if (exit) {
-		console.log("Resolved config props:", props);
-		process.exit();
+		console.log("Resolved config props:", stringifyJson(props));
+		throw throwPrettyError("Resolve the errors above and try again.");
 	}
 
-	dbg("Resolved config props:", props);
+	logDbg("Resolved config props:", newProps);
 
-	return props as ConfigProps;
+	return newProps;
 }
 
 const except = [
@@ -110,5 +149,4 @@ const except = [
 	"buildMainOutputPath",
 	"buildOutputPath",
 	"devOutputPath",
-	"esbuildConfig",
 ];
