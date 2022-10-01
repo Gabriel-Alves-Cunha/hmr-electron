@@ -32,7 +32,7 @@ export async function parseCliArgs(): Promise<void> {
 	const configFilePathFromArgs = args["--config-file"];
 	const configFilePath = configFilePathFromArgs ?
 		resolve(configFilePathFromArgs as string) :
-		findPathOrExit(defaultPathsForConfig, configFilePathNotFound());
+		findPathOrExit(defaultPathsForConfig, configFilePathNotFound);
 
 	const userConfig = await readConfigFile(configFilePath);
 

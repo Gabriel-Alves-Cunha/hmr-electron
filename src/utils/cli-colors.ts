@@ -1,9 +1,10 @@
 const ansi = (a: number, b: number) =>
-	(msg: string) => `\u001b[${a}m${msg}\u001b[${b}m`;
+	(msg: any) => `\u001b[${a}m${msg}\u001b[${b}m`;
 
 export const underline = ansi(4, 24);
 export const bold = ansi(1, 22);
 
+export const bgMagenta = ansi(45, 49);
 export const bgYellow = ansi(43, 49);
 export const bgGreen = ansi(42, 49);
 export const bgBlue = ansi(44, 49);

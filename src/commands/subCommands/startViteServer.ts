@@ -4,18 +4,20 @@ import { createServer } from "vite";
 
 import { electronPreloadSourceMapVitePlugin } from "#utils/electronPreloadSourceMapVitePlugin";
 import { viteConsoleMessagePrefix } from "#common/logs";
+import { bold, green, underline } from "#utils/cli-colors";
+import { getPrettyDate } from "#utils/getPrettyDate";
 import { LoggerPlugin } from "#utils/viteLoggerPlugin";
-import { bold, green } from "#utils/cli-colors";
-import { logDebug } from "#utils/debug";
 
 export async function startViteServer(config: ConfigProps): Promise<void> {
 	const server = await createServer({
 		esbuild: {
-			logLevel: logDebug ? "debug" : "silent",
 			minifyIdentifiers: false,
 			minifyWhitespace: false,
+			sourcesContent: false,
 			minifySyntax: false,
+			platform: "browser",
 			treeShaking: true,
+			logLevel: "debug",
 			target: "esnext",
 			sourcemap: true,
 			charset: "utf8",
@@ -26,7 +28,7 @@ export async function startViteServer(config: ConfigProps): Promise<void> {
 
 		plugins: [
 			electronPreloadSourceMapVitePlugin(config.preloadSourceMapFilePath),
-			LoggerPlugin(config.cwd),
+			LoggerPlugin(config.srcPath),
 		],
 
 		logLevel: "info",
@@ -38,14 +40,18 @@ export async function startViteServer(config: ConfigProps): Promise<void> {
 
 	await server.listen();
 
-	const address = server.httpServer?.address();
-	if (address && typeof address === "object") {
-		const { port } = address;
+	const addressInfo = server.httpServer?.address();
+	if (addressInfo && typeof addressInfo === "object") {
+		const { address, port } = addressInfo;
 
 		console.log(
+			getPrettyDate(),
+			viteConsoleMessagePrefix,
 			bold(
 				green(
-					`${viteConsoleMessagePrefix} Dev server running at port ${port}.`,
+					` Dev server running at address ${
+						underline(`http://${address}:${port}`)
+					}.`,
 				),
 			),
 		);

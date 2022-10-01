@@ -3,16 +3,18 @@ import { TransformOptions } from "node:stream";
 export const removeJunkTransformOptions: TransformOptions = {
 	decodeStrings: false,
 
-	transform(chunk, _encoding, doneCb) {
-		const source = chunk.toString();
+	transform(chunk: Buffer, _encoding, doneCb) {
+		const source: string = chunk.toString();
 
-		if (junkRegex_1.test(source)) return false;
-		if (junkRegex_2.test(source)) return false;
-		if (junkRegex_3.test(source)) return false;
+		if (
+			source.includes(errorThatAlwaysAppear, 49) ||
+			junkRegex_1.test(source) ||
+			junkRegex_2.test(source) ||
+			junkRegex_3.test(source)
+		)
+			return;
 
-		doneCb(null, chunk);
-
-		return;
+		doneCb(undefined, chunk);
 	},
 };
 
@@ -25,3 +27,6 @@ const junkRegex_2 = /\[\d+:\d+\/|\d+\.\d+:ERROR:CONSOLE\(\d+\)\]/;
 
 /** Example: ALSA lib confmisc.c:767:(parse_card) cannot find card '0' */
 const junkRegex_3 = /ALSA lib [a-z]+\.c:\d+:\([a-z_]+\)/;
+
+// libva error: vaGetDriverNameByIndex() failed with unknown libva error, driver_name = (null)
+const errorThatAlwaysAppear = "unknown libva error, driver_name = (null)";

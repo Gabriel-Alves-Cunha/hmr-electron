@@ -4,6 +4,7 @@ import { bgYellow, black, bold, green } from "#utils/cli-colors";
 import { runEsbuildForMainProcess } from "./esbuild";
 import { finishBuildMessage } from "#common/logs";
 import { diagnoseErrors } from "#common/diagnoseErrors";
+import { getPrettyDate } from "#utils/getPrettyDate";
 import { runElectron } from "#commands/subCommands/runElectron";
 import { prompt } from "#common/prompt";
 
@@ -33,13 +34,15 @@ export async function promptToRerunElectron(
 ) {
 	stopPromptToRunElectron();
 
-	console.log(finishBuildMessage);
+	console.log(getPrettyDate(), finishBuildMessage);
 
 	if (count > 1) {
 		const [readAnswer, stopPrompt] = prompt(
-			bgYellow(black(bold(`[${count}x | ${dateFormatted()}]`))) +
-				needToRerunElectron,
+			`${getPrettyDate()} ${
+				bgYellow(black(bold(`[${count}x]`)))
+			} ${needToRerunElectron}`,
 		);
+
 		stopPromptToRunElectron = stopPrompt;
 
 		if (await readAnswer())
@@ -51,23 +54,4 @@ export async function promptToRerunElectron(
 
 ///////////////////////////////////////////
 
-function dateFormatted() {
-	const date = new Date();
-
-	return [
-		padTo2Digits(date.getHours()),
-		padTo2Digits(date.getMinutes()),
-		padTo2Digits(date.getSeconds()),
-	]
-		.join(":");
-}
-
-///////////////////////////////////////////
-
 const needToRerunElectron = green("Need to rerun Electron?");
-
-///////////////////////////////////////////
-
-function padTo2Digits(num: number) {
-	return num.toString().padStart(2, "0");
-}

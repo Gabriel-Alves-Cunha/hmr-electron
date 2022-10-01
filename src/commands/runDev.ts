@@ -20,7 +20,7 @@ export async function runDev(config: ConfigProps) {
 
 	await startViteServer(config);
 
-	// Start dev for main process
+	// Start dev for main process.
 	findPathOrExit(
 		[config.electronEntryFilePath, ...entryFileDefaultPlaces],
 		entryFilePathNotFound(config.electronEntryFilePath),

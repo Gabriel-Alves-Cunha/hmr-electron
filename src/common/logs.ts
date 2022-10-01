@@ -1,3 +1,4 @@
+import { getPrettyDate } from "#utils/getPrettyDate";
 import {
 	underline,
 	bgYellow,
@@ -10,38 +11,35 @@ import {
 	red,
 } from "#utils/cli-colors";
 
-export const consoleMessagePrefix = bgYellow(bold(black("[hmr-electron]")));
+export const hmrElectronConsoleMessagePrefix = bgYellow(
+	bold(black("[hmr-electron]")),
+);
 export const viteConsoleMessagePrefix = bgGreen(bold(black("[VITE]")));
 
-export const finishBuildMessage = green(
-	`${consoleMessagePrefix} Build finished.`,
+export const finishBuildMessage = hmrElectronConsoleMessagePrefix + green(
+	" Build finished.",
 );
 
-export function entryFilePathNotFound(path: string | undefined) {
+export function entryFilePathNotFound(path: string | undefined): () => never {
 	return () =>
 		throwPrettyError(
-			`${underline("entryFilePath")} not found. Received: ${
-				blue(String(path))
-			}`,
+			`${underline("entryFilePath")} not found. Received: ${blue(path)}`,
 		);
 }
 
-export function configFilePathNotFound() {
-	return () =>
-		throwPrettyError(
-			`No config file (${underline("'hmr-electron.config.ts'")}) found.`,
-		);
-}
-
-export function fileNotFound(file: string, path: string | undefined): never {
+export function configFilePathNotFound(): never {
 	throwPrettyError(
-		`File ${underline(green(`"${file}"`))} not found. Received: ${
-			blue(String(path))
-		}`,
+		`No config file (${underline("'hmr-electron.config.ts'")}) found.`,
 	);
 }
 
-export function viteConfigFileNotFound(cwd: string) {
+export function fileNotFound(file: string, path: string | undefined): string {
+	return `File ${underline(green(`"${file}"`))} not found. Received: ${
+		blue(path)
+	}`;
+}
+
+export function viteConfigFileNotFound(cwd: string): () => never {
 	return () =>
 		throwPrettyError(
 			`Vite config file for main process in "${cwd}" ${
@@ -50,8 +48,14 @@ export function viteConfigFileNotFound(cwd: string) {
 		);
 }
 
-export function throwPrettyError(msg: string): never {
-	throw new Error(red(`\n${borderY}\n${msg}\n${borderY}`));
+export function throwPrettyError(msg: any): never {
+	throw new Error(
+		red(`
+${borderY}
+${getPrettyDate()} ${msg}
+${borderY}
+`),
+	);
 }
 
 export function prettyPrintStringArray<T>(arr: readonly T[]): string {

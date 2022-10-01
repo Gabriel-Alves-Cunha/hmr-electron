@@ -7,3 +7,8 @@ yarn-error.log*
 
 # Directories
 node_modules
+demo/dev-build
+demo/build
+
+# Build result
+build/hmr-electron.js

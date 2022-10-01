@@ -1,4 +1,5 @@
 import { borderY, cyan, gray, red, yellow } from "#utils/cli-colors";
+import { getPrettyDate } from "#utils/getPrettyDate";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -13,11 +14,12 @@ export function formatCompileError(err: CompileError): string {
 
 	const pathMessage = `\
 file: ${cyan(err.location.file)}
-line: ${yellow(String(err.location.line))}
-column: ${yellow(String(err.location.column))}\n\n`;
+line: ${yellow(err.location.line)}
+column: ${yellow(err.location.column)}
+`;
 
 	const code = `\
-${gray(String(err.location.line))} ${err.location.lineText}
+${gray(err.location.line)} ${err.location.lineText}
 ${" ".repeat(err.location.column + `${err.location.line}`.length + 1 + 1)}
 ${red("~".repeat(err.location.length))} ${
 		" ".repeat(
@@ -28,7 +30,11 @@ ${red("~".repeat(err.location.length))} ${
 		)
 	}`;
 
-	return `${categoryMessage} ${border} - ${pathMessage} ${err.message}\n\n${code}\n${border}`;
+	return `${getPrettyDate()} ${categoryMessage}
+${border}
+${pathMessage}
+${err.message}\n\n${code}
+${border}`;
 }
 
 ///////////////////////////////////////////

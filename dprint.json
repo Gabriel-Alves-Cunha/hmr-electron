@@ -19,7 +19,7 @@
 		"singleBodyPosition": "maintain",
 		"operatorPosition": "sameLine",
 		"bracePosition": "maintain",
-		"preferSingleLine": true,
+		"preferSingleLine": false,
 		"quoteProps": "asNeeded",
 		"useBraces": "maintain",
 		"semiColons": "always"

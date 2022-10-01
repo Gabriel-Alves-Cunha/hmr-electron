@@ -1,10 +1,12 @@
-import { ChildProcess, spawn } from "node:child_process";
+import type { ConfigProps } from "#types/config";
+
+import { type ChildProcess, spawn } from "node:child_process";
 import { Transform } from "node:stream";
 
 import { removeJunkTransformOptions } from "#utils/removeJunkLogs";
 import { throwPrettyError } from "#common/logs";
+import { getPrettyDate } from "#utils/getPrettyDate";
 import { gray } from "#utils/cli-colors";
-import { ConfigProps } from "#types/config";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -50,24 +52,31 @@ export async function runElectron(
 		...electronOptions,
 		electronBuiltEntryFile,
 	], { env: electronEnviromentVariables })
-		.on("exit", code => {
+		.on("exit", (code, signal) => {
 			if (!exitBecauseOfUserCode)
-				throw new Error(gray(`Electron exited with code ${code}.`));
+				throwPrettyError(
+					`Electron exited with code: ${code}, signal: ${signal}.`,
+				);
 
 			exitBecauseOfUserCode = true;
 		})
 		.on("close", (code, signal) => {
-			console.log(`Process closed with code ${code}, ${signal}`);
+			console.log(
+				getPrettyDate(),
+				gray(
+					`Process closed with code: ${code}, signal: ${signal}.`,
+				),
+			);
 			process.exit(code ?? undefined);
 		})
 		.on("error", err => {
-			throw throwPrettyError(
-				"Error from child_process running Electron:\n" + String(err),
+			throwPrettyError(
+				`Error from child_process running Electron: ${err.message}`,
 			);
 		});
 
 	electronProcess.stdout.on("data", data => {
-		console.log(data);
+		console.log(getPrettyDate(), data);
 	});
 
 	function createStopElectronFn(): () => void {

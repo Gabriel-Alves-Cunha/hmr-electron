@@ -1,5 +1,6 @@
 import type { BuildOptions } from "esbuild";
 
+// Remember to always manually update the build/index.d.ts file!!!!
 export type UserProvidedConfigProps = {
 	preloadSourceMapFilePath?: string | undefined;
 	preloadFilePath?: string | undefined;

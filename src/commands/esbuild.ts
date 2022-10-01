@@ -5,6 +5,7 @@ import { type BuildFailure, build, analyzeMetafile } from "esbuild";
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
+import { getRelativePreloadFilePath } from "#utils/getRelativeFilePath";
 import { throwPrettyError } from "#common/logs";
 import { cleanCache } from "./cleanCache";
 import { require } from "#src/require";
@@ -20,8 +21,7 @@ export async function runEsbuildForMainProcess(
 	onError: (errors: CompileError[]) => void,
 	onBuildComplete: (config: ConfigProps, count: number) => void,
 ): Promise<void> {
-	const tsconfigPath = join(props.mainPath, "tsconfig.json") ||
-		props.baseTSconfigPath;
+	const tsconfigPath = join(props.mainPath, "tsconfig.json");
 	const entryPoints = [props.electronEntryFilePath];
 
 	let count = 0;
@@ -30,7 +30,9 @@ export async function runEsbuildForMainProcess(
 		entryPoints.push(props.preloadFilePath);
 
 		console.log(
-			`\tUsing preload file: "${getRelativePreloadFilePath(props)}"\n`,
+			`\tUsing preload file: "${
+				getRelativePreloadFilePath(props.preloadFilePath, props.cwd)
+			}"\n`,
 		);
 	}
 
@@ -138,12 +140,6 @@ function transformErrors(error: BuildFailure): CompileError[] {
 function isBuildFailure(err: unknown): err is BuildFailure {
 	// @ts-ignore => For some reason ts is not narrowing the types...
 	return err && err.errors && Array.isArray(err.errors);
-}
-
-///////////////////////////////////////////
-
-function getRelativePreloadFilePath(config: ConfigProps): string {
-	return config.preloadFilePath?.substring(config.cwd.length) ?? "";
 }
 
 ///////////////////////////////////////////

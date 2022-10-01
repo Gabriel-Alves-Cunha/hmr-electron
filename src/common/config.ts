@@ -15,7 +15,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 
 	const mainPath = props.mainPath ?
 		resolve(props.mainPath) :
-		join(srcPath, "main");
+		join(srcPath, main);
 
 	const rendererPath = props.rendererPath ?
 		resolve(props.rendererPath) :
@@ -33,16 +33,16 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 	if (props.preloadFilePath) {
 		preloadSourceMapFilePath = props.preloadSourceMapFilePath ?
 			resolve(props.preloadSourceMapFilePath) :
-			join(devOutputPath, "preload.js.map");
+			join(devOutputPath, main, "preload.cjs.map");
 	}
 
 	const rendererTSconfigPath = props.rendererTSconfigPath ?
 		resolve(props.rendererTSconfigPath) :
-		join(rendererPath, "tsconfig.json");
+		join(rendererPath, tsconfigJson);
 
 	const mainTSconfigPath = props.mainTSconfigPath ?
 		resolve(props.mainTSconfigPath) :
-		join(mainPath, "tsconfig.json");
+		join(mainPath, tsconfigJson);
 
 	const nodeModulesPath = props.nodeModulesPath ?
 		resolve(props.nodeModulesPath) :
@@ -58,7 +58,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 
 	const baseTSconfigPath = props.baseTSconfigPath ?
 		resolve(props.baseTSconfigPath) :
-		join(cwd, "tsconfig.json");
+		join(cwd, tsconfigJson);
 
 	const buildOutputPath = props.buildOutputPath ?
 		resolve(props.buildOutputPath) :
@@ -74,7 +74,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 
 	const buildMainOutputPath = props.buildMainOutputPath ?
 		resolve(props.buildMainOutputPath) :
-		join(buildOutputPath, "main");
+		join(buildOutputPath, main);
 
 	const esbuildConfig = props.esbuildConfig || {};
 
@@ -82,12 +82,10 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 		props.electronOptions :
 		[];
 
-	const electronBuiltEntryFile = join(devOutputPath, "main", "index.cjs");
+	const electronBuiltEntryFile = join(devOutputPath, main, "index.cjs");
 
-	let electronEnviromentVariables: NodeJS.ProcessEnv = {};
-	if (props.electronEnviromentVariables) {
-		electronEnviromentVariables = props.electronEnviromentVariables;
-	}
+	let electronEnviromentVariables: NodeJS.ProcessEnv =
+		props.electronEnviromentVariables || {};
 
 	const newProps: ConfigProps = {
 		electronEnviromentVariables,
@@ -135,13 +133,18 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 
 	if (exit) {
 		console.log("Resolved config props:", stringifyJson(props));
-		throw throwPrettyError("Resolve the errors above and try again.");
+		throwPrettyError("Resolve the errors above and try again.");
 	}
 
 	logDbg("Resolved config props:", newProps);
 
 	return newProps;
 }
+
+///////////////////////////////////////////////
+///////////////////////////////////////////////
+///////////////////////////////////////////////
+// Constants:
 
 const except = [
 	"preloadSourceMapFilePath",
@@ -150,3 +153,8 @@ const except = [
 	"buildOutputPath",
 	"devOutputPath",
 ];
+
+///////////////////////////////////////////////
+
+const tsconfigJson = "tsconfig.json";
+const main = "main";

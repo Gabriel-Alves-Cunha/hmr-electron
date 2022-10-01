@@ -15,6 +15,7 @@ const underline = ansi(4, 24);
 const bold = ansi(1, 22);
 const bgYellow = ansi(43, 49);
 const bgGreen = ansi(42, 49);
+const bgBlue = ansi(44, 49);
 const magenta = ansi(35, 39);
 const yellow = ansi(33, 39);
 const green = ansi(32, 39);
@@ -25,25 +26,39 @@ const cyan = ansi(36, 39);
 const red = ansi(31, 39);
 const borderY = "────────────────────────────────────────────────────────────────────────────────";
 
-const consoleMessagePrefix = bgYellow(bold(black("[hmr-electron]")));
+function getPrettyDate() {
+  const date = new Date();
+  return bgBlue(
+    bold(
+      black(
+        `[${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())} ${pad(date.getMilliseconds(), 3)}]`
+      )
+    )
+  );
+}
+function pad(num, padding = 2) {
+  return num.toString().padStart(padding, "0");
+}
+
+const hmrElectronConsoleMessagePrefix = bgYellow(
+  bold(black("[hmr-electron]"))
+);
 const viteConsoleMessagePrefix = bgGreen(bold(black("[VITE]")));
-const finishBuildMessage = green(
-  `${consoleMessagePrefix} Build finished.`
+const finishBuildMessage = hmrElectronConsoleMessagePrefix + green(
+  " Build finished."
 );
 function entryFilePathNotFound(path) {
   return () => throwPrettyError(
-    `${underline("entryFilePath")} not found. Received: ${blue(String(path))}`
+    `${underline("entryFilePath")} not found. Received: ${blue(path)}`
   );
 }
 function configFilePathNotFound() {
-  return () => throwPrettyError(
+  throwPrettyError(
     `No config file (${underline("'hmr-electron.config.ts'")}) found.`
   );
 }
 function fileNotFound(file, path) {
-  throwPrettyError(
-    `File ${underline(green(`"${file}"`))} not found. Received: ${blue(String(path))}`
-  );
+  return `File ${underline(green(`"${file}"`))} not found. Received: ${blue(path)}`;
 }
 function viteConfigFileNotFound(cwd) {
   return () => throwPrettyError(
@@ -51,10 +66,13 @@ function viteConfigFileNotFound(cwd) {
   );
 }
 function throwPrettyError(msg) {
-  throw new Error(red(`
+  throw new Error(
+    red(`
 ${borderY}
-${msg}
-${borderY}`));
+${getPrettyDate()} ${msg}
+${borderY}
+`)
+  );
 }
 function prettyPrintStringArray(arr) {
   const s = arr.map((item) => green(`"${item}"`)).join(", ");
@@ -144,31 +162,28 @@ function makeConfigProps(props) {
   const cwd = props.cwd || process.cwd();
   const electronEntryFilePath = resolve(props.electronEntryFilePath);
   const srcPath = props.srcPath ? resolve(props.srcPath) : join(cwd, "src");
-  const mainPath = props.mainPath ? resolve(props.mainPath) : join(srcPath, "main");
+  const mainPath = props.mainPath ? resolve(props.mainPath) : join(srcPath, main);
   const rendererPath = props.rendererPath ? resolve(props.rendererPath) : join(srcPath, "renderer");
   const devOutputPath = props.devOutputPath ? resolve(props.devOutputPath) : join(cwd, "dev-build");
   const preloadFilePath = props.preloadFilePath ? resolve(props.preloadFilePath) : void 0;
   let preloadSourceMapFilePath;
   if (props.preloadFilePath) {
-    preloadSourceMapFilePath = props.preloadSourceMapFilePath ? resolve(props.preloadSourceMapFilePath) : join(devOutputPath, "preload.js.map");
+    preloadSourceMapFilePath = props.preloadSourceMapFilePath ? resolve(props.preloadSourceMapFilePath) : join(devOutputPath, main, "preload.cjs.map");
   }
-  const rendererTSconfigPath = props.rendererTSconfigPath ? resolve(props.rendererTSconfigPath) : join(rendererPath, "tsconfig.json");
-  const mainTSconfigPath = props.mainTSconfigPath ? resolve(props.mainTSconfigPath) : join(mainPath, "tsconfig.json");
+  const rendererTSconfigPath = props.rendererTSconfigPath ? resolve(props.rendererTSconfigPath) : join(rendererPath, tsconfigJson);
+  const mainTSconfigPath = props.mainTSconfigPath ? resolve(props.mainTSconfigPath) : join(mainPath, tsconfigJson);
   const nodeModulesPath = props.nodeModulesPath ? resolve(props.nodeModulesPath) : join(cwd, "./node_modules");
   const viteConfigPath = props.viteConfigPath ? resolve(props.viteConfigPath) : join(cwd, "vite.config.ts");
   const packageJsonPath = props.packageJsonPath ? resolve(props.packageJsonPath) : join(cwd, "package.json");
-  const baseTSconfigPath = props.baseTSconfigPath ? resolve(props.baseTSconfigPath) : join(cwd, "tsconfig.json");
+  const baseTSconfigPath = props.baseTSconfigPath ? resolve(props.baseTSconfigPath) : join(cwd, tsconfigJson);
   const buildOutputPath = props.buildOutputPath ? resolve(props.buildOutputPath) : join(cwd, "build");
   const buildRendererOutputPath = props.buildRendererOutputPath ? resolve(props.buildRendererOutputPath) : join(buildOutputPath, "renderer");
   const hmrElectronPath = props.hmrElectronPath ? resolve(props.hmrElectronPath) : join(nodeModulesPath, "hmr-electron");
-  const buildMainOutputPath = props.buildMainOutputPath ? resolve(props.buildMainOutputPath) : join(buildOutputPath, "main");
+  const buildMainOutputPath = props.buildMainOutputPath ? resolve(props.buildMainOutputPath) : join(buildOutputPath, main);
   const esbuildConfig = props.esbuildConfig || {};
   const electronOptions = Array.isArray(props.electronOptions) ? props.electronOptions : [];
-  const electronBuiltEntryFile = join(devOutputPath, "main", "index.cjs");
-  let electronEnviromentVariables = {};
-  if (props.electronEnviromentVariables) {
-    electronEnviromentVariables = props.electronEnviromentVariables;
-  }
+  const electronBuiltEntryFile = join(devOutputPath, main, "index.cjs");
+  let electronEnviromentVariables = props.electronEnviromentVariables || {};
   const newProps = {
     electronEnviromentVariables,
     preloadSourceMapFilePath,
@@ -204,7 +219,7 @@ function makeConfigProps(props) {
   });
   if (exit) {
     console.log("Resolved config props:", stringifyJson(props));
-    throw throwPrettyError("Resolve the errors above and try again.");
+    throwPrettyError("Resolve the errors above and try again.");
   }
   logDbg("Resolved config props:", newProps);
   return newProps;
@@ -216,6 +231,8 @@ const except = [
   "buildOutputPath",
   "devOutputPath"
 ];
+const tsconfigJson = "tsconfig.json";
+const main = "main";
 
 function makeTempFileWithData(extension, dataToFillFileWith) {
   const filepath = join(tmpdir(), randomBytes(16).toString("hex") + extension);
@@ -236,12 +253,12 @@ async function readConfigFile(filePath) {
   try {
     if (tsExtensions.includes(extname(filePath))) {
       const buildResult = await build({
-        logLevel: logDebug ? "debug" : "silent",
         minifyIdentifiers: false,
         minifyWhitespace: false,
         entryPoints: [filePath],
         minifySyntax: false,
         treeShaking: true,
+        logLevel: "debug",
         target: "esnext",
         sourcemap: false,
         platform: "node",
@@ -254,7 +271,7 @@ async function readConfigFile(filePath) {
       const [outputFile] = buildResult.outputFiles;
       if (!outputFile)
         throwPrettyError(
-          `Output for transpiling ts -> js on 'readConfigFile()' not present! ${stringifyJson(buildResult)}`
+          `Output for transpiling to '.js' on 'readConfigFile()' not present! ${stringifyJson(buildResult)}`
         );
       const { text } = outputFile;
       logDbg(green(`Text result from readConfigFile():
@@ -271,7 +288,7 @@ ${bold(text)}`));
       throwPrettyError("config.electronEntryFilePath is required!");
     return userConfig;
   } catch (error) {
-    return throwPrettyError(String(error));
+    return throwPrettyError(error);
   } finally {
     if (filenameChanged)
       rmSync(filePath);
@@ -284,14 +301,18 @@ async function cleanCache(config) {
   await rm(config.devOutputPath, { recursive: true, force: true });
 }
 
+function getRelativePreloadFilePath(path, cwd) {
+  return path.substring(cwd.length);
+}
+
 async function runEsbuildForMainProcess(props, onError, onBuildComplete) {
-  const tsconfigPath = join(props.mainPath, "tsconfig.json") || props.baseTSconfigPath;
+  const tsconfigPath = join(props.mainPath, "tsconfig.json");
   const entryPoints = [props.electronEntryFilePath];
   let count = 0;
   if (props.preloadFilePath) {
     entryPoints.push(props.preloadFilePath);
     console.log(
-      `	Using preload file: "${getRelativePreloadFilePath(props)}"
+      `	Using preload file: "${getRelativePreloadFilePath(props.preloadFilePath, props.cwd)}"
 `
     );
   }
@@ -365,9 +386,6 @@ function transformErrors(error) {
 function isBuildFailure(err) {
   return err && err.errors && Array.isArray(err.errors);
 }
-function getRelativePreloadFilePath(config) {
-  return config.preloadFilePath?.substring(config.cwd.length) ?? "";
-}
 const dependenciesKeys = [
   "peerDependencies",
   "devDependencies",
@@ -380,24 +398,25 @@ function formatCompileError(err) {
   if (!err.location)
     return err.message;
   const pathMessage = `file: ${cyan(err.location.file)}
-line: ${yellow(String(err.location.line))}
-column: ${yellow(String(err.location.column))}
-
+line: ${yellow(err.location.line)}
+column: ${yellow(err.location.column)}
 `;
-  const code = `${gray(String(err.location.line))} ${err.location.lineText}
+  const code = `${gray(err.location.line)} ${err.location.lineText}
 ${" ".repeat(err.location.column + `${err.location.line}`.length + 1 + 1)}
 ${red("~".repeat(err.location.length))} ${" ".repeat(
     err.location.lineText.length - err.location.column - err.location.length
   )}`;
-  return `${categoryMessage} ${border} - ${pathMessage} ${err.message}
+  return `${getPrettyDate()} ${categoryMessage}
+${border}
+${pathMessage}
+${err.message}
 
 ${code}
 ${border}`;
 }
 
 function diagnoseErrors(errors) {
-  const output = formatDiagnosticsMessage(errors);
-  console.error(output);
+  console.error(formatDiagnosticsMessage(errors));
 }
 function formatDiagnosticsMessage(errors) {
   const errorMessage = `Found ${errors.length} errors. Watching for file changes...`;
@@ -411,7 +430,7 @@ function formatDiagnosticsMessage(errors) {
       diagnosticDetail += "\n";
   });
   const result = `${borderY}
-${consoleMessagePrefix} ${magenta("Some typescript compilation errors occurred:")}
+${hmrElectronConsoleMessagePrefix} ${magenta("Some typescript compilation errors occurred:")}
 
 ${diagnosticDetail}
 
@@ -424,19 +443,15 @@ const removeJunkTransformOptions = {
   decodeStrings: false,
   transform(chunk, _encoding, doneCb) {
     const source = chunk.toString();
-    if (junkRegex_1.test(source))
-      return false;
-    if (junkRegex_2.test(source))
-      return false;
-    if (junkRegex_3.test(source))
-      return false;
-    doneCb(null, chunk);
-    return;
+    if (source.includes(errorThatAlwaysAppear, 49) || junkRegex_1.test(source) || junkRegex_2.test(source) || junkRegex_3.test(source))
+      return;
+    doneCb(void 0, chunk);
   }
 };
 const junkRegex_1 = /\d+-\d+-\d+ \d+:\d+:\d+\.\d+ Electron(?: Helper)?\[\d+:\d+]/;
 const junkRegex_2 = /\[\d+:\d+\/|\d+\.\d+:ERROR:CONSOLE\(\d+\)\]/;
 const junkRegex_3 = /ALSA lib [a-z]+\.c:\d+:\([a-z_]+\)/;
+const errorThatAlwaysAppear = "unknown libva error, driver_name = (null)";
 
 const stopElectronFns = [];
 let exitBecauseOfUserCode = false;
@@ -465,20 +480,27 @@ async function runElectron({
   const electronProcess = spawn("electron", [
     ...electronOptions,
     electronBuiltEntryFile
-  ], { env: electronEnviromentVariables }).on("exit", (code) => {
+  ], { env: electronEnviromentVariables }).on("exit", (code, signal) => {
     if (!exitBecauseOfUserCode)
-      throw new Error(gray(`Electron exited with code ${code}.`));
+      throwPrettyError(
+        `Electron exited with code: ${code}, signal: ${signal}.`
+      );
     exitBecauseOfUserCode = true;
   }).on("close", (code, signal) => {
-    console.log(`Process closed with code ${code}, ${signal}`);
+    console.log(
+      getPrettyDate(),
+      gray(
+        `Process closed with code: ${code}, signal: ${signal}.`
+      )
+    );
     process.exit(code ?? void 0);
   }).on("error", (err) => {
-    throw throwPrettyError(
-      "Error from child_process running Electron:\n" + String(err)
+    throwPrettyError(
+      `Error from child_process running Electron: ${err.message}`
     );
   });
   electronProcess.stdout.on("data", (data) => {
-    console.log(data);
+    console.log(getPrettyDate(), data);
   });
   function createStopElectronFn() {
     let called = false;
@@ -511,17 +533,18 @@ async function runElectron({
 }
 
 function prompt(question) {
-  const questionAndPrompt = `${green("?")} ${question} (Y/n) `;
-  const output = process.stdout;
-  const input = process.stdin;
-  const readline = createInterface({ input, output });
+  const questionAndPrompt = `${green("?")} ${question} ${gray("(Y/n)")} `;
+  const readline = createInterface({
+    output: process.stdout,
+    input: process.stdin
+  });
   let answerResolve = () => {
   };
   const answerPromise = new Promise((resolve) => {
     answerResolve = resolve;
   });
   readline.question(questionAndPrompt, (answer) => {
-    answerResolve(answer === "Y" || answer == "y");
+    answerResolve(yes.includes(answer));
     readline.close();
   });
   return [() => answerPromise, () => {
@@ -529,6 +552,7 @@ function prompt(question) {
     readline.close();
   }];
 }
+const yes = ["Y", "y", "\n", "\r", "\r\n"];
 
 async function runBuild(config) {
   await runEsbuildForMainProcess(
@@ -541,10 +565,10 @@ let stopPromptToRunElectron = () => {
 };
 async function promptToRerunElectron(config, count) {
   stopPromptToRunElectron();
-  console.log(finishBuildMessage);
+  console.log(getPrettyDate(), finishBuildMessage);
   if (count > 1) {
     const [readAnswer, stopPrompt] = prompt(
-      bgYellow(black(bold(`[${count}x | ${dateFormatted()}]`))) + needToRerunElectron
+      `${getPrettyDate()} ${bgYellow(black(bold(`[${count}x]`)))} ${needToRerunElectron}`
     );
     stopPromptToRunElectron = stopPrompt;
     if (await readAnswer())
@@ -553,30 +577,23 @@ async function promptToRerunElectron(config, count) {
     await runElectron(config);
   }
 }
-function dateFormatted() {
-  const date = new Date();
-  return [
-    padTo2Digits(date.getHours()),
-    padTo2Digits(date.getMinutes()),
-    padTo2Digits(date.getSeconds())
-  ].join(":");
-}
 const needToRerunElectron = green("Need to rerun Electron?");
-function padTo2Digits(num) {
-  return num.toString().padStart(2, "0");
-}
 
 function electronPreloadSourceMapVitePlugin(preloadSourceMapFilePath) {
   const plugin = {
     name: "electron-preload-sourcemap",
     configureServer(server) {
       if (!preloadSourceMapFilePath)
-        return;
+        return console.warn(yellow("No preloadSourceMapFilePath."));
+      else
+        console.log("preloadSourceMapFilePath =", preloadSourceMapFilePath);
       server.middlewares.use((req, res, next) => {
-        if (req.originalUrl && req.originalUrl === preloadSourceMapFilePath) {
+        if (req.originalUrl && preloadSourceMapFilePath.includes(req.originalUrl)) {
+          console.log("Using preload map...");
           createReadStream(preloadSourceMapFilePath).pipe(res);
-          return;
+          return next();
         }
+        console.log("Not using preload map.", req.originalUrl);
         next();
       });
     }
@@ -595,6 +612,7 @@ function LoggerPlugin(srcPath) {
           return;
         console.log(
           viteConsoleMessagePrefix,
+          getPrettyDate(),
           yellow("HMR update on:"),
           underline(gray(basename(srcPath)))
         );
@@ -608,11 +626,13 @@ function LoggerPlugin(srcPath) {
 async function startViteServer(config) {
   const server = await createServer({
     esbuild: {
-      logLevel: logDebug ? "debug" : "silent",
       minifyIdentifiers: false,
       minifyWhitespace: false,
+      sourcesContent: false,
       minifySyntax: false,
+      platform: "browser",
       treeShaking: true,
+      logLevel: "debug",
       target: "esnext",
       sourcemap: true,
       charset: "utf8",
@@ -622,20 +642,22 @@ async function startViteServer(config) {
     },
     plugins: [
       electronPreloadSourceMapVitePlugin(config.preloadSourceMapFilePath),
-      LoggerPlugin(config.cwd)
+      LoggerPlugin(config.srcPath)
     ],
     logLevel: "info",
     build: { outDir: "src/renderer" },
     configFile: config.viteConfigPath
   });
   await server.listen();
-  const address = server.httpServer?.address();
-  if (address && typeof address === "object") {
-    const { port } = address;
+  const addressInfo = server.httpServer?.address();
+  if (addressInfo && typeof addressInfo === "object") {
+    const { address, port } = addressInfo;
     console.log(
+      getPrettyDate(),
+      viteConsoleMessagePrefix,
       bold(
         green(
-          `${viteConsoleMessagePrefix} Dev server running at port ${port}.`
+          ` Dev server running at address ${underline(`http://${address}:${port}`)}.`
         )
       )
     );
@@ -667,7 +689,7 @@ async function parseCliArgs() {
   if (Object.keys(args).length === 0)
     return printHelpMsg();
   const configFilePathFromArgs = args["--config-file"];
-  const configFilePath = configFilePathFromArgs ? resolve(configFilePathFromArgs) : findPathOrExit(defaultPathsForConfig, configFilePathNotFound());
+  const configFilePath = configFilePathFromArgs ? resolve(configFilePathFromArgs) : findPathOrExit(defaultPathsForConfig, configFilePathNotFound);
   const userConfig = await readConfigFile(configFilePath);
   const configProps = makeConfigProps(userConfig);
   if (args["clean"])

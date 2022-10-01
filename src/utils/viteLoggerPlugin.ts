@@ -4,10 +4,12 @@ import { basename } from "node:path";
 
 import { viteConsoleMessagePrefix } from "#common/logs";
 import { gray, underline, yellow } from "#utils/cli-colors";
+import { getPrettyDate } from "./getPrettyDate";
 
 export function LoggerPlugin(srcPath: string): Plugin {
 	const plugin: Plugin = {
 		name: "electron-hmr-logger",
+
 		handleHotUpdate(ctx) {
 			if (!srcPath)
 				throw new Error(`There must be a srcPath! Received: ${srcPath}`);
@@ -17,6 +19,7 @@ export function LoggerPlugin(srcPath: string): Plugin {
 
 				console.log(
 					viteConsoleMessagePrefix,
+					getPrettyDate(),
 					yellow("HMR update on:"),
 					underline(gray(basename(srcPath))),
 				);

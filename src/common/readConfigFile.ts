@@ -4,7 +4,7 @@ import { existsSync, rmSync } from "node:fs";
 import { extname } from "node:path";
 import { build } from "esbuild";
 
-import { logDbg, logDebug, stringifyJson } from "#utils/debug";
+import { logDbg, stringifyJson } from "#utils/debug";
 import { makeTempFileWithData } from "#utils/makeTempFileWithData";
 import { throwPrettyError } from "./logs";
 import { bold, green } from "#utils/cli-colors";
@@ -31,12 +31,12 @@ export async function readConfigFile(
 
 		if (tsExtensions.includes(extname(filePath))) {
 			const buildResult = await build({
-				logLevel: logDebug ? "debug" : "silent",
 				minifyIdentifiers: false,
 				minifyWhitespace: false,
 				entryPoints: [filePath],
 				minifySyntax: false,
 				treeShaking: true,
+				logLevel: "debug",
 				target: "esnext",
 				sourcemap: false,
 				platform: "node",
@@ -51,7 +51,7 @@ export async function readConfigFile(
 
 			if (!outputFile)
 				throwPrettyError(
-					`Output for transpiling ts -> js on 'readConfigFile()' not present! ${
+					`Output for transpiling to '.js' on 'readConfigFile()' not present! ${
 						stringifyJson(buildResult)
 					}`,
 				);
@@ -82,7 +82,7 @@ export async function readConfigFile(
 
 		return userConfig;
 	} catch (error) {
-		return throwPrettyError(String(error));
+		return throwPrettyError(error);
 	} finally {
 		if (filenameChanged) rmSync(filePath);
 	}

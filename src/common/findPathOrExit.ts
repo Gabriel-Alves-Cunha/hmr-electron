@@ -1,6 +1,11 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+// Main function:
+
 export function findPathOrExit(
 	defaultPaths: string[],
 	notFoundMessage: () => Error,
@@ -14,6 +19,11 @@ export function findPathOrExit(
 	throw notFoundMessage();
 }
 
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+// Constants:
+
 export const defaultPathsForConfig = [
 	"./hmr-electron.config.json",
 
@@ -25,6 +35,8 @@ export const defaultPathsForConfig = [
 	"./hmr-electron.config.mjs",
 	"./hmr-electron.config.js",
 ];
+
+///////////////////////////////////////////
 
 export const defaultPathsForViteConfigFile = [
 	"./src/renderer/vite.config.cts",
@@ -51,6 +63,8 @@ export const defaultPathsForViteConfigFile = [
 	"./vite.config.mjs",
 	"./vite.config.js",
 ];
+
+///////////////////////////////////////////
 
 export const entryFileDefaultPlaces = [
 	"./src/main/index.cjs",

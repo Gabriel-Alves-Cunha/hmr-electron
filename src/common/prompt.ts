@@ -1,15 +1,16 @@
 import { createInterface } from "node:readline";
 
-import { green } from "#utils/cli-colors";
+import { gray, green } from "#utils/cli-colors";
 
 export function prompt(
 	question: string,
 ): Readonly<[ReadAnswerFn, StopPromptFn]> {
-	const questionAndPrompt = `${green("?")} ${question} (Y/n) `;
-	const output = process.stdout;
-	const input = process.stdin;
+	const questionAndPrompt = `${green("?")} ${question} ${gray("(Y/n)")} `;
 
-	const readline = createInterface({ input, output });
+	const readline = createInterface({
+		output: process.stdout,
+		input: process.stdin,
+	});
 
 	let answerResolve: (answer: boolean) => void = () => {};
 	const answerPromise = new Promise<boolean>(resolve => {
@@ -17,7 +18,7 @@ export function prompt(
 	});
 
 	readline.question(questionAndPrompt, answer => {
-		answerResolve(answer === "Y" || answer == "y");
+		answerResolve(yes.includes(answer));
 		readline.close();
 	});
 
@@ -26,6 +27,8 @@ export function prompt(
 		readline.close();
 	}];
 }
+
+const yes = ["Y", "y", "\n", "\r", "\r\n"];
 
 type ReadAnswerFn = () => Promise<boolean>;
 type StopPromptFn = () => void;

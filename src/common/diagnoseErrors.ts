@@ -1,5 +1,5 @@
 import { type CompileError, formatCompileError } from "#common/compileError";
-import { consoleMessagePrefix } from "./logs";
+import { hmrElectronConsoleMessagePrefix } from "./logs";
 import { borderY, magenta } from "#utils/cli-colors";
 
 ///////////////////////////////////////////
@@ -8,9 +8,7 @@ import { borderY, magenta } from "#utils/cli-colors";
 // Main function:
 
 export function diagnoseErrors(errors: CompileError[]): void {
-	const output = formatDiagnosticsMessage(errors);
-
-	console.error(output);
+	console.error(formatDiagnosticsMessage(errors));
 }
 
 ///////////////////////////////////////////
@@ -35,7 +33,7 @@ function formatDiagnosticsMessage(errors: CompileError[]): string {
 
 	const result = `\
 ${borderY}
-${consoleMessagePrefix} ${
+${hmrElectronConsoleMessagePrefix} ${
 		magenta("Some typescript compilation errors occurred:")
 	}
 
