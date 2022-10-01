@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { log } from "node:console";
 
 import { configFilePathNotFound, prettyPrintStringArray } from "#common/logs";
 import { defaultPathsForConfig, findPathOrExit } from "#common/findPathOrExit";
@@ -66,7 +67,7 @@ export async function parseCliArgs(): Promise<void> {
 	}
 
 	printHelpMsg();
-	console.log(
+	log(
 		`No commands matched. Args = ${prettyPrintStringArray(process.argv)}`,
 	);
 }
@@ -127,7 +128,7 @@ function argsAsObj(args: string[]): Record<string, string | boolean> {
 //////////////////////////////////////////
 
 function printHelpMsg() {
-	console.log(`\
+	log(`\
 ${bold(blue(name))} version ${version}
 
 ${yellow("⚡")} Start developing your Electron + Vite app.

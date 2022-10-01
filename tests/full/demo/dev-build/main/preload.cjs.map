@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../src/main/preload.cts"],
-  "mappings": ";;;AAAA,sBAA6D;AAE7D,8BAAc,kBAAkB,UAAU;AAAA,EACzC,SAAS,4BAAY;AAAA,EACrB,UACC,SACA,UACC;AACD,gCAAY,GAAG,SAAS,CAAC,OAAO,QAAQ;AACvC,eAAS,OAAO,GAAG;AAAA,IACpB,CAAC;AAAA,EACF;AACD,CAAC;",
-  "names": []
-}

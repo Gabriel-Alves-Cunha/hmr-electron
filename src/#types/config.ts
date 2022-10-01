@@ -34,5 +34,10 @@ export type UserProvidedConfigProps = {
 };
 
 export type ConfigProps = Readonly<
-	Required<UserProvidedConfigProps & { electronBuiltEntryFile: string; }>
+	Required<
+		UserProvidedConfigProps & {
+			devBuildElectronEntryFilePath: string;
+			devBuildRendererOutputPath: string;
+		}
+	>
 >;

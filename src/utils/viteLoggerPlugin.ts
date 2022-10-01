@@ -1,6 +1,7 @@
 import type { Plugin } from "vite";
 
 import { basename } from "node:path";
+import { log } from "node:console";
 
 import { viteConsoleMessagePrefix } from "#common/logs";
 import { gray, underline, yellow } from "#utils/cli-colors";
@@ -17,7 +18,7 @@ export function LoggerPlugin(srcPath: string): Plugin {
 			ctx.modules.forEach(({ file }) => {
 				if (!file) return;
 
-				console.log(
+				log(
 					viteConsoleMessagePrefix,
 					getPrettyDate(),
 					yellow("HMR update on:"),

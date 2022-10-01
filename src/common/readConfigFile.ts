@@ -58,7 +58,7 @@ export async function readConfigFile(
 
 			const { text } = outputFile;
 
-			logDbg(green(`Text result from readConfigFile():\n\n${bold(text)}`));
+			logDbg(green(`Text result from readConfigFile():\n${bold(text)}\n`));
 
 			///////////////////////////////////////////
 			///////////////////////////////////////////
@@ -73,7 +73,7 @@ export async function readConfigFile(
 
 		const { default: userConfig }: ConfigFromModule = require(filePath);
 
-		logDbg(green(`Config = ${stringifyJson(userConfig)}`));
+		logDbg(green(`User config = ${stringifyJson(userConfig)}`));
 
 		if (!userConfig)
 			throwPrettyError("Config file is required!");
@@ -81,8 +81,8 @@ export async function readConfigFile(
 			throwPrettyError("config.electronEntryFilePath is required!");
 
 		return userConfig;
-	} catch (error) {
-		return throwPrettyError(error);
+	} catch (err) {
+		return throwPrettyError(err);
 	} finally {
 		if (filenameChanged) rmSync(filePath);
 	}

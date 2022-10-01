@@ -1,6 +1,7 @@
 import type { Plugin } from "vite";
 
 import { createReadStream } from "node:fs";
+import { log, warn } from "node:console";
 
 import { yellow } from "./cli-colors";
 
@@ -13,21 +14,19 @@ export function electronPreloadSourceMapVitePlugin(
 
 		configureServer(server) {
 			if (!preloadSourceMapFilePath)
-				return console.warn(yellow("No preloadSourceMapFilePath."));
-			else console.log("preloadSourceMapFilePath =", preloadSourceMapFilePath);
+				return warn(yellow("No preloadSourceMapFilePath."));
+			else log("preloadSourceMapFilePath =", preloadSourceMapFilePath);
 
 			server.middlewares.use((req, res, next) => {
 				if (
 					req.originalUrl && preloadSourceMapFilePath.includes(req.originalUrl)
 				) {
-					console.log("Using preload map...");
+					log("Using preload map...");
 					createReadStream(preloadSourceMapFilePath).pipe(res);
+					return;
+				} else log("Not using preload map.", req.originalUrl);
 
-					return next();
-				}
-				console.log("Not using preload map.", req.originalUrl);
-
-				next();
+				return next();
 			});
 		},
 	};

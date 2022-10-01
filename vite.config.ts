@@ -44,6 +44,7 @@ export default defineConfig(() => {
 			minifySyntax: false,
 			treeShaking: true,
 			logLevel: "debug",
+			platform: "node",
 			target: "esnext",
 			sourcemap: false,
 			charset: "utf8",

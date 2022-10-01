@@ -59,7 +59,7 @@ ${borderY}
 }
 
 export function prettyPrintStringArray<T>(arr: readonly T[]): string {
-	const s = arr.map(item => green(`"${item}"`)).join(", ");
+	const arrayItems = arr.map(item => green(`"${item}"`)).join(", ");
 
-	return `[${s}]`;
+	return `[ ${arrayItems} ]`;
 }

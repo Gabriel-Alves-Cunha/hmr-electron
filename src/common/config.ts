@@ -1,6 +1,7 @@
 import type { ConfigProps, UserProvidedConfigProps } from "#types/config";
 
 import { join, resolve } from "node:path";
+import { log, error } from "node:console";
 import { existsSync } from "node:fs";
 
 import { fileNotFound, throwPrettyError } from "./logs";
@@ -78,20 +79,20 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 
 	const esbuildConfig = props.esbuildConfig || {};
 
-	const electronOptions = Array.isArray(props.electronOptions) ?
-		props.electronOptions :
-		[];
+	const electronOptions = props.electronOptions || [];
 
-	const electronBuiltEntryFile = join(devOutputPath, main, "index.cjs");
+	const devBuildElectronEntryFilePath = join(devOutputPath, main, "index.cjs");
 
-	let electronEnviromentVariables: NodeJS.ProcessEnv =
-		props.electronEnviromentVariables || {};
+	const devBuildRendererOutputPath = join(devOutputPath, "renderer");
+
+	const electronEnviromentVariables = props.electronEnviromentVariables || {};
 
 	const newProps: ConfigProps = {
+		devBuildElectronEntryFilePath,
 		electronEnviromentVariables,
+		devBuildRendererOutputPath,
 		preloadSourceMapFilePath,
 		buildRendererOutputPath,
-		electronBuiltEntryFile,
 		electronEntryFilePath,
 		rendererTSconfigPath,
 		buildMainOutputPath,
@@ -126,13 +127,13 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 			return;
 
 		if (!existsSync(filePath as string)) {
-			console.error(fileNotFound(key, filePath as string));
+			error(fileNotFound(key, filePath as string));
 			exit = true;
 		}
 	});
 
 	if (exit) {
-		console.log("Resolved config props:", stringifyJson(props));
+		log("Resolved config props:", stringifyJson(props));
 		throwPrettyError("Resolve the errors above and try again.");
 	}
 

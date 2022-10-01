@@ -1,14 +1,15 @@
 import { join, resolve, extname, basename } from 'node:path';
+import { log, dir, error, warn } from 'node:console';
 import { existsSync, writeFileSync, rmSync, readdirSync, createReadStream } from 'node:fs';
 import { build, analyzeMetafile } from 'esbuild';
 import { randomBytes } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { createRequire } from 'node:module';
 import { rm } from 'node:fs/promises';
+import { build as build$1, createServer } from 'vite';
 import { spawn } from 'node:child_process';
 import { Transform } from 'node:stream';
 import { createInterface } from 'node:readline';
-import { createServer } from 'vite';
 
 const ansi = (a, b) => (msg) => `\x1B[${a}m${msg}\x1B[${b}m`;
 const underline = ansi(4, 24);
@@ -75,8 +76,8 @@ ${borderY}
   );
 }
 function prettyPrintStringArray(arr) {
-  const s = arr.map((item) => green(`"${item}"`)).join(", ");
-  return `[${s}]`;
+  const arrayItems = arr.map((item) => green(`"${item}"`)).join(", ");
+  return `[ ${arrayItems} ]`;
 }
 
 function findPathOrExit(defaultPaths, notFoundMessage) {
@@ -143,7 +144,7 @@ function stringifyJson(obj) {
 const logDebug = process.env.DEBUG?.includes("hmr-electron") ?? false;
 function dbg(...args) {
   if (logDebug)
-    console.dir(args, {
+    dir(args, {
       maxStringLength: 1e3,
       maxArrayLength: 100,
       compact: false,
@@ -154,7 +155,7 @@ function dbg(...args) {
 }
 function logDbg(...args) {
   if (logDebug)
-    console.log(...args);
+    log(...args);
 }
 logDbg("Hello from the debug side!");
 
@@ -181,14 +182,16 @@ function makeConfigProps(props) {
   const hmrElectronPath = props.hmrElectronPath ? resolve(props.hmrElectronPath) : join(nodeModulesPath, "hmr-electron");
   const buildMainOutputPath = props.buildMainOutputPath ? resolve(props.buildMainOutputPath) : join(buildOutputPath, main);
   const esbuildConfig = props.esbuildConfig || {};
-  const electronOptions = Array.isArray(props.electronOptions) ? props.electronOptions : [];
-  const electronBuiltEntryFile = join(devOutputPath, main, "index.cjs");
-  let electronEnviromentVariables = props.electronEnviromentVariables || {};
+  const electronOptions = props.electronOptions || [];
+  const devBuildElectronEntryFilePath = join(devOutputPath, main, "index.cjs");
+  const devBuildRendererOutputPath = join(devOutputPath, "renderer");
+  const electronEnviromentVariables = props.electronEnviromentVariables || {};
   const newProps = {
+    devBuildElectronEntryFilePath,
     electronEnviromentVariables,
+    devBuildRendererOutputPath,
     preloadSourceMapFilePath,
     buildRendererOutputPath,
-    electronBuiltEntryFile,
     electronEntryFilePath,
     rendererTSconfigPath,
     buildMainOutputPath,
@@ -213,12 +216,12 @@ function makeConfigProps(props) {
     if (!key || !filePath || except.includes(key))
       return;
     if (!existsSync(filePath)) {
-      console.error(fileNotFound(key, filePath));
+      error(fileNotFound(key, filePath));
       exit = true;
     }
   });
   if (exit) {
-    console.log("Resolved config props:", stringifyJson(props));
+    log("Resolved config props:", stringifyJson(props));
     throwPrettyError("Resolve the errors above and try again.");
   }
   logDbg("Resolved config props:", newProps);
@@ -275,20 +278,20 @@ async function readConfigFile(filePath) {
         );
       const { text } = outputFile;
       logDbg(green(`Text result from readConfigFile():
-
-${bold(text)}`));
+${bold(text)}
+`));
       filePath = makeTempFileWithData(".js", text);
       filenameChanged = true;
     }
     const { default: userConfig } = require2(filePath);
-    logDbg(green(`Config = ${stringifyJson(userConfig)}`));
+    logDbg(green(`User config = ${stringifyJson(userConfig)}`));
     if (!userConfig)
       throwPrettyError("Config file is required!");
     if (!userConfig.electronEntryFilePath)
       throwPrettyError("config.electronEntryFilePath is required!");
     return userConfig;
-  } catch (error) {
-    return throwPrettyError(error);
+  } catch (err) {
+    return throwPrettyError(err);
   } finally {
     if (filenameChanged)
       rmSync(filePath);
@@ -311,7 +314,7 @@ async function runEsbuildForMainProcess(props, onError, onBuildComplete) {
   let count = 0;
   if (props.preloadFilePath) {
     entryPoints.push(props.preloadFilePath);
-    console.log(
+    log(
       `	Using preload file: "${getRelativePreloadFilePath(props.preloadFilePath, props.cwd)}"
 `
     );
@@ -321,6 +324,7 @@ async function runEsbuildForMainProcess(props, onError, onBuildComplete) {
     const buildResult = await build({
       outdir: props.isBuild ? props.buildMainOutputPath : join(props.devOutputPath, "main"),
       external: await findExternals(props),
+      minify: props.isBuild ? true : false,
       outExtension: { ".js": ".cjs" },
       incremental: !props.isBuild,
       tsconfig: tsconfigPath,
@@ -329,18 +333,19 @@ async function runEsbuildForMainProcess(props, onError, onBuildComplete) {
       logLevel: "debug",
       platform: "node",
       target: "esnext",
+      charset: "utf8",
       sourcemap: true,
       metafile: true,
-      minify: false,
       format: "cjs",
       bundle: true,
       logLimit: 10,
       color: true,
       entryPoints,
+      supported,
       ...props.esbuildConfig,
       watch: props.isBuild ? false : {
-        onRebuild: async (error) => {
-          error ? onError(transformErrors(error)) : onBuildComplete(props, count++);
+        onRebuild: async (error2) => {
+          error2 ? onError(transformErrors(error2)) : onBuildComplete(props, count++);
         }
       }
     });
@@ -350,14 +355,11 @@ async function runEsbuildForMainProcess(props, onError, onBuildComplete) {
       const metafile = await analyzeMetafile(buildResult.metafile, {
         verbose: true
       });
-      console.log("Esbuild build result metafile:\n", metafile);
+      log("Esbuild build result metafile:\n", metafile);
     }
     onBuildComplete(props, count);
-  } catch (error) {
-    if (isBuildFailure(error))
-      onError(transformErrors(error));
-    else
-      console.error(error);
+  } catch (err) {
+    isBuildFailure(err) ? onError(transformErrors(err)) : error(err);
   }
 }
 async function findExternals(props) {
@@ -377,8 +379,8 @@ async function findExternals(props) {
   dbg("Modules found to use as externals:", externals);
   return [...externals];
 }
-function transformErrors(error) {
-  return error.errors.map((e) => ({
+function transformErrors(error2) {
+  return error2.errors.map((e) => ({
     location: e.location,
     message: e.text
   }));
@@ -391,6 +393,59 @@ const dependenciesKeys = [
   "devDependencies",
   "dependencies"
 ];
+const supported = {
+  "arbitrary-module-namespace-names": true,
+  "regexp-sticky-and-unicode-flags": true,
+  "regexp-unicode-property-escapes": true,
+  "typeof-exotic-object-is-object": true,
+  "class-private-static-accessor": true,
+  "regexp-lookbehind-assertions": true,
+  "class-private-static-method": true,
+  "regexp-named-capture-groups": true,
+  "class-private-static-field": true,
+  "class-private-brand-check": true,
+  "node-colon-prefix-require": true,
+  "node-colon-prefix-import": true,
+  "class-private-accessor": true,
+  "optional-catch-binding": true,
+  "class-private-method": true,
+  "regexp-match-indices": true,
+  "class-private-field": true,
+  "nested-rest-binding": true,
+  "class-static-blocks": true,
+  "regexp-dot-all-flag": true,
+  "class-static-field": true,
+  "logical-assignment": true,
+  "nullish-coalescing": true,
+  "object-rest-spread": true,
+  "exponent-operator": true,
+  "import-assertions": true,
+  "object-extensions": true,
+  "default-argument": true,
+  "object-accessors": true,
+  "template-literal": true,
+  "async-generator": true,
+  "top-level-await": true,
+  "unicode-escapes": true,
+  "export-star-as": true,
+  "optional-chain": true,
+  "dynamic-import": true,
+  "const-and-let": true,
+  "rest-argument": true,
+  "array-spread": true,
+  destructuring: true,
+  "import-meta": true,
+  "async-await": true,
+  "class-field": true,
+  "new-target": true,
+  "for-await": true,
+  generator: true,
+  "for-of": true,
+  hashbang: true,
+  bigint: true,
+  class: true,
+  arrow: true
+};
 
 const categoryMessage = red("[ERROR]");
 const border = red(borderY);
@@ -416,7 +471,7 @@ ${border}`;
 }
 
 function diagnoseErrors(errors) {
-  console.error(formatDiagnosticsMessage(errors));
+  error(formatDiagnosticsMessage(errors));
 }
 function formatDiagnosticsMessage(errors) {
   const errorMessage = `Found ${errors.length} errors. Watching for file changes...`;
@@ -439,6 +494,51 @@ ${borderY}`;
   return result;
 }
 
+async function runViteBuild(config) {
+  const buildResult = await build$1({
+    esbuild: {
+      minifyIdentifiers: false,
+      minifyWhitespace: false,
+      sourcesContent: false,
+      minifySyntax: false,
+      platform: "browser",
+      treeShaking: true,
+      logLevel: "debug",
+      target: "esnext",
+      sourcemap: true,
+      charset: "utf8",
+      format: "esm",
+      logLimit: 10,
+      color: true,
+      supported
+    },
+    logLevel: "info",
+    build: {
+      outDir: config.buildRendererOutputPath,
+      rollupOptions: {
+        preserveEntrySignatures: "strict",
+        strictDeprecations: true,
+        output: {
+          generatedCode: {
+            objectShorthand: true,
+            constBindings: true,
+            preset: "es2015"
+          },
+          format: "esm"
+        }
+      },
+      chunkSizeWarningLimit: 1e3,
+      reportCompressedSize: false,
+      emptyOutDir: true,
+      sourcemap: false,
+      target: "esnext",
+      minify: true
+    },
+    configFile: config.viteConfigPath
+  });
+  dbg({ buildResult });
+}
+
 const removeJunkTransformOptions = {
   decodeStrings: false,
   transform(chunk, _encoding, doneCb) {
@@ -457,7 +557,7 @@ const stopElectronFns = [];
 let exitBecauseOfUserCode = false;
 async function runElectron({
   electronEnviromentVariables,
-  electronBuiltEntryFile,
+  devBuildElectronEntryFilePath,
   electronOptions,
   silent = false
 }) {
@@ -468,7 +568,8 @@ async function runElectron({
       "--node-memory-debug",
       "--trace-warnings",
       "--trace-uncaught",
-      "--trace-warnings"
+      "--trace-warnings",
+      "--inspect"
     ];
   if (Object.keys(electronEnviromentVariables).length === 0)
     electronEnviromentVariables = { ...process.env, FORCE_COLOR: "2" };
@@ -479,7 +580,7 @@ async function runElectron({
     };
   const electronProcess = spawn("electron", [
     ...electronOptions,
-    electronBuiltEntryFile
+    devBuildElectronEntryFilePath
   ], { env: electronEnviromentVariables }).on("exit", (code, signal) => {
     if (!exitBecauseOfUserCode)
       throwPrettyError(
@@ -487,7 +588,7 @@ async function runElectron({
       );
     exitBecauseOfUserCode = true;
   }).on("close", (code, signal) => {
-    console.log(
+    log(
       getPrettyDate(),
       gray(
         `Process closed with code: ${code}, signal: ${signal}.`
@@ -500,7 +601,7 @@ async function runElectron({
     );
   });
   electronProcess.stdout.on("data", (data) => {
-    console.log(getPrettyDate(), data);
+    log(getPrettyDate(), data);
   });
   function createStopElectronFn() {
     let called = false;
@@ -548,24 +649,34 @@ function prompt(question) {
     readline.close();
   });
   return [() => answerPromise, () => {
-    console.log();
+    log();
     readline.close();
   }];
 }
 const yes = ["Y", "y", "\n", "\r", "\r\n"];
 
 async function runBuild(config) {
+  findPathOrExit(
+    [config.viteConfigPath, ...defaultPathsForViteConfigFile],
+    viteConfigFileNotFound(config.cwd)
+  );
+  findPathOrExit(
+    [config.electronEntryFilePath, ...entryFileDefaultPlaces],
+    entryFilePathNotFound(config.electronEntryFilePath)
+  );
   await runEsbuildForMainProcess(
     { ...config, isBuild: true },
     diagnoseErrors,
-    promptToRerunElectron
+    () => {
+    }
   );
+  await runViteBuild(config);
 }
 let stopPromptToRunElectron = () => {
 };
 async function promptToRerunElectron(config, count) {
   stopPromptToRunElectron();
-  console.log(getPrettyDate(), finishBuildMessage);
+  log(getPrettyDate(), finishBuildMessage);
   if (count > 1) {
     const [readAnswer, stopPrompt] = prompt(
       `${getPrettyDate()} ${bgYellow(black(bold(`[${count}x]`)))} ${needToRerunElectron}`
@@ -584,17 +695,17 @@ function electronPreloadSourceMapVitePlugin(preloadSourceMapFilePath) {
     name: "electron-preload-sourcemap",
     configureServer(server) {
       if (!preloadSourceMapFilePath)
-        return console.warn(yellow("No preloadSourceMapFilePath."));
+        return warn(yellow("No preloadSourceMapFilePath."));
       else
-        console.log("preloadSourceMapFilePath =", preloadSourceMapFilePath);
+        log("preloadSourceMapFilePath =", preloadSourceMapFilePath);
       server.middlewares.use((req, res, next) => {
         if (req.originalUrl && preloadSourceMapFilePath.includes(req.originalUrl)) {
-          console.log("Using preload map...");
+          log("Using preload map...");
           createReadStream(preloadSourceMapFilePath).pipe(res);
-          return next();
-        }
-        console.log("Not using preload map.", req.originalUrl);
-        next();
+          return;
+        } else
+          log("Not using preload map.", req.originalUrl);
+        return next();
       });
     }
   };
@@ -610,7 +721,7 @@ function LoggerPlugin(srcPath) {
       ctx.modules.forEach(({ file }) => {
         if (!file)
           return;
-        console.log(
+        log(
           viteConsoleMessagePrefix,
           getPrettyDate(),
           yellow("HMR update on:"),
@@ -638,21 +749,35 @@ async function startViteServer(config) {
       charset: "utf8",
       format: "esm",
       logLimit: 10,
-      color: true
+      color: true,
+      supported
     },
     plugins: [
       electronPreloadSourceMapVitePlugin(config.preloadSourceMapFilePath),
       LoggerPlugin(config.srcPath)
     ],
     logLevel: "info",
-    build: { outDir: "src/renderer" },
+    build: {
+      outDir: config.devBuildRendererOutputPath,
+      rollupOptions: {
+        output: {
+          generatedCode: {
+            objectShorthand: true,
+            constBindings: true,
+            preset: "es2015"
+          }
+        }
+      }
+    },
     configFile: config.viteConfigPath
   });
+  logDbg("Vite server moduleGraph =", stringifyJson(server.moduleGraph));
+  logDbg("Vite server config =", stringifyJson(server.config));
   await server.listen();
   const addressInfo = server.httpServer?.address();
   if (addressInfo && typeof addressInfo === "object") {
     const { address, port } = addressInfo;
-    console.log(
+    log(
       getPrettyDate(),
       viteConsoleMessagePrefix,
       bold(
@@ -704,7 +829,7 @@ async function parseCliArgs() {
     return await runBuild(configProps);
   }
   printHelpMsg();
-  console.log(
+  log(
     `No commands matched. Args = ${prettyPrintStringArray(process.argv)}`
   );
 }
@@ -743,7 +868,7 @@ function argsAsObj(args) {
   return obj;
 }
 function printHelpMsg() {
-  console.log(`${bold(blue(name))} version ${version}
+  log(`${bold(blue(name))} version ${version}
 
 ${yellow("⚡")} Start developing your Electron + Vite app.
 

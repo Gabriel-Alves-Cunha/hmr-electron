@@ -1,4 +1,5 @@
 import { createInterface } from "node:readline";
+import { log } from "node:console";
 
 import { gray, green } from "#utils/cli-colors";
 
@@ -23,7 +24,7 @@ export function prompt(
 	});
 
 	return [() => answerPromise, () => {
-		console.log();
+		log();
 		readline.close();
 	}];
 }

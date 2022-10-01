@@ -2,11 +2,13 @@ import type { ConfigProps } from "#types/config";
 
 import { type ChildProcess, spawn } from "node:child_process";
 import { Transform } from "node:stream";
+import { log } from "node:console";
 
 import { removeJunkTransformOptions } from "#utils/removeJunkLogs";
 import { throwPrettyError } from "#common/logs";
 import { getPrettyDate } from "#utils/getPrettyDate";
 import { gray } from "#utils/cli-colors";
+
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -24,7 +26,7 @@ let exitBecauseOfUserCode = false;
 export async function runElectron(
 	{
 		electronEnviromentVariables,
-		electronBuiltEntryFile,
+		devBuildElectronEntryFilePath,
 		electronOptions,
 		silent = false,
 	}: StartElectronProps,
@@ -38,6 +40,7 @@ export async function runElectron(
 			"--trace-warnings",
 			"--trace-uncaught",
 			"--trace-warnings",
+			"--inspect",
 		];
 
 	if (Object.keys(electronEnviromentVariables).length === 0)
@@ -50,7 +53,7 @@ export async function runElectron(
 
 	const electronProcess = spawn("electron", [
 		...electronOptions,
-		electronBuiltEntryFile,
+		devBuildElectronEntryFilePath,
 	], { env: electronEnviromentVariables })
 		.on("exit", (code, signal) => {
 			if (!exitBecauseOfUserCode)
@@ -61,7 +64,7 @@ export async function runElectron(
 			exitBecauseOfUserCode = true;
 		})
 		.on("close", (code, signal) => {
-			console.log(
+			log(
 				getPrettyDate(),
 				gray(
 					`Process closed with code: ${code}, signal: ${signal}.`,
@@ -76,7 +79,7 @@ export async function runElectron(
 		});
 
 	electronProcess.stdout.on("data", data => {
-		console.log(getPrettyDate(), data);
+		log(getPrettyDate(), data);
 	});
 
 	function createStopElectronFn(): () => void {

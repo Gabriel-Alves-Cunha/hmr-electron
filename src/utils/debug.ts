@@ -1,3 +1,5 @@
+import { log, dir } from "node:console";
+
 export function stringifyJson(obj: unknown) {
 	return JSON.stringify(obj, null, 2);
 }
@@ -11,7 +13,7 @@ export const logDebug = process.env.DEBUG?.includes("hmr-electron") ?? false;
 
 export function dbg(...args: unknown[]): void {
 	if (logDebug)
-		console.dir(args, {
+		dir(args, {
 			maxStringLength: 1_000,
 			maxArrayLength: 100,
 			compact: false,
@@ -22,7 +24,7 @@ export function dbg(...args: unknown[]): void {
 }
 
 export function logDbg(...args: unknown[]): void {
-	if (logDebug) console.log(...args);
+	if (logDebug) log(...args);
 }
 
 logDbg("Hello from the debug side!");
