@@ -86,6 +86,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 	const devBuildRendererOutputPath = join(devOutputPath, "renderer");
 
 	const electronEnviromentVariables = props.electronEnviromentVariables || {};
+	Object.assign(electronEnviromentVariables, process.env, { FORCE_COLOR: "2" });
 
 	const newProps: ConfigProps = {
 		devBuildElectronEntryFilePath,

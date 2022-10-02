@@ -1,12 +1,16 @@
 import { type UserConfigExport, defineConfig } from "vite";
 import { builtinModules } from "node:module";
 import { resolve } from "node:path";
+import {
+	type UserConfigExport as VitestUserConfigExport,
+	configDefaults,
+} from "vitest/config";
 
 const builtinModulesWithNode = builtinModules.map(mod => `node:${mod}`);
 const allBuiltinModules = builtinModulesWithNode.concat(builtinModules);
 
 export default defineConfig(() => {
-	const config: UserConfigExport = {
+	const config: UserConfigExport & VitestUserConfigExport = {
 		build: {
 			rollupOptions: {
 				// make sure to externalize deps that shouldn't be bundled
@@ -53,24 +57,24 @@ export default defineConfig(() => {
 			color: true,
 		},
 
-		// test: {
-		// 	dir: "src/__tests__",
-		// 	logHeapUsage: true,
-		// 	coverage: {
-		// 		// reporter: ["html", "text"],
-		// 		reporter: ["text"],
-		// 		// all: true,
-		// 	},
-		// 	exclude: [
-		// 		...configDefaults.exclude,
-		// 		"**/seeLeakedVariables.ts",
-		// 		"**/.eslintrc.{js,cjs}",
-		// 		"**/styles.ts",
-		// 		"**/global.ts",
-		// 		"coverage/**",
-		// 		"**/*.d.ts",
-		// 	],
-		// },
+		test: {
+			logHeapUsage: true,
+			dir: "tests",
+			coverage: {
+				// reporter: ["html", "text"],
+				reporter: ["text"],
+				// all: true,
+			},
+			exclude: [
+				...configDefaults.exclude,
+				"**/seeLeakedVariables.ts",
+				"**/.eslintrc.{js,cjs}",
+				"**/styles.ts",
+				"**/global.ts",
+				"coverage/**",
+				"**/*.d.ts",
+			],
+		},
 
 		resolve: {
 			alias: [
@@ -79,6 +83,7 @@ export default defineConfig(() => {
 				{ find: "#common", replacement: resolve("src/common") },
 				{ find: "#types", replacement: resolve("src/#types") },
 				{ find: "#utils", replacement: resolve("src/utils") },
+				{ find: "#tests", replacement: resolve("tests") },
 				{ find: "#src", replacement: resolve("src/") },
 			],
 		},

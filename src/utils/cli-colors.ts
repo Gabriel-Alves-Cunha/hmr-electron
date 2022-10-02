@@ -1,5 +1,5 @@
-const ansi = (a: number, b: number) =>
-	(msg: any) => `\u001b[${a}m${msg}\u001b[${b}m`;
+const ansi = (a: number, b: number) => (msg: any) =>
+	`\u001b[${a}m${msg}\u001b[${b}m`;
 
 export const underline = ansi(4, 24);
 export const bold = ansi(1, 22);

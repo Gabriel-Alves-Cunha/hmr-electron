@@ -1,6 +1,6 @@
 import { TransformOptions } from "node:stream";
 
-export const removeJunkTransformOptions: TransformOptions = {
+export const removeJunkLogs: TransformOptions = {
 	decodeStrings: false,
 
 	transform(chunk: Buffer, _encoding, doneCb) {

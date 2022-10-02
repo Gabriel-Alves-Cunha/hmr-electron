@@ -28,13 +28,12 @@
 		"alwaysStrict": true,
 		"skipLibCheck": true,
 		"diagnostics": true,
+		"sourceMap": false,
 		"module": "ESNext",
 		"target": "ESNext",
-		"sourceMap": false,
 		"baseUrl": "./",
 		"pretty": true,
 		"strict": true,
-		// "noEmit": true,
 		"paths": {
 			"#common/*": [
 				"src/common/*"
@@ -54,12 +53,19 @@
 			"#utils/*": [
 				"src/utils/*"
 			],
+			"#tests/*": [
+				"tests/*"
+			],
 			"#src/*": [
 				"src/*"
 			]
 		}
 	},
 	"include": [
+		"tests",
 		"src"
+	],
+	"exclude": [
+		"tests/full"
 	]
 }

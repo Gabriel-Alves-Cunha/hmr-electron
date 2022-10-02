@@ -6,8 +6,8 @@ import { bgYellow, black, bold, green } from "#utils/cli-colors";
 import { runEsbuildForMainProcess } from "./esbuild";
 import { diagnoseErrors } from "#common/diagnoseErrors";
 import { getPrettyDate } from "#utils/getPrettyDate";
+import { startElectron } from "#commands/subCommands/startElectron";
 import { runViteBuild } from "./subCommands/runViteBuild";
-import { runElectron } from "#commands/subCommands/runElectron";
 import { prompt } from "#common/prompt";
 import {
 	viteConfigFileNotFound,
@@ -70,9 +70,9 @@ export async function promptToRerunElectron(
 		stopPromptToRunElectron = stopPrompt;
 
 		if (await readAnswer())
-			await runElectron(config);
+			await startElectron(config);
 	} else {
-		await runElectron(config);
+		await startElectron(config);
 	}
 }
 

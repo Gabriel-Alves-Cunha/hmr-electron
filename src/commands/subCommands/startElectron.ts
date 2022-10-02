@@ -4,18 +4,17 @@ import { type ChildProcess, spawn } from "node:child_process";
 import { Transform } from "node:stream";
 import { log } from "node:console";
 
-import { removeJunkTransformOptions } from "#utils/removeJunkLogs";
 import { throwPrettyError } from "#common/logs";
+import { removeJunkLogs } from "#utils/removeJunkLogs";
 import { getPrettyDate } from "#utils/getPrettyDate";
 import { gray } from "#utils/cli-colors";
-
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 // Constants:
 
-const stopElectronFns: Array<() => void> = [];
+const stopElectronFns: StopElectronFn[] = [];
 let exitBecauseOfUserCode = false;
 
 ///////////////////////////////////////////
@@ -23,15 +22,16 @@ let exitBecauseOfUserCode = false;
 ///////////////////////////////////////////
 // Main function:
 
-export async function runElectron(
+export async function startElectron(
 	{
-		electronEnviromentVariables,
 		devBuildElectronEntryFilePath,
+		electronEnviromentVariables,
 		electronOptions,
 		silent = false,
+		isTest = false,
 	}: StartElectronProps,
 ): Promise<Readonly<[ChildProcess, StopElectronFn]>> {
-	stopElectronFns.forEach(stopElectron => stopElectron());
+	stopElectronFns.forEach(stopFn => stopFn());
 
 	if (electronOptions.length === 0)
 		electronOptions = [
@@ -43,18 +43,14 @@ export async function runElectron(
 			"--inspect",
 		];
 
-	if (Object.keys(electronEnviromentVariables).length === 0)
-		electronEnviromentVariables = { ...process.env, FORCE_COLOR: "2" };
-	else
-		electronEnviromentVariables = {
-			...electronEnviromentVariables,
-			...process.env,
-		};
-
-	const electronProcess = spawn("electron", [
-		...electronOptions,
-		devBuildElectronEntryFilePath,
-	], { env: electronEnviromentVariables })
+	const electronProcess = spawn(
+		"electron",
+		isTest ? [""] : [
+			...electronOptions,
+			devBuildElectronEntryFilePath,
+		],
+		{ env: electronEnviromentVariables },
+	)
 		.on("exit", (code, signal) => {
 			if (!exitBecauseOfUserCode)
 				throwPrettyError(
@@ -101,10 +97,10 @@ export async function runElectron(
 
 	if (!silent) {
 		const removeElectronLoggerJunkOutput = new Transform(
-			removeJunkTransformOptions,
+			removeJunkLogs,
 		);
 		const removeElectronLoggerJunkErrors = new Transform(
-			removeJunkTransformOptions,
+			removeJunkLogs,
 		);
 
 		electronProcess.stdout.pipe(removeElectronLoggerJunkOutput).pipe(
@@ -123,7 +119,9 @@ export async function runElectron(
 ///////////////////////////////////////////
 // Types:
 
-export type StartElectronProps = Readonly<ConfigProps & { silent?: boolean; }>;
+export type StartElectronProps = Readonly<
+	ConfigProps & { silent?: boolean; isTest?: boolean; }
+>;
 
 ///////////////////////////////////////////
 

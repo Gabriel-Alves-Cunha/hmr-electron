@@ -6,9 +6,9 @@ import { randomBytes } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { createRequire } from 'node:module';
 import { rm } from 'node:fs/promises';
-import { build as build$1, createServer } from 'vite';
 import { spawn } from 'node:child_process';
 import { Transform } from 'node:stream';
+import { build as build$1, createServer } from 'vite';
 import { createInterface } from 'node:readline';
 
 const ansi = (a, b) => (msg) => `\x1B[${a}m${msg}\x1B[${b}m`;
@@ -186,6 +186,7 @@ function makeConfigProps(props) {
   const devBuildElectronEntryFilePath = join(devOutputPath, main, "index.cjs");
   const devBuildRendererOutputPath = join(devOutputPath, "renderer");
   const electronEnviromentVariables = props.electronEnviromentVariables || {};
+  Object.assign(electronEnviromentVariables, process.env, { FORCE_COLOR: "2" });
   const newProps = {
     devBuildElectronEntryFilePath,
     electronEnviromentVariables,
@@ -494,6 +495,98 @@ ${borderY}`;
   return result;
 }
 
+const removeJunkLogs = {
+  decodeStrings: false,
+  transform(chunk, _encoding, doneCb) {
+    const source = chunk.toString();
+    if (source.includes(errorThatAlwaysAppear, 49) || junkRegex_1.test(source) || junkRegex_2.test(source) || junkRegex_3.test(source))
+      return;
+    doneCb(void 0, chunk);
+  }
+};
+const junkRegex_1 = /\d+-\d+-\d+ \d+:\d+:\d+\.\d+ Electron(?: Helper)?\[\d+:\d+]/;
+const junkRegex_2 = /\[\d+:\d+\/|\d+\.\d+:ERROR:CONSOLE\(\d+\)\]/;
+const junkRegex_3 = /ALSA lib [a-z]+\.c:\d+:\([a-z_]+\)/;
+const errorThatAlwaysAppear = "unknown libva error, driver_name = (null)";
+
+const stopElectronFns = [];
+let exitBecauseOfUserCode = false;
+async function startElectron({
+  devBuildElectronEntryFilePath,
+  electronEnviromentVariables,
+  electronOptions,
+  silent = false,
+  isTest = false
+}) {
+  stopElectronFns.forEach((stopFn) => stopFn());
+  if (electronOptions.length === 0)
+    electronOptions = [
+      "--enable-source-maps",
+      "--node-memory-debug",
+      "--trace-warnings",
+      "--trace-uncaught",
+      "--trace-warnings",
+      "--inspect"
+    ];
+  const electronProcess = spawn(
+    "electron",
+    isTest ? [""] : [
+      ...electronOptions,
+      devBuildElectronEntryFilePath
+    ],
+    { env: electronEnviromentVariables }
+  ).on("exit", (code, signal) => {
+    if (!exitBecauseOfUserCode)
+      throwPrettyError(
+        `Electron exited with code: ${code}, signal: ${signal}.`
+      );
+    exitBecauseOfUserCode = true;
+  }).on("close", (code, signal) => {
+    log(
+      getPrettyDate(),
+      gray(
+        `Process closed with code: ${code}, signal: ${signal}.`
+      )
+    );
+    process.exit(code ?? void 0);
+  }).on("error", (err) => {
+    throwPrettyError(
+      `Error from child_process running Electron: ${err.message}`
+    );
+  });
+  electronProcess.stdout.on("data", (data) => {
+    log(getPrettyDate(), data);
+  });
+  function createStopElectronFn() {
+    let called = false;
+    return () => {
+      if (!called && electronProcess.pid) {
+        electronProcess.removeAllListeners();
+        process.kill(electronProcess.pid);
+        exitBecauseOfUserCode = true;
+      }
+      called = true;
+    };
+  }
+  const stopElectronFn = createStopElectronFn();
+  stopElectronFns.push(stopElectronFn);
+  if (!silent) {
+    const removeElectronLoggerJunkOutput = new Transform(
+      removeJunkLogs
+    );
+    const removeElectronLoggerJunkErrors = new Transform(
+      removeJunkLogs
+    );
+    electronProcess.stdout.pipe(removeElectronLoggerJunkOutput).pipe(
+      process.stdout
+    );
+    electronProcess.stderr.pipe(removeElectronLoggerJunkErrors).pipe(
+      process.stderr
+    );
+  }
+  return [electronProcess, stopElectronFn];
+}
+
 async function runViteBuild(config) {
   const buildResult = await build$1({
     esbuild: {
@@ -537,100 +630,6 @@ async function runViteBuild(config) {
     configFile: config.viteConfigPath
   });
   dbg({ buildResult });
-}
-
-const removeJunkTransformOptions = {
-  decodeStrings: false,
-  transform(chunk, _encoding, doneCb) {
-    const source = chunk.toString();
-    if (source.includes(errorThatAlwaysAppear, 49) || junkRegex_1.test(source) || junkRegex_2.test(source) || junkRegex_3.test(source))
-      return;
-    doneCb(void 0, chunk);
-  }
-};
-const junkRegex_1 = /\d+-\d+-\d+ \d+:\d+:\d+\.\d+ Electron(?: Helper)?\[\d+:\d+]/;
-const junkRegex_2 = /\[\d+:\d+\/|\d+\.\d+:ERROR:CONSOLE\(\d+\)\]/;
-const junkRegex_3 = /ALSA lib [a-z]+\.c:\d+:\([a-z_]+\)/;
-const errorThatAlwaysAppear = "unknown libva error, driver_name = (null)";
-
-const stopElectronFns = [];
-let exitBecauseOfUserCode = false;
-async function runElectron({
-  electronEnviromentVariables,
-  devBuildElectronEntryFilePath,
-  electronOptions,
-  silent = false
-}) {
-  stopElectronFns.forEach((stopElectron) => stopElectron());
-  if (electronOptions.length === 0)
-    electronOptions = [
-      "--enable-source-maps",
-      "--node-memory-debug",
-      "--trace-warnings",
-      "--trace-uncaught",
-      "--trace-warnings",
-      "--inspect"
-    ];
-  if (Object.keys(electronEnviromentVariables).length === 0)
-    electronEnviromentVariables = { ...process.env, FORCE_COLOR: "2" };
-  else
-    electronEnviromentVariables = {
-      ...electronEnviromentVariables,
-      ...process.env
-    };
-  const electronProcess = spawn("electron", [
-    ...electronOptions,
-    devBuildElectronEntryFilePath
-  ], { env: electronEnviromentVariables }).on("exit", (code, signal) => {
-    if (!exitBecauseOfUserCode)
-      throwPrettyError(
-        `Electron exited with code: ${code}, signal: ${signal}.`
-      );
-    exitBecauseOfUserCode = true;
-  }).on("close", (code, signal) => {
-    log(
-      getPrettyDate(),
-      gray(
-        `Process closed with code: ${code}, signal: ${signal}.`
-      )
-    );
-    process.exit(code ?? void 0);
-  }).on("error", (err) => {
-    throwPrettyError(
-      `Error from child_process running Electron: ${err.message}`
-    );
-  });
-  electronProcess.stdout.on("data", (data) => {
-    log(getPrettyDate(), data);
-  });
-  function createStopElectronFn() {
-    let called = false;
-    return () => {
-      if (!called && electronProcess.pid) {
-        electronProcess.removeAllListeners();
-        process.kill(electronProcess.pid);
-        exitBecauseOfUserCode = true;
-      }
-      called = true;
-    };
-  }
-  const stopElectronFn = createStopElectronFn();
-  stopElectronFns.push(stopElectronFn);
-  if (!silent) {
-    const removeElectronLoggerJunkOutput = new Transform(
-      removeJunkTransformOptions
-    );
-    const removeElectronLoggerJunkErrors = new Transform(
-      removeJunkTransformOptions
-    );
-    electronProcess.stdout.pipe(removeElectronLoggerJunkOutput).pipe(
-      process.stdout
-    );
-    electronProcess.stderr.pipe(removeElectronLoggerJunkErrors).pipe(
-      process.stderr
-    );
-  }
-  return [electronProcess, stopElectronFn];
 }
 
 function prompt(question) {
@@ -683,9 +682,9 @@ async function promptToRerunElectron(config, count) {
     );
     stopPromptToRunElectron = stopPrompt;
     if (await readAnswer())
-      await runElectron(config);
+      await startElectron(config);
   } else {
-    await runElectron(config);
+    await startElectron(config);
   }
 }
 const needToRerunElectron = green("Need to rerun Electron?");
@@ -807,7 +806,7 @@ async function runDev(config) {
 }
 
 const name = "hmr-electron";
-const version = "0.0.1";
+const version = "0.0.2";
 
 async function parseCliArgs() {
   const args = argsAsObj(usefullArgs());
