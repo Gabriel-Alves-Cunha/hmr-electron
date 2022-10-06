@@ -1,16 +1,41 @@
-import type { ConfigProps, UserProvidedConfigProps } from "#types/config";
+import type { ConfigProps, UserProvidedConfigProps } from "types/config";
 
 import { join, resolve } from "node:path";
 import { log, error } from "node:console";
 import { existsSync } from "node:fs";
 
 import { fileNotFound, throwPrettyError } from "./logs";
-import { logDbg, stringifyJson } from "#utils/debug";
+import { logDbg, stringifyJson } from "@utils/debug";
+import { builtinModules } from "node:module";
 
+// TODO: make use of findPathOrExit() with default places.
 export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
-	const cwd = props.cwd || process.cwd();
+	const {
+		electronOptions = [
+			"--enable-source-maps",
+			"--node-memory-debug",
+			"--trace-warnings",
+			"--trace-uncaught",
+			"--trace-warnings",
+			"--inspect",
+		],
+		electronEnviromentVariables = {},
+		cwd = process.cwd(),
+		esbuildConfig = {},
+	} = props;
 
-	const electronEntryFilePath = resolve(props.electronEntryFilePath);
+	///////////////////////////////////////////////
+
+	Object.assign(electronEnviromentVariables, process.env, { FORCE_COLOR: "2" });
+
+	///////////////////////////////////////////////
+
+	const electronEsbuildExternalPackages =
+		props.electronEsbuildExternalPackages ?
+			props.electronEsbuildExternalPackages.concat(allBuiltinModules) :
+			allBuiltinModules;
+
+	///////////////////////////////////////////////
 
 	const srcPath = props.srcPath ? resolve(props.srcPath) : join(cwd, "src");
 
@@ -22,9 +47,23 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 		resolve(props.rendererPath) :
 		join(srcPath, "renderer");
 
+	///////////////////////////////////////////////
+
 	const devOutputPath = props.devOutputPath ?
 		resolve(props.devOutputPath) :
 		join(cwd, "dev-build");
+
+	const devBuildMainOutputPath = props.devBuildMainOutputPath ?
+		resolve(props.devBuildMainOutputPath) :
+		join(devOutputPath, main);
+
+	const devBuildRendererOutputPath = join(devOutputPath, "renderer");
+
+	const devBuildElectronEntryFilePath = props.devBuildElectronEntryFilePath ?
+		resolve(props.devBuildElectronEntryFilePath) :
+		join(devBuildMainOutputPath, "index.cjs");
+
+	///////////////////////////////////////////////
 
 	const preloadFilePath = props.preloadFilePath ?
 		resolve(props.preloadFilePath) :
@@ -37,6 +76,8 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 			join(devOutputPath, main, "preload.cjs.map");
 	}
 
+	///////////////////////////////////////////////
+
 	const rendererTSconfigPath = props.rendererTSconfigPath ?
 		resolve(props.rendererTSconfigPath) :
 		join(rendererPath, tsconfigJson);
@@ -44,6 +85,12 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 	const mainTSconfigPath = props.mainTSconfigPath ?
 		resolve(props.mainTSconfigPath) :
 		join(mainPath, tsconfigJson);
+
+	const baseTSconfigPath = props.baseTSconfigPath ?
+		resolve(props.baseTSconfigPath) :
+		join(cwd, tsconfigJson);
+
+	///////////////////////////////////////////////
 
 	const nodeModulesPath = props.nodeModulesPath ?
 		resolve(props.nodeModulesPath) :
@@ -57,9 +104,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 		resolve(props.packageJsonPath) :
 		join(cwd, "package.json");
 
-	const baseTSconfigPath = props.baseTSconfigPath ?
-		resolve(props.baseTSconfigPath) :
-		join(cwd, tsconfigJson);
+	///////////////////////////////////////////////
 
 	const buildOutputPath = props.buildOutputPath ?
 		resolve(props.buildOutputPath) :
@@ -69,31 +114,29 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 		resolve(props.buildRendererOutputPath) :
 		join(buildOutputPath, "renderer");
 
-	const hmrElectronPath = props.hmrElectronPath ?
-		resolve(props.hmrElectronPath) :
-		join(nodeModulesPath, "hmr-electron");
-
 	const buildMainOutputPath = props.buildMainOutputPath ?
 		resolve(props.buildMainOutputPath) :
 		join(buildOutputPath, main);
 
-	const esbuildConfig = props.esbuildConfig || {};
+	///////////////////////////////////////////////
 
-	const electronOptions = props.electronOptions || [];
+	const hmrElectronPath = props.hmrElectronPath ?
+		resolve(props.hmrElectronPath) :
+		join(nodeModulesPath, "hmr-electron");
 
-	const devBuildElectronEntryFilePath = join(devOutputPath, main, "index.cjs");
+	const electronEntryFilePath = resolve(props.electronEntryFilePath);
 
-	const devBuildRendererOutputPath = join(devOutputPath, "renderer");
-
-	const electronEnviromentVariables = props.electronEnviromentVariables || {};
-	Object.assign(electronEnviromentVariables, process.env, { FORCE_COLOR: "2" });
+	///////////////////////////////////////////////
+	///////////////////////////////////////////////
 
 	const newProps: ConfigProps = {
+		electronEsbuildExternalPackages,
 		devBuildElectronEntryFilePath,
 		electronEnviromentVariables,
 		devBuildRendererOutputPath,
 		preloadSourceMapFilePath,
 		buildRendererOutputPath,
+		devBuildMainOutputPath,
 		electronEntryFilePath,
 		rendererTSconfigPath,
 		buildMainOutputPath,
@@ -116,19 +159,22 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 
 	///////////////////////////////////////////////
 	///////////////////////////////////////////////
-	// Validate if all the files exist:
+	// Validate if the files exist:
 
 	let exit = false;
 
 	Object.entries(props).forEach(([key, filePath]) => {
 		if (
-			!key || !filePath /* This apparently gives: !{} => false */ || except
-				.includes(key)
+			!key ||
+			!filePath ||
+			Array.isArray(filePath) ||
+			typeof filePath === "object" ||
+			except.includes(key)
 		)
 			return;
 
-		if (!existsSync(filePath as string)) {
-			error(fileNotFound(key, filePath as string));
+		if (!existsSync(filePath)) {
+			error(fileNotFound(key, filePath));
 			exit = true;
 		}
 	});
@@ -155,6 +201,11 @@ const except = [
 	"buildOutputPath",
 	"devOutputPath",
 ];
+
+///////////////////////////////////////////
+
+const builtinModulesWithNode = builtinModules.map(mod => `node:${mod}`);
+const allBuiltinModules = builtinModulesWithNode.concat(builtinModules);
 
 ///////////////////////////////////////////////
 

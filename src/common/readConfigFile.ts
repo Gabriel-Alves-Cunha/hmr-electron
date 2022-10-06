@@ -1,25 +1,23 @@
-import type { UserProvidedConfigProps } from "#types/config";
+import type { UserProvidedConfigProps } from "types/config";
 
 import { existsSync, rmSync } from "node:fs";
 import { extname } from "node:path";
 import { build } from "esbuild";
 
-import { logDbg, stringifyJson } from "#utils/debug";
-import { makeTempFileWithData } from "#utils/makeTempFileWithData";
+import { logDbg, stringifyJson } from "@utils/debug";
+import { makeTempFileWithData } from "@utils/makeTempFileWithData";
 import { throwPrettyError } from "./logs";
-import { bold, green } from "#utils/cli-colors";
-import { require } from "#src/require";
+import { bold, green } from "@utils/cli-colors";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 // Main function:
 
-/** Loads the config from the file as a default export. */
 export async function readConfigFile(
 	filePath: string,
 ): Promise<UserProvidedConfigProps> {
-	if (!filePath || !existsSync(filePath))
+	!existsSync(filePath) &&
 		throwPrettyError(`There must be a config file! Received: "${filePath}"`);
 
 	let filenameChanged = false;
@@ -36,12 +34,12 @@ export async function readConfigFile(
 				entryPoints: [filePath],
 				minifySyntax: false,
 				treeShaking: true,
-				logLevel: "debug",
-				target: "esnext",
 				sourcemap: false,
+				logLevel: "info",
+				target: "esnext",
 				platform: "node",
 				charset: "utf8",
-				format: "cjs",
+				format: "esm",
 				logLimit: 10,
 				write: false,
 				color: true,
@@ -64,14 +62,14 @@ export async function readConfigFile(
 			///////////////////////////////////////////
 			// Writing to a temp file to be read by js native dyn import:
 
-			filePath = makeTempFileWithData(".js", text);
+			filePath = makeTempFileWithData(".mjs", text);
 			filenameChanged = true;
 		}
 
 		///////////////////////////////////////////
 		///////////////////////////////////////////
 
-		const { default: userConfig }: ConfigFromModule = require(filePath);
+		const { default: userConfig }: ConfigFromModule = await import(filePath);
 
 		logDbg(green(`User config = ${stringifyJson(userConfig)}`));
 

@@ -1,15 +1,16 @@
 import { resolve } from "node:path";
 import { log } from "node:console";
 
-import { configFilePathNotFound, prettyPrintStringArray } from "#common/logs";
-import { defaultPathsForConfig, findPathOrExit } from "#common/findPathOrExit";
-import { blue, bold, green, yellow } from "#utils/cli-colors";
-import { logDbg, stringifyJson } from "#utils/debug";
-import { makeConfigProps } from "#common/config";
-import { readConfigFile } from "#common/readConfigFile";
-import { cleanCache } from "#commands/cleanCache";
-import { runBuild } from "#commands/runBuild";
-import { runDev } from "#commands/runDev";
+import { configFilePathNotFound, prettyPrintStringArray } from "@common/logs";
+import { defaultPathsForConfig, findPathOrExit } from "@common/findPathOrExit";
+import { blue, bold, green, yellow } from "@utils/cli-colors";
+import { logDbg, stringifyJson } from "@utils/debug";
+import { makeConfigProps } from "@common/config";
+import { hmrElectronLog } from "@utils/consoleMsgs";
+import { readConfigFile } from "@common/readConfigFile";
+import { cleanCache } from "@commands/cleanCache";
+import { runBuild } from "@commands/runBuild";
+import { runDev } from "@commands/runDev";
 
 import { name, version } from "../package.json";
 
@@ -66,8 +67,13 @@ export async function parseCliArgs(): Promise<void> {
 		return await runBuild(configProps);
 	}
 
+	//////////////////////////////////////////
+	//////////////////////////////////////////
+	// Default:
+
 	printHelpMsg();
-	log(
+
+	hmrElectronLog(
 		`No commands matched. Args = ${prettyPrintStringArray(process.argv)}`,
 	);
 }
@@ -85,23 +91,16 @@ function usefullArgs(): string[] {
 
 	let indexToSliceFrom = 0;
 	for (const arg of reversedArgs) {
-		logDbg({ arg, nameToMatch: name, index: arg.lastIndexOf(name) });
-
 		const indexOfThisPkgCommand = arg.lastIndexOf(name);
 
-		if (indexOfThisPkgCommand === -1)
-			continue;
+		if (indexOfThisPkgCommand === -1) continue;
 
 		++indexToSliceFrom;
 		break;
 	}
 
 	const argsToUse = args.slice(indexToSliceFrom + 1);
-	logDbg(
-		`Modified args = ${
-			prettyPrintStringArray(argsToUse)
-		}\nindexToSliceFrom = ${indexToSliceFrom}`,
-	);
+	logDbg(`Modified args = ${prettyPrintStringArray(argsToUse)}`);
 
 	return argsToUse;
 }

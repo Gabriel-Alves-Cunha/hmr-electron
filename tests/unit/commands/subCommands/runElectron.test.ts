@@ -2,10 +2,10 @@ import type { ChildProcess } from "node:child_process";
 
 import { describe, expect, it } from "vitest";
 
-import { processExists } from "#tests/unit/processExists";
-import { startElectron } from "#commands/subCommands/startElectron";
-import { config } from "#tests/unit/config";
-import { sleep } from "#tests/unit/sleep";
+import { stopPreviousElectronAndStartANewOne } from "@commands/subCommands/stopPreviousElectronAndStartANewOne";
+import { processExists } from "@utils/processExists";
+import { config } from "@tests/unit/config";
+import { sleep } from "@tests/unit/sleep";
 
 const times = 5;
 
@@ -17,13 +17,12 @@ describe("testing runElectron()", () => {
 		for (let i = 0; i < times; ++i) {
 			stopFn();
 
-			const [childProcess, stopElectronFn] = await startElectron({
+			const childProcess = stopPreviousElectronAndStartANewOne({
 				silent: true,
 				isTest: true,
 				...config,
 			});
 
-			stopFn = stopElectronFn;
 			processList.push(childProcess);
 		}
 
@@ -45,7 +44,7 @@ describe("testing runElectron()", () => {
 
 		return new Promise<void>(async resolve => {
 			for (let i = 0; i < times; ++i) {
-				const [childProcess, stopElectronFn] = await startElectron({
+				const childProcess = stopPreviousElectronAndStartANewOne({
 					silent: true,
 					isTest: true,
 					...config,
@@ -63,7 +62,6 @@ describe("testing runElectron()", () => {
 							expect(await processExists(childProcess.pid)).toBe(true);
 					}
 
-					stopElectronFn();
 					resolve();
 				}
 			}

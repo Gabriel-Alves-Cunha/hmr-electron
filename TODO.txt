@@ -1,0 +1,3 @@
+* vite build for main and another one for renderer.
+
+* add ignore to config.

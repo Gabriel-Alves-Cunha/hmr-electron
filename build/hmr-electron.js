@@ -1,14 +1,14 @@
-import { join, resolve, extname, basename } from 'node:path';
-import { log, dir, error, warn } from 'node:console';
-import { existsSync, writeFileSync, rmSync, readdirSync, createReadStream } from 'node:fs';
-import { build, analyzeMetafile } from 'esbuild';
+import { join, resolve, extname } from 'node:path';
+import { log, error } from 'node:console';
+import { existsSync, writeFileSync, rmSync } from 'node:fs';
+import { builtinModules } from 'node:module';
+import { build } from 'esbuild';
 import { randomBytes } from 'node:crypto';
 import { tmpdir } from 'node:os';
-import { createRequire } from 'node:module';
 import { rm } from 'node:fs/promises';
+import { build as build$1, createServer } from 'vite';
 import { spawn } from 'node:child_process';
 import { Transform } from 'node:stream';
-import { build as build$1, createServer } from 'vite';
 import { createInterface } from 'node:readline';
 
 const ansi = (a, b) => (msg) => `\x1B[${a}m${msg}\x1B[${b}m`;
@@ -41,18 +41,10 @@ function pad(num, padding = 2) {
   return num.toString().padStart(padding, "0");
 }
 
+const viteConsoleMessagePrefix = bgGreen(bold(black("[VITE]")));
 const hmrElectronConsoleMessagePrefix = bgYellow(
   bold(black("[hmr-electron]"))
 );
-const viteConsoleMessagePrefix = bgGreen(bold(black("[VITE]")));
-const finishBuildMessage = hmrElectronConsoleMessagePrefix + green(
-  " Build finished."
-);
-function entryFilePathNotFound(path) {
-  return () => throwPrettyError(
-    `${underline("entryFilePath")} not found. Received: ${blue(path)}`
-  );
-}
 function configFilePathNotFound() {
   throwPrettyError(
     `No config file (${underline("'hmr-electron.config.ts'")}) found.`
@@ -60,11 +52,6 @@ function configFilePathNotFound() {
 }
 function fileNotFound(file, path) {
   return `File ${underline(green(`"${file}"`))} not found. Received: ${blue(path)}`;
-}
-function viteConfigFileNotFound(cwd) {
-  return () => throwPrettyError(
-    `Vite config file for main process in "${cwd}" ${underline("NOT")} found.`
-  );
 }
 function throwPrettyError(msg) {
   throw new Error(
@@ -97,75 +84,39 @@ const defaultPathsForConfig = [
   "./hmr-electron.config.mjs",
   "./hmr-electron.config.js"
 ];
-const defaultPathsForViteConfigFile = [
-  "./src/renderer/vite.config.cts",
-  "./src/renderer/vite.config.mts",
-  "./src/renderer/vite.config.ts",
-  "./src/renderer/vite.config.cjs",
-  "./src/renderer/vite.config.mjs",
-  "./src/renderer/vite.config.js",
-  "./src/vite.config.cts",
-  "./src/vite.config.mts",
-  "./src/vite.config.ts",
-  "./src/vite.config.cjs",
-  "./src/vite.config.mjs",
-  "./src/vite.config.js",
-  "./vite.config.cts",
-  "./vite.config.mts",
-  "./vite.config.ts",
-  "./vite.config.cjs",
-  "./vite.config.mjs",
-  "./vite.config.js"
-];
-const entryFileDefaultPlaces = [
-  "./src/main/index.cjs",
-  "./src/main/index.mjs",
-  "./src/main/index.js",
-  "./src/main/index.cts",
-  "./src/main/index.mts",
-  "./src/main/index.ts",
-  "./src/index.cjs",
-  "./src/index.mjs",
-  "./src/index.js",
-  "./src/index.cts",
-  "./src/index.mts",
-  "./src/index.ts",
-  "./index.cjs",
-  "./index.mjs",
-  "./index.js",
-  "./index.cts",
-  "./index.mts",
-  "./index.ts"
-];
 
 function stringifyJson(obj) {
-  return JSON.stringify(obj, null, 2);
+  return JSON.stringify(obj, void 0, 2);
 }
 const logDebug = process.env.DEBUG?.includes("hmr-electron") ?? false;
-function dbg(...args) {
-  if (logDebug)
-    dir(args, {
-      maxStringLength: 1e3,
-      maxArrayLength: 100,
-      compact: false,
-      sorted: false,
-      colors: true,
-      depth: 10
-    });
-}
 function logDbg(...args) {
-  if (logDebug)
-    log(...args);
+  logDebug && log(...args);
 }
 logDbg("Hello from the debug side!");
 
 function makeConfigProps(props) {
-  const cwd = props.cwd || process.cwd();
-  const electronEntryFilePath = resolve(props.electronEntryFilePath);
+  const {
+    electronOptions = [
+      "--enable-source-maps",
+      "--node-memory-debug",
+      "--trace-warnings",
+      "--trace-uncaught",
+      "--trace-warnings",
+      "--inspect"
+    ],
+    electronEnviromentVariables = {},
+    cwd = process.cwd(),
+    esbuildConfig = {}
+  } = props;
+  Object.assign(electronEnviromentVariables, process.env, { FORCE_COLOR: "2" });
+  const electronEsbuildExternalPackages = props.electronEsbuildExternalPackages ? props.electronEsbuildExternalPackages.concat(allBuiltinModules) : allBuiltinModules;
   const srcPath = props.srcPath ? resolve(props.srcPath) : join(cwd, "src");
   const mainPath = props.mainPath ? resolve(props.mainPath) : join(srcPath, main);
   const rendererPath = props.rendererPath ? resolve(props.rendererPath) : join(srcPath, "renderer");
   const devOutputPath = props.devOutputPath ? resolve(props.devOutputPath) : join(cwd, "dev-build");
+  const devBuildMainOutputPath = props.devBuildMainOutputPath ? resolve(props.devBuildMainOutputPath) : join(devOutputPath, main);
+  const devBuildRendererOutputPath = join(devOutputPath, "renderer");
+  const devBuildElectronEntryFilePath = props.devBuildElectronEntryFilePath ? resolve(props.devBuildElectronEntryFilePath) : join(devBuildMainOutputPath, "index.cjs");
   const preloadFilePath = props.preloadFilePath ? resolve(props.preloadFilePath) : void 0;
   let preloadSourceMapFilePath;
   if (props.preloadFilePath) {
@@ -173,26 +124,23 @@ function makeConfigProps(props) {
   }
   const rendererTSconfigPath = props.rendererTSconfigPath ? resolve(props.rendererTSconfigPath) : join(rendererPath, tsconfigJson);
   const mainTSconfigPath = props.mainTSconfigPath ? resolve(props.mainTSconfigPath) : join(mainPath, tsconfigJson);
+  const baseTSconfigPath = props.baseTSconfigPath ? resolve(props.baseTSconfigPath) : join(cwd, tsconfigJson);
   const nodeModulesPath = props.nodeModulesPath ? resolve(props.nodeModulesPath) : join(cwd, "./node_modules");
   const viteConfigPath = props.viteConfigPath ? resolve(props.viteConfigPath) : join(cwd, "vite.config.ts");
   const packageJsonPath = props.packageJsonPath ? resolve(props.packageJsonPath) : join(cwd, "package.json");
-  const baseTSconfigPath = props.baseTSconfigPath ? resolve(props.baseTSconfigPath) : join(cwd, tsconfigJson);
   const buildOutputPath = props.buildOutputPath ? resolve(props.buildOutputPath) : join(cwd, "build");
   const buildRendererOutputPath = props.buildRendererOutputPath ? resolve(props.buildRendererOutputPath) : join(buildOutputPath, "renderer");
-  const hmrElectronPath = props.hmrElectronPath ? resolve(props.hmrElectronPath) : join(nodeModulesPath, "hmr-electron");
   const buildMainOutputPath = props.buildMainOutputPath ? resolve(props.buildMainOutputPath) : join(buildOutputPath, main);
-  const esbuildConfig = props.esbuildConfig || {};
-  const electronOptions = props.electronOptions || [];
-  const devBuildElectronEntryFilePath = join(devOutputPath, main, "index.cjs");
-  const devBuildRendererOutputPath = join(devOutputPath, "renderer");
-  const electronEnviromentVariables = props.electronEnviromentVariables || {};
-  Object.assign(electronEnviromentVariables, process.env, { FORCE_COLOR: "2" });
+  const hmrElectronPath = props.hmrElectronPath ? resolve(props.hmrElectronPath) : join(nodeModulesPath, "hmr-electron");
+  const electronEntryFilePath = resolve(props.electronEntryFilePath);
   const newProps = {
+    electronEsbuildExternalPackages,
     devBuildElectronEntryFilePath,
     electronEnviromentVariables,
     devBuildRendererOutputPath,
     preloadSourceMapFilePath,
     buildRendererOutputPath,
+    devBuildMainOutputPath,
     electronEntryFilePath,
     rendererTSconfigPath,
     buildMainOutputPath,
@@ -214,7 +162,7 @@ function makeConfigProps(props) {
   };
   let exit = false;
   Object.entries(props).forEach(([key, filePath]) => {
-    if (!key || !filePath || except.includes(key))
+    if (!key || !filePath || Array.isArray(filePath) || typeof filePath === "object" || except.includes(key))
       return;
     if (!existsSync(filePath)) {
       error(fileNotFound(key, filePath));
@@ -235,8 +183,25 @@ const except = [
   "buildOutputPath",
   "devOutputPath"
 ];
+const builtinModulesWithNode = builtinModules.map((mod) => `node:${mod}`);
+const allBuiltinModules = builtinModulesWithNode.concat(builtinModules);
 const tsconfigJson = "tsconfig.json";
 const main = "main";
+
+function hmrElectronLog(...args) {
+  log(
+    getPrettyDate(),
+    hmrElectronConsoleMessagePrefix,
+    ...args
+  );
+}
+function viteLog(...args) {
+  log(
+    getPrettyDate(),
+    viteConsoleMessagePrefix,
+    ...args
+  );
+}
 
 function makeTempFileWithData(extension, dataToFillFileWith) {
   const filepath = join(tmpdir(), randomBytes(16).toString("hex") + extension);
@@ -248,11 +213,8 @@ function makeTempFileWithData(extension, dataToFillFileWith) {
   }
 }
 
-const require2 = createRequire(import.meta.url);
-
 async function readConfigFile(filePath) {
-  if (!filePath || !existsSync(filePath))
-    throwPrettyError(`There must be a config file! Received: "${filePath}"`);
+  !existsSync(filePath) && throwPrettyError(`There must be a config file! Received: "${filePath}"`);
   let filenameChanged = false;
   try {
     if (tsExtensions.includes(extname(filePath))) {
@@ -262,12 +224,12 @@ async function readConfigFile(filePath) {
         entryPoints: [filePath],
         minifySyntax: false,
         treeShaking: true,
-        logLevel: "debug",
-        target: "esnext",
         sourcemap: false,
+        logLevel: "info",
+        target: "esnext",
         platform: "node",
         charset: "utf8",
-        format: "cjs",
+        format: "esm",
         logLimit: 10,
         write: false,
         color: true
@@ -281,10 +243,10 @@ async function readConfigFile(filePath) {
       logDbg(green(`Text result from readConfigFile():
 ${bold(text)}
 `));
-      filePath = makeTempFileWithData(".js", text);
+      filePath = makeTempFileWithData(".mjs", text);
       filenameChanged = true;
     }
-    const { default: userConfig } = require2(filePath);
+    const { default: userConfig } = await import(filePath);
     logDbg(green(`User config = ${stringifyJson(userConfig)}`));
     if (!userConfig)
       throwPrettyError("Config file is required!");
@@ -301,37 +263,72 @@ ${bold(text)}
 const tsExtensions = [".ts", ".mts", ".cts"];
 
 async function cleanCache(config) {
-  await rm(config.buildOutputPath, { recursive: true, force: true });
-  await rm(config.devOutputPath, { recursive: true, force: true });
+  await Promise.all([
+    rm(config.buildOutputPath, options$1),
+    rm(config.devOutputPath, options$1)
+  ]);
 }
+const options$1 = { recursive: true, force: true };
 
-function getRelativePreloadFilePath(path, cwd) {
+function ignoreDirectoriesAndFilesPlugin(regexOfDirs) {
+  const plugin = {
+    name: "ignore-directories-and-files",
+    setup(build) {
+      build.onResolve(
+        options,
+        (args) => ({ path: args.path, namespace })
+      );
+      regexOfDirs.forEach(
+        (regex) => build.onResolve({ filter: regex }, (args) => {
+          if (args.path.match(regex)) {
+            hmrElectronLog(`Ignoring "${args.path}"`);
+            return { path: args.path, namespace };
+          } else
+            return { path: args.path };
+        })
+      );
+      build.onLoad(options, () => ({
+        contents: emptyString
+      }));
+    }
+  };
+  return plugin;
+}
+const regexForEverything = /.*/;
+const namespace = "ignore";
+const options = { filter: regexForEverything, namespace };
+const emptyString = "";
+
+function getRelativeFilePath(path, cwd) {
   return path.substring(cwd.length);
 }
 
 async function runEsbuildForMainProcess(props, onError, onBuildComplete) {
-  const tsconfigPath = join(props.mainPath, "tsconfig.json");
   const entryPoints = [props.electronEntryFilePath];
-  let count = 0;
   if (props.preloadFilePath) {
     entryPoints.push(props.preloadFilePath);
-    log(
-      `	Using preload file: "${getRelativePreloadFilePath(props.preloadFilePath, props.cwd)}"
-`
-    );
+    log(`
+	Using preload file: "${getRelativeFilePath(props.preloadFilePath, props.cwd)}"
+`);
   }
   try {
-    await cleanCache(props);
     const buildResult = await build({
-      outdir: props.isBuild ? props.buildMainOutputPath : join(props.devOutputPath, "main"),
-      external: await findExternals(props),
-      minify: props.isBuild ? true : false,
+      plugins: [
+        ignoreDirectoriesAndFilesPlugin([
+          new RegExp(props.devBuildMainOutputPath),
+          new RegExp(props.buildMainOutputPath),
+          /node_modules/
+        ])
+      ],
+      outdir: props.isBuild ? props.buildMainOutputPath : props.devBuildMainOutputPath,
+      external: props.electronEsbuildExternalPackages,
+      tsconfig: props.mainTSconfigPath,
       outExtension: { ".js": ".cjs" },
-      incremental: !props.isBuild,
-      tsconfig: tsconfigPath,
+      minify: props.isBuild,
       sourcesContent: false,
+      incremental: false,
       treeShaking: true,
-      logLevel: "debug",
+      logLevel: "info",
       platform: "node",
       target: "esnext",
       charset: "utf8",
@@ -343,42 +340,23 @@ async function runEsbuildForMainProcess(props, onError, onBuildComplete) {
       color: true,
       entryPoints,
       supported,
-      ...props.esbuildConfig,
       watch: props.isBuild ? false : {
-        onRebuild: async (error2) => {
-          error2 ? onError(transformErrors(error2)) : onBuildComplete(props, count++);
+        onRebuild: async (error2, result) => {
+          if (result?.outputFiles)
+            log("Esbuild build outputFiles:\n", result.outputFiles);
+          if (error2)
+            return onError(transformErrors(error2));
+          onBuildComplete(props, true);
         }
-      }
+      },
+      ...props.esbuildConfig
     });
-    ++count;
-    dbg("Build result:", buildResult);
-    if (buildResult.metafile) {
-      const metafile = await analyzeMetafile(buildResult.metafile, {
-        verbose: true
-      });
-      log("Esbuild build result metafile:\n", metafile);
-    }
-    onBuildComplete(props, count);
+    if (buildResult.outputFiles)
+      log("Esbuild build outputFiles:\n", buildResult.outputFiles);
+    onBuildComplete(props, false);
   } catch (err) {
     isBuildFailure(err) ? onError(transformErrors(err)) : error(err);
   }
-}
-async function findExternals(props) {
-  if (!existsSync(props.packageJsonPath))
-    throwPrettyError("Could not find a valid package.json");
-  const packageJson = require2(props.packageJsonPath);
-  const externals = /* @__PURE__ */ new Set();
-  dbg({ packageJson });
-  dependenciesKeys.forEach((depKey) => {
-    const obj = packageJson[depKey] ?? {};
-    Object.keys(obj).forEach((name) => externals.add(name));
-  });
-  if (existsSync(props.nodeModulesPath)) {
-    const modules = readdirSync(props.nodeModulesPath);
-    modules.forEach((mod) => externals.add(mod));
-  }
-  dbg("Modules found to use as externals:", externals);
-  return [...externals];
 }
 function transformErrors(error2) {
   return error2.errors.map((e) => ({
@@ -389,11 +367,6 @@ function transformErrors(error2) {
 function isBuildFailure(err) {
   return err && err.errors && Array.isArray(err.errors);
 }
-const dependenciesKeys = [
-  "peerDependencies",
-  "devDependencies",
-  "dependencies"
-];
 const supported = {
   "arbitrary-module-namespace-names": true,
   "regexp-sticky-and-unicode-flags": true,
@@ -453,21 +426,19 @@ const border = red(borderY);
 function formatCompileError(err) {
   if (!err.location)
     return err.message;
-  const pathMessage = `file: ${cyan(err.location.file)}
+  const pathMessage = `file: ${cyan(`"${err.location.file}"`)}
 line: ${yellow(err.location.line)}
 column: ${yellow(err.location.column)}
 `;
-  const code = `${gray(err.location.line)} ${err.location.lineText}
-${" ".repeat(err.location.column + `${err.location.line}`.length + 1 + 1)}
-${red("~".repeat(err.location.length))} ${" ".repeat(
-    err.location.lineText.length - err.location.column - err.location.length
-  )}`;
+  const code = `${gray(err.location.line + " |")}  ${err.location.lineText}
+${" ".repeat(err.location.column + `${err.location.line}`.length + 4)}${red("~".repeat(err.location.length))}`;
   return `${getPrettyDate()} ${categoryMessage}
 ${border}
 ${pathMessage}
 ${err.message}
 
 ${code}
+
 ${border}`;
 }
 
@@ -476,100 +447,144 @@ function diagnoseErrors(errors) {
 }
 function formatDiagnosticsMessage(errors) {
   const errorMessage = `Found ${errors.length} errors. Watching for file changes...`;
-  const messages = errors.map((e) => formatCompileError(e));
-  let diagnosticDetail = "";
+  const messages = errors.map((err) => formatCompileError(err));
+  let diagnosticsDetails = "";
   messages.forEach((msg, index, { length }) => {
-    diagnosticDetail += msg.split("\n").map((detail) => `  • ${detail}.`).join(
-      "\n"
-    );
+    diagnosticsDetails += `  • ${msg}.`;
     if (index + 1 !== length)
-      diagnosticDetail += "\n";
+      diagnosticsDetails += "\n";
   });
-  const result = `${borderY}
+  return `${magentaBorder}
 ${hmrElectronConsoleMessagePrefix} ${magenta("Some typescript compilation errors occurred:")}
 
-${diagnosticDetail}
+${diagnosticsDetails}
 
 ${magenta(errorMessage)}
-${borderY}`;
-  return result;
+${magentaBorder}`;
+}
+const magentaBorder = magenta(borderY);
+
+async function runViteBuild(config) {
+  await build$1({
+    build: viteBuildOptions(config, true),
+    esbuild: viteESbuildOptions(),
+    css: { devSourcemap: true },
+    mode: "production",
+    logLevel: "info",
+    configFile: config.viteConfigPath
+  });
+}
+const viteBuildOptions = (config, isBuild) => ({
+  outDir: isBuild ? config.buildRendererOutputPath : config.devBuildRendererOutputPath,
+  chunkSizeWarningLimit: 1e3,
+  reportCompressedSize: false,
+  minify: "esbuild",
+  target: "esnext",
+  sourcemap: true,
+  rollupOptions: {
+    preserveEntrySignatures: "strict",
+    strictDeprecations: true,
+    output: {
+      assetFileNames: "assets/[name].[ext]",
+      entryFileNames: "[name].[ext]",
+      chunkFileNames: "[name].[ext]",
+      minifyInternalExports: true,
+      sourcemap: true,
+      format: "esm",
+      generatedCode: {
+        objectShorthand: true,
+        constBindings: true,
+        preset: "es2015"
+      }
+    }
+  }
+});
+const viteESbuildOptions = (platform = "browser") => ({
+  minifyIdentifiers: false,
+  minifyWhitespace: false,
+  sourcesContent: false,
+  minifySyntax: false,
+  treeShaking: true,
+  logLevel: "info",
+  target: "esnext",
+  sourcemap: true,
+  charset: "utf8",
+  format: "esm",
+  logLimit: 10,
+  color: true,
+  supported,
+  platform
+});
+
+async function runBuild(config) {
+  await Promise.all([
+    await runEsbuildForMainProcess(
+      { ...config, isBuild: true },
+      diagnoseErrors,
+      () => {
+      }
+    ),
+    await runViteBuild(config)
+  ]);
 }
 
 const removeJunkLogs = {
-  decodeStrings: false,
   transform(chunk, _encoding, doneCb) {
     const source = chunk.toString();
-    if (source.includes(errorThatAlwaysAppear, 49) || junkRegex_1.test(source) || junkRegex_2.test(source) || junkRegex_3.test(source))
+    if (source.includes(junkError_1, 49) || junkRegex_1.test(source) || junkRegex_2.test(source) || junkRegex_3.test(source))
       return;
-    doneCb(void 0, chunk);
+    doneCb(null, source);
   }
 };
 const junkRegex_1 = /\d+-\d+-\d+ \d+:\d+:\d+\.\d+ Electron(?: Helper)?\[\d+:\d+]/;
 const junkRegex_2 = /\[\d+:\d+\/|\d+\.\d+:ERROR:CONSOLE\(\d+\)\]/;
 const junkRegex_3 = /ALSA lib [a-z]+\.c:\d+:\([a-z_]+\)/;
-const errorThatAlwaysAppear = "unknown libva error, driver_name = (null)";
+const junkError_1 = "unknown libva error, driver_name = (null)";
 
-const stopElectronFns = [];
-let exitBecauseOfUserCode = false;
-async function startElectron({
+function stopPreviousElectronAndStartANewOne({
+  electronEnviromentVariables: env,
   devBuildElectronEntryFilePath,
-  electronEnviromentVariables,
   electronOptions,
   silent = false,
   isTest = false
 }) {
-  stopElectronFns.forEach((stopFn) => stopFn());
-  if (electronOptions.length === 0)
-    electronOptions = [
-      "--enable-source-maps",
-      "--node-memory-debug",
-      "--trace-warnings",
-      "--trace-uncaught",
-      "--trace-warnings",
-      "--inspect"
-    ];
+  logDbg(
+    "hmr-electron memory usage:",
+    process.memoryUsage(),
+    "\nresource usage:",
+    process.resourceUsage()
+  );
+  killPreviousElectronProcesses();
   const electronProcess = spawn(
     "electron",
     isTest ? [""] : [
       ...electronOptions,
       devBuildElectronEntryFilePath
     ],
-    { env: electronEnviromentVariables }
+    { env }
   ).on("exit", (code, signal) => {
-    if (!exitBecauseOfUserCode)
-      throwPrettyError(
-        `Electron exited with code: ${code}, signal: ${signal}.`
-      );
-    exitBecauseOfUserCode = true;
-  }).on("close", (code, signal) => {
-    log(
-      getPrettyDate(),
-      gray(
-        `Process closed with code: ${code}, signal: ${signal}.`
-      )
+    code !== 0 && throwPrettyError(
+      `Electron exited with code: ${code}, signal: ${signal}.`
     );
-    process.exit(code ?? void 0);
+    process.exitCode = code ?? 0;
   }).on("error", (err) => {
     throwPrettyError(
       `Error from child_process running Electron: ${err.message}`
     );
+  }).on("spawn", () => {
+    previousElectronProcesses.set(
+      electronProcess.pid,
+      electronProcess
+    );
+    hmrElectronLog(
+      gray(
+        "Electron process has been spawned!"
+      )
+    );
+    logDbg(
+      `Electron child process has been spawned with args: ${prettyPrintStringArray(electronProcess.spawnargs)}`
+    );
   });
-  electronProcess.stdout.on("data", (data) => {
-    log(getPrettyDate(), data);
-  });
-  function createStopElectronFn() {
-    let called = false;
-    return () => {
-      if (!called && electronProcess.pid) {
-        electronProcess.removeAllListeners();
-        process.kill(electronProcess.pid);
-        exitBecauseOfUserCode = true;
-      }
-      called = true;
-    };
-  }
-  const stopElectronFn = createStopElectronFn();
-  stopElectronFns.push(stopElectronFn);
   if (!silent) {
     const removeElectronLoggerJunkOutput = new Transform(
       removeJunkLogs
@@ -584,147 +599,67 @@ async function startElectron({
       process.stderr
     );
   }
-  return [electronProcess, stopElectronFn];
+  return electronProcess;
 }
-
-async function runViteBuild(config) {
-  const buildResult = await build$1({
-    esbuild: {
-      minifyIdentifiers: false,
-      minifyWhitespace: false,
-      sourcesContent: false,
-      minifySyntax: false,
-      platform: "browser",
-      treeShaking: true,
-      logLevel: "debug",
-      target: "esnext",
-      sourcemap: true,
-      charset: "utf8",
-      format: "esm",
-      logLimit: 10,
-      color: true,
-      supported
-    },
-    logLevel: "info",
-    build: {
-      outDir: config.buildRendererOutputPath,
-      rollupOptions: {
-        preserveEntrySignatures: "strict",
-        strictDeprecations: true,
-        output: {
-          generatedCode: {
-            objectShorthand: true,
-            constBindings: true,
-            preset: "es2015"
-          },
-          format: "esm"
-        }
-      },
-      chunkSizeWarningLimit: 1e3,
-      reportCompressedSize: false,
-      emptyOutDir: true,
-      sourcemap: false,
-      target: "esnext",
-      minify: true
-    },
-    configFile: config.viteConfigPath
+const previousElectronProcesses = /* @__PURE__ */ new Map();
+function killPreviousElectronProcesses() {
+  previousElectronProcesses.forEach((electronProcess, pid) => {
+    if (electronProcess.killed)
+      previousElectronProcesses.delete(pid);
+    electronProcess.removeAllListeners();
+    logDbg(
+      "electron child process listeners names:",
+      electronProcess.eventNames()
+    );
+    process.kill(pid, 0);
   });
-  dbg({ buildResult });
 }
 
-function prompt(question) {
-  const questionAndPrompt = `${green("?")} ${question} ${gray("(Y/n)")} `;
+async function askYesNo({ question, yesValues, noValues }) {
+  question = `${getPrettyDate()} ${question} ${gray("(Y/n)")} `;
+  yesValues = yesValues?.map((v) => v.toLowerCase()) ?? yes;
+  noValues = noValues?.map((v) => v.toLowerCase()) ?? no;
   const readline = createInterface({
     output: process.stdout,
     input: process.stdin
   });
-  let answerResolve = () => {
-  };
-  const answerPromise = new Promise((resolve) => {
-    answerResolve = resolve;
+  const stopPromptFn = () => readline.close();
+  const readAnswerFn = () => new Promise((resolve) => {
+    readline.question(question, async (answer) => {
+      readline.close();
+      const cleaned = answer.trim().toLowerCase();
+      if (cleaned === "")
+        return resolve(true);
+      if (yesValues.includes(cleaned))
+        return resolve(true);
+      if (noValues.includes(cleaned))
+        return resolve(false);
+    });
   });
-  readline.question(questionAndPrompt, (answer) => {
-    answerResolve(yes.includes(answer));
-    readline.close();
-  });
-  return [() => answerPromise, () => {
-    log();
-    readline.close();
-  }];
+  return [readAnswerFn, stopPromptFn];
 }
-const yes = ["Y", "y", "\n", "\r", "\r\n"];
+const yes = ["yes", "y"];
+const no = ["no", "n"];
 
-async function runBuild(config) {
-  findPathOrExit(
-    [config.viteConfigPath, ...defaultPathsForViteConfigFile],
-    viteConfigFileNotFound(config.cwd)
-  );
-  findPathOrExit(
-    [config.electronEntryFilePath, ...entryFileDefaultPlaces],
-    entryFilePathNotFound(config.electronEntryFilePath)
-  );
-  await runEsbuildForMainProcess(
-    { ...config, isBuild: true },
-    diagnoseErrors,
-    () => {
-    }
-  );
-  await runViteBuild(config);
-}
-let stopPromptToRunElectron = () => {
-};
-async function promptToRerunElectron(config, count) {
-  stopPromptToRunElectron();
-  log(getPrettyDate(), finishBuildMessage);
-  if (count > 1) {
-    const [readAnswer, stopPrompt] = prompt(
-      `${getPrettyDate()} ${bgYellow(black(bold(`[${count}x]`)))} ${needToRerunElectron}`
-    );
-    stopPromptToRunElectron = stopPrompt;
-    if (await readAnswer())
-      await startElectron(config);
-  } else {
-    await startElectron(config);
-  }
-}
-const needToRerunElectron = green("Need to rerun Electron?");
-
-function electronPreloadSourceMapVitePlugin(preloadSourceMapFilePath) {
+function viteLoggerPlugin(srcPath) {
   const plugin = {
-    name: "electron-preload-sourcemap",
-    configureServer(server) {
-      if (!preloadSourceMapFilePath)
-        return warn(yellow("No preloadSourceMapFilePath."));
-      else
-        log("preloadSourceMapFilePath =", preloadSourceMapFilePath);
-      server.middlewares.use((req, res, next) => {
-        if (req.originalUrl && preloadSourceMapFilePath.includes(req.originalUrl)) {
-          log("Using preload map...");
-          createReadStream(preloadSourceMapFilePath).pipe(res);
-          return;
-        } else
-          log("Not using preload map.", req.originalUrl);
-        return next();
-      });
-    }
-  };
-  return plugin;
-}
-
-function LoggerPlugin(srcPath) {
-  const plugin = {
-    name: "electron-hmr-logger",
+    name: "hmr-logger",
+    buildEnd(err) {
+      if (err)
+        error(getPrettyDate(), viteConsoleMessagePrefix, err);
+      log(
+        getPrettyDate(),
+        hmrElectronConsoleMessagePrefix,
+        green("Vite build is complete.")
+      );
+    },
     handleHotUpdate(ctx) {
-      if (!srcPath)
-        throw new Error(`There must be a srcPath! Received: ${srcPath}`);
       ctx.modules.forEach(({ file }) => {
         if (!file)
           return;
-        log(
-          viteConsoleMessagePrefix,
-          getPrettyDate(),
-          yellow("HMR update on:"),
-          underline(gray(basename(srcPath)))
+        const path = getRelativeFilePath(file, srcPath);
+        viteLog(
+          yellow(`HMR update on: ${underline(path)}`)
         );
       });
       return ctx.modules;
@@ -734,79 +669,61 @@ function LoggerPlugin(srcPath) {
 }
 
 async function startViteServer(config) {
-  const server = await createServer({
-    esbuild: {
-      minifyIdentifiers: false,
-      minifyWhitespace: false,
-      sourcesContent: false,
-      minifySyntax: false,
-      platform: "browser",
-      treeShaking: true,
-      logLevel: "debug",
-      target: "esnext",
-      sourcemap: true,
-      charset: "utf8",
-      format: "esm",
-      logLimit: 10,
-      color: true,
-      supported
-    },
-    plugins: [
-      electronPreloadSourceMapVitePlugin(config.preloadSourceMapFilePath),
-      LoggerPlugin(config.srcPath)
-    ],
+  const server = await (await createServer({
+    build: viteBuildOptions(config, false),
+    esbuild: viteESbuildOptions(),
+    css: { devSourcemap: true },
+    mode: "development",
     logLevel: "info",
-    build: {
-      outDir: config.devBuildRendererOutputPath,
-      rollupOptions: {
-        output: {
-          generatedCode: {
-            objectShorthand: true,
-            constBindings: true,
-            preset: "es2015"
-          }
-        }
-      }
-    },
+    plugins: [
+      viteLoggerPlugin(config.srcPath)
+    ],
     configFile: config.viteConfigPath
-  });
-  logDbg("Vite server moduleGraph =", stringifyJson(server.moduleGraph));
+  })).listen();
   logDbg("Vite server config =", stringifyJson(server.config));
-  await server.listen();
-  const addressInfo = server.httpServer?.address();
-  if (addressInfo && typeof addressInfo === "object") {
-    const { address, port } = addressInfo;
-    log(
-      getPrettyDate(),
-      viteConsoleMessagePrefix,
-      bold(
-        green(
-          ` Dev server running at address ${underline(`http://${address}:${port}`)}.`
-        )
+  const { address, port } = server.httpServer.address();
+  viteLog(
+    bold(
+      green(
+        `Dev server running at address ${underline(`http://${address}:${port}`)}.`
       )
-    );
-  }
+    )
+  );
 }
 
 async function runDev(config) {
-  findPathOrExit(
-    [config.viteConfigPath, ...defaultPathsForViteConfigFile],
-    viteConfigFileNotFound(config.cwd)
-  );
-  await startViteServer(config);
-  findPathOrExit(
-    [config.electronEntryFilePath, ...entryFileDefaultPlaces],
-    entryFilePathNotFound(config.electronEntryFilePath)
-  );
-  await runEsbuildForMainProcess(
+  startViteServer(config);
+  runEsbuildForMainProcess(
     { ...config, isBuild: false },
     diagnoseErrors,
     promptToRerunElectron
   );
 }
+const prettyCount = (count2) => bgYellow(black(bold(`[${count2}º]`)));
+let stopPreviousPromptToRerunElectron = () => {
+};
+let count = 0;
+async function promptToRerunElectron(config, isWatch) {
+  stopPreviousPromptToRerunElectron();
+  ++count;
+  if (!isWatch || count === 1) {
+    stopPreviousElectronAndStartANewOne(config);
+    return;
+  }
+  const [readAnswerFn, stopPromptFn] = await askYesNo({
+    question: `${prettyCount(count)} ${needToRerunElectron}`
+  });
+  stopPreviousPromptToRerunElectron = stopPromptFn;
+  if (await readAnswerFn()) {
+    hmrElectronLog(magenta("Reloading Electron..."));
+    stopPreviousElectronAndStartANewOne(config);
+  } else
+    hmrElectronLog(magenta("Not reloading Electron."));
+}
+const needToRerunElectron = green("Do you want to rerun Electron?");
 
 const name = "hmr-electron";
-const version = "0.0.2";
+const version = "0.0.3";
 
 async function parseCliArgs() {
   const args = argsAsObj(usefullArgs());
@@ -828,7 +745,7 @@ async function parseCliArgs() {
     return await runBuild(configProps);
   }
   printHelpMsg();
-  log(
+  hmrElectronLog(
     `No commands matched. Args = ${prettyPrintStringArray(process.argv)}`
   );
 }
@@ -838,7 +755,6 @@ function usefullArgs() {
   logDbg(`Original args = ${prettyPrintStringArray(args)}`);
   let indexToSliceFrom = 0;
   for (const arg of reversedArgs) {
-    logDbg({ arg, nameToMatch: name, index: arg.lastIndexOf(name) });
     const indexOfThisPkgCommand = arg.lastIndexOf(name);
     if (indexOfThisPkgCommand === -1)
       continue;
@@ -846,10 +762,7 @@ function usefullArgs() {
     break;
   }
   const argsToUse = args.slice(indexToSliceFrom + 1);
-  logDbg(
-    `Modified args = ${prettyPrintStringArray(argsToUse)}
-indexToSliceFrom = ${indexToSliceFrom}`
-  );
+  logDbg(`Modified args = ${prettyPrintStringArray(argsToUse)}`);
   return argsToUse;
 }
 function argsAsObj(args) {

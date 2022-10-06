@@ -2,7 +2,7 @@ import { exec } from "node:child_process";
 
 export function processExists(
 	processNameOrPid: string | number | undefined,
-): Promise<boolean> {
+): Promise<boolean> | boolean {
 	if (!processNameOrPid) {
 		console.error("processNameOrPid is invalid:", processNameOrPid);
 		return false;

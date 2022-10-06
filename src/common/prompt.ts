@@ -1,35 +1,69 @@
 import { createInterface } from "node:readline";
-import { log } from "node:console";
 
-import { gray, green } from "#utils/cli-colors";
+import { getPrettyDate } from "@utils/getPrettyDate";
+import { gray } from "@utils/cli-colors";
 
-export function prompt(
-	question: string,
-): Readonly<[ReadAnswerFn, StopPromptFn]> {
-	const questionAndPrompt = `${green("?")} ${question} ${gray("(Y/n)")} `;
+export async function askYesNo(
+	{ question, yesValues, noValues }: AskYesNoProps,
+): Promise<readonly [ReadAnswerFn, StopPromptFn]> {
+	question = `${getPrettyDate()} ${question} ${gray("(Y/n)")} `;
+	yesValues = yesValues?.map(v => v.toLowerCase()) ?? yes;
+	noValues = noValues?.map(v => v.toLowerCase()) ?? no;
 
 	const readline = createInterface({
 		output: process.stdout,
 		input: process.stdin,
 	});
 
-	let answerResolve: (answer: boolean) => void = () => {};
-	const answerPromise = new Promise<boolean>(resolve => {
-		answerResolve = resolve;
-	});
+	const stopPromptFn: StopPromptFn = () => readline.close();
 
-	readline.question(questionAndPrompt, answer => {
-		answerResolve(yes.includes(answer));
-		readline.close();
-	});
+	const readAnswerFn = () =>
+		new Promise<boolean>(resolve => {
+			readline.question(question, async answer => {
+				readline.close();
 
-	return [() => answerPromise, () => {
-		log();
-		readline.close();
-	}];
+				const cleaned = answer.trim().toLowerCase();
+
+				if (cleaned === "")
+					return resolve(true);
+
+				if (yesValues.includes(cleaned))
+					return resolve(true);
+
+				if (noValues.includes(cleaned))
+					return resolve(false);
+			});
+		});
+
+	return [readAnswerFn, stopPromptFn];
 }
 
-const yes = ["Y", "y", "\n", "\r", "\r\n"];
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+// Helper functions:
+
+const yes = ["yes", "y"];
+const no = ["no", "n"];
+
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+// Types:
+
+type Handler = {
+	yesValues?: string[];
+	noValues?: string[];
+	question: string;
+};
+
+///////////////////////////////////////////
 
 type ReadAnswerFn = () => Promise<boolean>;
-type StopPromptFn = () => void;
+export type StopPromptFn = () => void;
+
+///////////////////////////////////////////
+
+type AskYesNoProps = Handler & {
+	onInvalidAnswer?: (props: Required<Handler>) => void;
+};

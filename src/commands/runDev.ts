@@ -1,34 +1,62 @@
-import type { ConfigProps } from "#types/config";
+import type { ConfigProps } from "types/config";
 
-import { entryFilePathNotFound, viteConfigFileNotFound } from "#common/logs";
+import { bgYellow, black, bold, green, magenta } from "@utils/cli-colors";
+import { stopPreviousElectronAndStartANewOne } from "@commands/subCommands/stopPreviousElectronAndStartANewOne";
+import { type StopPromptFn, askYesNo } from "@common/prompt";
 import { runEsbuildForMainProcess } from "./esbuild";
-import { promptToRerunElectron } from "./runBuild";
 import { startViteServer } from "./subCommands/startViteServer";
-import { diagnoseErrors } from "#common/diagnoseErrors";
-import {
-	defaultPathsForViteConfigFile,
-	entryFileDefaultPlaces,
-	findPathOrExit,
-} from "#common/findPathOrExit";
+import { diagnoseErrors } from "@common/diagnoseErrors";
+import { hmrElectronLog } from "@utils/consoleMsgs";
 
-export async function runDev(config: ConfigProps) {
-	// Start Vite server:
-	findPathOrExit(
-		[config.viteConfigPath, ...defaultPathsForViteConfigFile],
-		viteConfigFileNotFound(config.cwd),
-	);
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+// Main function:
 
-	await startViteServer(config);
+export async function runDev(config: ConfigProps): Promise<void> {
+	startViteServer(config);
 
-	// Start dev for main process.
-	findPathOrExit(
-		[config.electronEntryFilePath, ...entryFileDefaultPlaces],
-		entryFilePathNotFound(config.electronEntryFilePath),
-	);
-
-	await runEsbuildForMainProcess(
+	runEsbuildForMainProcess(
 		{ ...config, isBuild: false },
 		diagnoseErrors,
 		promptToRerunElectron,
 	);
 }
+
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+// Helper functions:
+
+const prettyCount = (count: number) => bgYellow(black(bold(`[${count}º]`)));
+let stopPreviousPromptToRerunElectron: StopPromptFn = () => {};
+let count = 0;
+
+async function promptToRerunElectron(
+	config: ConfigProps,
+	isWatch: boolean,
+): Promise<void> {
+	stopPreviousPromptToRerunElectron();
+	++count;
+
+	if (!isWatch || count === 1) {
+		stopPreviousElectronAndStartANewOne(config);
+		return;
+	}
+
+	const [readAnswerFn, stopPromptFn] = await askYesNo({
+		question: `${prettyCount(count)} ${needToRerunElectron}`,
+	});
+
+	stopPreviousPromptToRerunElectron = stopPromptFn;
+
+	if (await readAnswerFn()) {
+		hmrElectronLog(magenta("Reloading Electron..."));
+		stopPreviousElectronAndStartANewOne(config);
+	} else
+		hmrElectronLog(magenta("Not reloading Electron."));
+}
+
+///////////////////////////////////////////
+
+const needToRerunElectron = green("Do you want to rerun Electron?");

@@ -1,9 +1,6 @@
 {
 	"compilerOptions": {
-		"lib": [
-			"ESNext"
-		],
-		"noPropertyAccessFromIndexSignature": true,
+		"noPropertyAccessFromIndexSignature": false,
 		"useUnknownInCatchVariables": true,
 		"noFallthroughCasesInSwitch": true,
 		"exactOptionalPropertyTypes": true,
@@ -29,34 +26,34 @@
 		"skipLibCheck": true,
 		"diagnostics": true,
 		"sourceMap": false,
-		"module": "ESNext",
-		"target": "ESNext",
-		"baseUrl": "./",
+		"module": "ES2020",
+		"target": "ES2022",
 		"pretty": true,
 		"strict": true,
+		"baseUrl": ".",
+		"lib": [
+			"ES2022"
+		],
 		"paths": {
-			"#common/*": [
+			"@common/*": [
 				"src/common/*"
 			],
-			"#commands/*": [
+			"@plugins/*": [
+				"src/plugins/*"
+			],
+			"@commands/*": [
 				"src/commands/*"
 			],
-			"#types/*": [
-				"src/#types/*"
+			"types/*": [
+				"src/types/*"
 			],
-			"#validation/*": [
-				"src/validation/*"
-			],
-			"#validation": [
-				"src/validation/index"
-			],
-			"#utils/*": [
+			"@utils/*": [
 				"src/utils/*"
 			],
-			"#tests/*": [
+			"@tests/*": [
 				"tests/*"
 			],
-			"#src/*": [
+			"@src/*": [
 				"src/*"
 			]
 		}

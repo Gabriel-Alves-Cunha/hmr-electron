@@ -1,8 +1,8 @@
 import { error } from "node:console";
 
-import { type CompileError, formatCompileError } from "#common/compileError";
+import { type CompileError, formatCompileError } from "@common/compileError";
 import { hmrElectronConsoleMessagePrefix } from "./logs";
-import { borderY, magenta } from "#utils/cli-colors";
+import { borderY, magenta } from "@utils/cli-colors";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -21,28 +21,25 @@ export function diagnoseErrors(errors: CompileError[]): void {
 function formatDiagnosticsMessage(errors: CompileError[]): string {
 	const errorMessage =
 		`Found ${errors.length} errors. Watching for file changes...`;
-	const messages = errors.map(e => formatCompileError(e));
+	const messages = errors.map(err => formatCompileError(err));
 
-	let diagnosticDetail = "";
+	let diagnosticsDetails = "";
 	messages.forEach((msg, index, { length }) => {
-		diagnosticDetail += msg.split("\n").map(detail => `  • ${detail}.`).join(
-			"\n",
-		);
+		diagnosticsDetails += `  • ${msg}.`;
 
 		if (index + 1 !== length)
-			diagnosticDetail += "\n";
+			diagnosticsDetails += "\n";
 	});
 
-	const result = `\
-${borderY}
+	return `${magentaBorder}
 ${hmrElectronConsoleMessagePrefix} ${
 		magenta("Some typescript compilation errors occurred:")
 	}
 
-${diagnosticDetail}
+${diagnosticsDetails}
 
 ${magenta(errorMessage)}
-${borderY}`;
-
-	return result;
+${magentaBorder}`;
 }
+
+const magentaBorder = magenta(borderY);

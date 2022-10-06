@@ -9,15 +9,16 @@ export type UserProvidedConfigProps = {
 	buildMainOutputPath?: string;
 	buildOutputPath?: string;
 
+	devBuildElectronEntryFilePath?: string;
+	devBuildRendererOutputPath?: string;
+	devBuildMainOutputPath?: string;
 	devOutputPath?: string;
 
 	rendererTSconfigPath?: string;
-
-	electronEntryFilePath: string;
-	hmrElectronPath?: string;
-
-	baseTSconfigPath?: string;
 	mainTSconfigPath?: string;
+	baseTSconfigPath?: string;
+
+	hmrElectronPath?: string;
 	nodeModulesPath?: string;
 	packageJsonPath?: string;
 	viteConfigPath?: string;
@@ -26,18 +27,18 @@ export type UserProvidedConfigProps = {
 	mainPath?: string;
 	srcPath?: string;
 
+	electronEsbuildExternalPackages?: string[];
 	esbuildConfig?: BuildOptions;
-	electronOptions?: string[];
 
 	electronEnviromentVariables?: NodeJS.ProcessEnv;
+	electronEntryFilePath: string;
+	electronOptions?: string[];
+
 	cwd?: string;
 };
 
 export type ConfigProps = Readonly<
 	Required<
-		UserProvidedConfigProps & {
-			devBuildElectronEntryFilePath: string;
-			devBuildRendererOutputPath: string;
-		}
+		UserProvidedConfigProps
 	>
 >;

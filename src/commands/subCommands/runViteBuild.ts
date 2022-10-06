@@ -1,58 +1,79 @@
-import type { ConfigProps } from "#types/config";
+import type { BuildOptions, ESBuildOptions } from "vite";
+import type { CommonOptions } from "esbuild";
+import type { ConfigProps } from "types/config";
 
-import { build } from "vite";
+import { build as viteBuild } from "vite";
 
-import { supported } from "#commands/esbuild";
-import { dbg } from "#utils/debug";
+import { supported } from "@commands/esbuild";
 
 export async function runViteBuild(config: ConfigProps): Promise<void> {
-	const buildResult = await build({
-		esbuild: {
-			minifyIdentifiers: false,
-			minifyWhitespace: false,
-			sourcesContent: false,
-			minifySyntax: false,
-			platform: "browser",
-			treeShaking: true,
-			logLevel: "debug",
-			target: "esnext",
-			sourcemap: true,
-			charset: "utf8",
-			format: "esm",
-			logLimit: 10,
-			color: true,
-			supported,
-		},
-
+	await viteBuild({
+		build: viteBuildOptions(config, true),
+		esbuild: viteESbuildOptions(),
+		css: { devSourcemap: true },
+		mode: "production",
 		logLevel: "info",
-
-		build: {
-			outDir: config.buildRendererOutputPath,
-			rollupOptions: {
-				preserveEntrySignatures: "strict",
-				strictDeprecations: true,
-
-				output: {
-					generatedCode: {
-						objectShorthand: true,
-						constBindings: true,
-						preset: "es2015",
-					},
-
-					format: "esm",
-				},
-			},
-
-			chunkSizeWarningLimit: 1_000,
-			reportCompressedSize: false,
-			emptyOutDir: true,
-			sourcemap: false,
-			target: "esnext",
-			minify: true,
-		},
 
 		configFile: config.viteConfigPath,
 	});
-
-	dbg({ buildResult });
 }
+
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+// Helper functions:
+
+export const viteBuildOptions = (
+	config: ConfigProps,
+	isBuild: boolean,
+): BuildOptions => ({
+	outDir: isBuild ?
+		config.buildRendererOutputPath :
+		config.devBuildRendererOutputPath,
+	chunkSizeWarningLimit: 1_000,
+	reportCompressedSize: false,
+	minify: "esbuild",
+	target: "esnext",
+	sourcemap: true,
+
+	rollupOptions: {
+		preserveEntrySignatures: "strict",
+		strictDeprecations: true,
+
+		output: {
+			assetFileNames: "assets/[name].[ext]",
+			entryFileNames: "[name].[ext]",
+			chunkFileNames: "[name].[ext]",
+			minifyInternalExports: true,
+			sourcemap: true,
+			format: "esm",
+
+			generatedCode: {
+				objectShorthand: true,
+				constBindings: true,
+				preset: "es2015",
+			},
+		},
+	},
+});
+
+///////////////////////////////////////////
+
+export const viteESbuildOptions = (
+	platform: CommonOptions["platform"] = "browser",
+): ESBuildOptions => ({
+	minifyIdentifiers: false,
+	minifyWhitespace: false,
+	sourcesContent: false,
+	minifySyntax: false,
+	treeShaking: true,
+	logLevel: "info",
+	target: "esnext",
+	sourcemap: true,
+	charset: "utf8",
+	format: "esm",
+	logLimit: 10,
+	color: true,
+	supported,
+	platform,
+});

@@ -1,4 +1,4 @@
-import { getPrettyDate } from "#utils/getPrettyDate";
+import { getPrettyDate } from "@utils/getPrettyDate";
 import {
 	underline,
 	bgYellow,
@@ -9,15 +9,11 @@ import {
 	blue,
 	bold,
 	red,
-} from "#utils/cli-colors";
+} from "@utils/cli-colors";
 
+export const viteConsoleMessagePrefix = bgGreen(bold(black("[VITE]")));
 export const hmrElectronConsoleMessagePrefix = bgYellow(
 	bold(black("[hmr-electron]")),
-);
-export const viteConsoleMessagePrefix = bgGreen(bold(black("[VITE]")));
-
-export const finishBuildMessage = hmrElectronConsoleMessagePrefix + green(
-	" Build finished.",
 );
 
 export function entryFilePathNotFound(path: string | undefined): () => never {

@@ -1,16 +1,11 @@
-import type { CompileError } from "#common/compileError";
-import type { ConfigProps } from "#types/config";
+import type { CompileError } from "@common/compileError";
+import type { ConfigProps } from "types/config";
 
-import { type BuildFailure, build, analyzeMetafile } from "esbuild";
-import { existsSync, readdirSync } from "node:fs";
+import { type BuildFailure, build } from "esbuild";
 import { log, error } from "node:console";
-import { join } from "node:path";
 
-import { getRelativePreloadFilePath } from "#utils/getRelativeFilePath";
-import { throwPrettyError } from "#common/logs";
-import { cleanCache } from "./cleanCache";
-import { require } from "#src/require";
-import { dbg } from "#utils/debug";
+import { ignoreDirectoriesAndFilesPlugin } from "@plugins/ignoreDirectoriesAndFilesPlugin";
+import { getRelativeFilePath } from "@utils/getRelativeFilePath";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -20,39 +15,38 @@ import { dbg } from "#utils/debug";
 export async function runEsbuildForMainProcess(
 	props: BuildProps,
 	onError: (errors: CompileError[]) => void,
-	onBuildComplete: (config: ConfigProps, count: number) => void,
+	onBuildComplete: (config: ConfigProps, isWatch: boolean) => void,
 ): Promise<void> {
-	const tsconfigPath = join(props.mainPath, "tsconfig.json");
 	const entryPoints = [props.electronEntryFilePath];
-
-	let count = 0;
 
 	if (props.preloadFilePath) {
 		entryPoints.push(props.preloadFilePath);
 
-		log(
-			`\tUsing preload file: "${
-				getRelativePreloadFilePath(props.preloadFilePath, props.cwd)
-			}"\n`,
-		);
+		log(`
+\tUsing preload file: "${getRelativeFilePath(props.preloadFilePath, props.cwd)}"
+`);
 	}
 
 	try {
-		// Clean prev build output:
-		await cleanCache(props);
-
 		const buildResult = await build({
+			plugins: [
+				ignoreDirectoriesAndFilesPlugin([
+					new RegExp(props.devBuildMainOutputPath),
+					new RegExp(props.buildMainOutputPath),
+					/node_modules/,
+				]),
+			],
 			outdir: props.isBuild ?
 				props.buildMainOutputPath :
-				join(props.devOutputPath, "main"),
-			external: await findExternals(props),
-			minify: props.isBuild ? true : false,
+				props.devBuildMainOutputPath,
+			external: props.electronEsbuildExternalPackages,
+			tsconfig: props.mainTSconfigPath,
 			outExtension: { ".js": ".cjs" },
-			incremental: !props.isBuild,
-			tsconfig: tsconfigPath,
+			minify: props.isBuild,
 			sourcesContent: false,
+			incremental: false,
 			treeShaking: true,
-			logLevel: "debug",
+			logLevel: "info",
 			platform: "node",
 			target: "esnext",
 			charset: "utf8",
@@ -65,30 +59,24 @@ export async function runEsbuildForMainProcess(
 			entryPoints,
 			supported,
 
-			...props.esbuildConfig,
-
 			watch: props.isBuild ? false : {
-				onRebuild: async error => {
-					error ?
-						onError(transformErrors(error)) :
-						onBuildComplete(props, count++);
+				onRebuild: async (error, result) => {
+					if (result?.outputFiles)
+						log("Esbuild build outputFiles:\n", result.outputFiles);
+
+					if (error) return onError(transformErrors(error));
+
+					onBuildComplete(props, true);
 				},
 			},
+
+			...props.esbuildConfig,
 		});
 
-		++count;
+		if (buildResult.outputFiles)
+			log("Esbuild build outputFiles:\n", buildResult.outputFiles);
 
-		dbg("Build result:", buildResult);
-
-		if (buildResult.metafile) {
-			const metafile = await analyzeMetafile(buildResult.metafile, {
-				verbose: true,
-			});
-
-			log("Esbuild build result metafile:\n", metafile);
-		}
-
-		onBuildComplete(props, count);
+		onBuildComplete(props, false);
 	} catch (err) {
 		isBuildFailure(err) ?
 			onError(transformErrors(err)) :
@@ -101,35 +89,6 @@ export async function runEsbuildForMainProcess(
 ///////////////////////////////////////////
 // Helper functions:
 
-async function findExternals(props: BuildProps): Promise<string[]> {
-	if (!existsSync(props.packageJsonPath))
-		throwPrettyError("Could not find a valid package.json");
-
-	const packageJson = require(props.packageJsonPath);
-	const externals = new Set<string>();
-
-	dbg({ packageJson });
-
-	dependenciesKeys.forEach(depKey => {
-		const obj = packageJson[depKey] ?? {};
-
-		Object.keys(obj).forEach(name => externals.add(name));
-	});
-
-	// Find node_modules
-	if (existsSync(props.nodeModulesPath)) {
-		const modules = readdirSync(props.nodeModulesPath);
-
-		modules.forEach(mod => externals.add(mod));
-	}
-
-	dbg("Modules found to use as externals:", externals);
-
-	return [...externals];
-}
-
-///////////////////////////////////////////
-
 function transformErrors(error: BuildFailure): CompileError[] {
 	return error.errors.map((e): CompileError => ({
 		location: e.location,
@@ -139,21 +98,9 @@ function transformErrors(error: BuildFailure): CompileError[] {
 
 ///////////////////////////////////////////
 
-function isBuildFailure(err: unknown): err is BuildFailure {
-	// @ts-ignore => For some reason ts is not narrowing the types...
+function isBuildFailure(err: any): err is BuildFailure {
 	return err && err.errors && Array.isArray(err.errors);
 }
-
-///////////////////////////////////////////
-///////////////////////////////////////////
-///////////////////////////////////////////
-// Constants:
-
-const dependenciesKeys = [
-	"peerDependencies",
-	"devDependencies",
-	"dependencies",
-];
 
 ///////////////////////////////////////////
 

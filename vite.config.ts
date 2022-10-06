@@ -15,7 +15,7 @@ export default defineConfig(() => {
 			rollupOptions: {
 				// make sure to externalize deps that shouldn't be bundled
 				// into your library
-				external: ["esbuild", "vite", ...allBuiltinModules],
+				external: ["esbuild", "electron", "vite", ...allBuiltinModules],
 				preserveEntrySignatures: "strict",
 				strictDeprecations: true,
 
@@ -47,7 +47,7 @@ export default defineConfig(() => {
 			minifyWhitespace: false,
 			minifySyntax: false,
 			treeShaking: true,
-			logLevel: "debug",
+			logLevel: "info",
 			platform: "node",
 			target: "esnext",
 			sourcemap: false,
@@ -78,13 +78,14 @@ export default defineConfig(() => {
 
 		resolve: {
 			alias: [
-				{ find: "#validation", replacement: resolve("src/validation") },
-				{ find: "#commands", replacement: resolve("src/commands") },
-				{ find: "#common", replacement: resolve("src/common") },
-				{ find: "#types", replacement: resolve("src/#types") },
-				{ find: "#utils", replacement: resolve("src/utils") },
-				{ find: "#tests", replacement: resolve("tests") },
-				{ find: "#src", replacement: resolve("src/") },
+				{ find: "@validation", replacement: resolve("src/validation") },
+				{ find: "@commands", replacement: resolve("src/commands") },
+				{ find: "@plugins", replacement: resolve("src/plugins") },
+				{ find: "@common", replacement: resolve("src/common") },
+				{ find: "@utils", replacement: resolve("src/utils") },
+				{ find: "types", replacement: resolve("src/types") },
+				{ find: "@tests", replacement: resolve("tests") },
+				{ find: "@src", replacement: resolve("src/") },
 			],
 		},
 	};

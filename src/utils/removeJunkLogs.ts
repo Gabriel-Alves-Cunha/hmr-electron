@@ -1,20 +1,18 @@
-import { TransformOptions } from "node:stream";
+import type { TransformOptions } from "node:stream";
 
 export const removeJunkLogs: TransformOptions = {
-	decodeStrings: false,
-
 	transform(chunk: Buffer, _encoding, doneCb) {
 		const source: string = chunk.toString();
 
 		if (
-			source.includes(errorThatAlwaysAppear, 49) ||
+			source.includes(junkError_1, 49) ||
 			junkRegex_1.test(source) ||
 			junkRegex_2.test(source) ||
 			junkRegex_3.test(source)
 		)
 			return;
 
-		doneCb(undefined, chunk);
+		doneCb(null, source);
 	},
 };
 
@@ -29,4 +27,4 @@ const junkRegex_2 = /\[\d+:\d+\/|\d+\.\d+:ERROR:CONSOLE\(\d+\)\]/;
 const junkRegex_3 = /ALSA lib [a-z]+\.c:\d+:\([a-z_]+\)/;
 
 // libva error: vaGetDriverNameByIndex() failed with unknown libva error, driver_name = (null)
-const errorThatAlwaysAppear = "unknown libva error, driver_name = (null)";
+const junkError_1 = "unknown libva error, driver_name = (null)";
