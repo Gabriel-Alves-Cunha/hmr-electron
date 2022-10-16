@@ -6,13 +6,14 @@ import { type StopPromptFn, askYesNo } from "@common/prompt";
 import { runEsbuildForMainProcess } from "./esbuild";
 import { startViteServer } from "./subCommands/startViteServer";
 import { diagnoseErrors } from "@common/diagnoseErrors";
-import { hmrElectronLog } from "@utils/consoleMsgs";
+import { hmrElectronLog } from "@common/logs";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 // Main function:
 
+// TODO: maybe Promise.all()?
 export async function runDev(config: ConfigProps): Promise<void> {
 	startViteServer(config);
 
@@ -39,7 +40,7 @@ async function promptToRerunElectron(
 	stopPreviousPromptToRerunElectron();
 	++count;
 
-	if (!isWatch || count === 1) {
+	if (count === 1 || !isWatch) {
 		stopPreviousElectronAndStartANewOne(config);
 		return;
 	}
@@ -54,7 +55,7 @@ async function promptToRerunElectron(
 		hmrElectronLog(magenta("Reloading Electron..."));
 		stopPreviousElectronAndStartANewOne(config);
 	} else
-		hmrElectronLog(magenta("Not reloading Electron."));
+		hmrElectronLog(magenta("NOT reloading Electron."));
 }
 
 ///////////////////////////////////////////

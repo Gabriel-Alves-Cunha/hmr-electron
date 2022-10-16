@@ -1,6 +1,6 @@
 import type { Plugin } from "esbuild";
 
-import { hmrElectronLog } from "@utils/consoleMsgs";
+import { hmrElectronLog } from "@common/logs";
 
 export function ignoreDirectoriesAndFilesPlugin(regexOfDirs: RegExp[]): Plugin {
 	const plugin: Plugin = {
@@ -33,5 +33,5 @@ export function ignoreDirectoriesAndFilesPlugin(regexOfDirs: RegExp[]): Plugin {
 
 const regexForEverything = /.*/;
 const namespace = "ignore";
-const options = { filter: regexForEverything, namespace };
+const options = { filter: regexForEverything, namespace } as const;
 const emptyString = "";

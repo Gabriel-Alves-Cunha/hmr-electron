@@ -3,6 +3,7 @@ import type { TransformOptions } from "node:stream";
 export const removeJunkLogs: TransformOptions = {
 	transform(chunk: Buffer, _encoding, doneCb) {
 		const source: string = chunk.toString();
+		const error = null;
 
 		if (
 			source.includes(junkError_1, 49) ||
@@ -12,7 +13,7 @@ export const removeJunkLogs: TransformOptions = {
 		)
 			return;
 
-		doneCb(null, source);
+		doneCb(error, source);
 	},
 };
 

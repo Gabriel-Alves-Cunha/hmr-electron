@@ -1,3 +1,5 @@
 * vite build for main and another one for renderer.
 
 * add ignore to config.
+
+* cant get .js.map to load...

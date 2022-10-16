@@ -1,35 +1,19 @@
-import { exec } from "node:child_process";
+import { kill } from "node:process";
 
 export function processExists(
-	processNameOrPid: string | number | undefined,
-): Promise<boolean> | boolean {
-	if (!processNameOrPid) {
-		console.error("processNameOrPid is invalid:", processNameOrPid);
+	pid: number | undefined,
+): boolean {
+	if (!pid) {
+		console.error(`Invalid pid: \`${pid}\``);
 		return false;
 	}
 
-	processNameOrPid = String(processNameOrPid);
+	pid = Number(pid);
 
-	const cmd = (() => {
-		switch (process.platform) {
-			case "win32":
-				return "tasklist";
-			case "darwin":
-				return `ps -ax | grep ${processNameOrPid}`;
-			case "linux":
-				return "ps -A";
-			default:
-				return "false";
-		}
-	})();
-
-	return new Promise((resolve, reject) => {
-		exec(cmd, (err, stdout) => {
-			if (err) reject(err);
-
-			const hasProcess = stdout.includes(processNameOrPid);
-
-			resolve(hasProcess);
-		});
-	});
+	try {
+		kill(pid, 0); // As a special case, a signal of 0 can be used to test for the existence of a process.
+		return true;
+	} catch (_) {
+		return false;
+	}
 }

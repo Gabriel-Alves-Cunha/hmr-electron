@@ -7,8 +7,10 @@ import { build as viteBuild } from "vite";
 import { supported } from "@commands/esbuild";
 
 export async function runViteBuild(config: ConfigProps): Promise<void> {
+	const isBuild = true;
+
 	await viteBuild({
-		build: viteBuildOptions(config, true),
+		build: viteBuildOptions(config, isBuild),
 		esbuild: viteESbuildOptions(),
 		css: { devSourcemap: true },
 		mode: "production",
@@ -37,6 +39,7 @@ export const viteBuildOptions = (
 	sourcemap: true,
 
 	rollupOptions: {
+		external: config.electronEsbuildExternalPackages,
 		preserveEntrySignatures: "strict",
 		strictDeprecations: true,
 
@@ -67,8 +70,8 @@ export const viteESbuildOptions = (
 	sourcesContent: false,
 	minifySyntax: false,
 	treeShaking: true,
-	logLevel: "info",
 	target: "esnext",
+	logLevel: "info",
 	sourcemap: true,
 	charset: "utf8",
 	format: "esm",

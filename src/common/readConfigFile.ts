@@ -4,10 +4,10 @@ import { existsSync, rmSync } from "node:fs";
 import { extname } from "node:path";
 import { build } from "esbuild";
 
-import { logDbg, stringifyJson } from "@utils/debug";
+import { dbg, logConfig, stringifyJson } from "@utils/debug";
 import { makeTempFileWithData } from "@utils/makeTempFileWithData";
-import { throwPrettyError } from "./logs";
-import { bold, green } from "@utils/cli-colors";
+import { throwPrettyError } from "@common/logs";
+import { bold } from "@utils/cli-colors";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -20,7 +20,7 @@ export async function readConfigFile(
 	!existsSync(filePath) &&
 		throwPrettyError(`There must be a config file! Received: "${filePath}"`);
 
-	let filenameChanged = false;
+	let hasFilenameChanged = false;
 
 	try {
 		///////////////////////////////////////////
@@ -35,8 +35,8 @@ export async function readConfigFile(
 				minifySyntax: false,
 				treeShaking: true,
 				sourcemap: false,
-				logLevel: "info",
 				target: "esnext",
+				logLevel: "info",
 				platform: "node",
 				charset: "utf8",
 				format: "esm",
@@ -56,14 +56,15 @@ export async function readConfigFile(
 
 			const { text } = outputFile;
 
-			logDbg(green(`Text result from readConfigFile():\n${bold(text)}\n`));
+			dbg(`Text result from readConfigFile():\n${bold(text)}\n`);
 
 			///////////////////////////////////////////
 			///////////////////////////////////////////
 			// Writing to a temp file to be read by js native dyn import:
 
+			// '.mjs' to force node to read the file as es-module.
 			filePath = makeTempFileWithData(".mjs", text);
-			filenameChanged = true;
+			hasFilenameChanged = true;
 		}
 
 		///////////////////////////////////////////
@@ -71,18 +72,19 @@ export async function readConfigFile(
 
 		const { default: userConfig }: ConfigFromModule = await import(filePath);
 
-		logDbg(green(`User config = ${stringifyJson(userConfig)}`));
+		logConfig(`User config = ${stringifyJson(userConfig)}`);
 
 		if (!userConfig)
 			throwPrettyError("Config file is required!");
 		if (!userConfig.electronEntryFilePath)
-			throwPrettyError("config.electronEntryFilePath is required!");
+			throwPrettyError("`config.electronEntryFilePath` is required!");
 
 		return userConfig;
-	} catch (err) {
-		return throwPrettyError(err);
+	} catch (e) {
+		return throwPrettyError(e);
 	} finally {
-		if (filenameChanged) rmSync(filePath);
+		// Removing temp file:
+		if (hasFilenameChanged) rmSync(filePath);
 	}
 }
 
@@ -98,4 +100,6 @@ const tsExtensions = [".ts", ".mts", ".cts"];
 ///////////////////////////////////////////
 // Types:
 
-type ConfigFromModule = { default: UserProvidedConfigProps | undefined; };
+type ConfigFromModule = Readonly<
+	{ default: UserProvidedConfigProps | undefined; }
+>;

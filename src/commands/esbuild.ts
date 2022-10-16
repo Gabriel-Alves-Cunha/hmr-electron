@@ -2,10 +2,12 @@ import type { CompileError } from "@common/compileError";
 import type { ConfigProps } from "types/config";
 
 import { type BuildFailure, build } from "esbuild";
-import { log, error } from "node:console";
+import { error } from "node:console";
 
 import { ignoreDirectoriesAndFilesPlugin } from "@plugins/ignoreDirectoriesAndFilesPlugin";
 import { getRelativeFilePath } from "@utils/getRelativeFilePath";
+import { hmrElectronLog } from "@common/logs";
+import { dirDbg } from "@utils/debug";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -22,17 +24,25 @@ export async function runEsbuildForMainProcess(
 	if (props.preloadFilePath) {
 		entryPoints.push(props.preloadFilePath);
 
-		log(`
-\tUsing preload file: "${getRelativeFilePath(props.preloadFilePath, props.cwd)}"
-`);
+		hmrElectronLog(
+			`Using preload file: "${
+				getRelativeFilePath(
+					props.preloadFilePath,
+					props.cwd,
+				)
+			}".`,
+		);
 	}
+
+	dirDbg(
+		"props.electronEsbuildExternalPackages: ",
+		props.electronEsbuildExternalPackages,
+	);
 
 	try {
 		const buildResult = await build({
 			plugins: [
 				ignoreDirectoriesAndFilesPlugin([
-					new RegExp(props.devBuildMainOutputPath),
-					new RegExp(props.buildMainOutputPath),
 					/node_modules/,
 				]),
 			],
@@ -62,7 +72,7 @@ export async function runEsbuildForMainProcess(
 			watch: props.isBuild ? false : {
 				onRebuild: async (error, result) => {
 					if (result?.outputFiles)
-						log("Esbuild build outputFiles:\n", result.outputFiles);
+						hmrElectronLog("Esbuild build outputFiles:\n", result.outputFiles);
 
 					if (error) return onError(transformErrors(error));
 
@@ -74,7 +84,7 @@ export async function runEsbuildForMainProcess(
 		});
 
 		if (buildResult.outputFiles)
-			log("Esbuild build outputFiles:\n", buildResult.outputFiles);
+			hmrElectronLog("Esbuild build outputFiles:\n", buildResult.outputFiles);
 
 		onBuildComplete(props, false);
 	} catch (err) {
@@ -89,18 +99,16 @@ export async function runEsbuildForMainProcess(
 ///////////////////////////////////////////
 // Helper functions:
 
-function transformErrors(error: BuildFailure): CompileError[] {
-	return error.errors.map((e): CompileError => ({
+const transformErrors = (error: BuildFailure): CompileError[] =>
+	error.errors.map((e): CompileError => ({
 		location: e.location,
 		message: e.text,
 	}));
-}
 
 ///////////////////////////////////////////
 
-function isBuildFailure(err: any): err is BuildFailure {
-	return err && err.errors && Array.isArray(err.errors);
-}
+const isBuildFailure = (err: any): err is BuildFailure =>
+	err && err.errors && Array.isArray(err.errors);
 
 ///////////////////////////////////////////
 

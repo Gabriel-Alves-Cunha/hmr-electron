@@ -1,12 +1,13 @@
 import { resolve } from "node:path";
+import { argv } from "node:process";
 import { log } from "node:console";
 
 import { configFilePathNotFound, prettyPrintStringArray } from "@common/logs";
 import { defaultPathsForConfig, findPathOrExit } from "@common/findPathOrExit";
 import { blue, bold, green, yellow } from "@utils/cli-colors";
-import { logDbg, stringifyJson } from "@utils/debug";
+import { dbg, stringifyJson } from "@utils/debug";
 import { makeConfigProps } from "@common/config";
-import { hmrElectronLog } from "@utils/consoleMsgs";
+import { hmrElectronLog } from "@common/logs";
 import { readConfigFile } from "@common/readConfigFile";
 import { cleanCache } from "@commands/cleanCache";
 import { runBuild } from "@commands/runBuild";
@@ -74,7 +75,7 @@ export async function parseCliArgs(): Promise<void> {
 	printHelpMsg();
 
 	hmrElectronLog(
-		`No commands matched. Args = ${prettyPrintStringArray(process.argv)}`,
+		`No commands matched. Args = ${prettyPrintStringArray(argv)}`,
 	);
 }
 
@@ -84,10 +85,9 @@ export async function parseCliArgs(): Promise<void> {
 // Helper functions:
 
 function usefullArgs(): string[] {
-	const args = process.argv;
-	const reversedArgs = args.slice().reverse();
+	const reversedArgs = argv.slice().reverse();
 
-	logDbg(`Original args = ${prettyPrintStringArray(args)}`);
+	dbg(`Original args = ${prettyPrintStringArray(argv)}`);
 
 	let indexToSliceFrom = 0;
 	for (const arg of reversedArgs) {
@@ -99,8 +99,8 @@ function usefullArgs(): string[] {
 		break;
 	}
 
-	const argsToUse = args.slice(indexToSliceFrom + 1);
-	logDbg(`Modified args = ${prettyPrintStringArray(argsToUse)}`);
+	const argsToUse = argv.slice(indexToSliceFrom + 1);
+	dbg(`Modified args = ${prettyPrintStringArray(argsToUse)}`);
 
 	return argsToUse;
 }
@@ -119,7 +119,7 @@ function argsAsObj(args: string[]): Record<string, string | boolean> {
 		else obj[key] = value;
 	});
 
-	logDbg("argsAsObj =", stringifyJson(obj));
+	dbg("argsAsObj =", stringifyJson(obj));
 
 	return obj;
 }

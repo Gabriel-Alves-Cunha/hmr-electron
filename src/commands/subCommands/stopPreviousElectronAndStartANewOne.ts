@@ -2,12 +2,13 @@ import type { ConfigProps } from "types/config";
 
 import { type ChildProcess, spawn } from "node:child_process";
 import { Transform } from "node:stream";
+import { kill, exit } from "node:process";
 
-import { prettyPrintStringArray, throwPrettyError } from "@common/logs";
-import { hmrElectronLog } from "@utils/consoleMsgs";
+import { prettyPrintStringArray } from "@common/logs";
+import { hmrElectronLog } from "@common/logs";
 import { removeJunkLogs } from "@utils/removeJunkLogs";
-import { logDbg } from "@utils/debug";
 import { gray } from "@utils/cli-colors";
+import { dbg } from "@utils/debug";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -19,20 +20,23 @@ export function stopPreviousElectronAndStartANewOne(
 		electronEnviromentVariables: env,
 		devBuildElectronEntryFilePath,
 		electronOptions,
-		silent = false,
 		isTest = false,
 	}: StartElectronProps,
 ): Readonly<ChildProcess> {
-	logDbg(
-		"hmr-electron memory usage:",
-		process.memoryUsage(),
-		"\nresource usage:",
-		process.resourceUsage(),
-	);
+	// TODO: make sure mem usage is ok!
+	// logDbg(
+	// 	"hmr-electron memory usage:",
+	// 	process.memoryUsage(),
+	// 	"\nresource usage:",
+	// 	process.resourceUsage(),
+	// );
+	///////////////////////////////////////////
 
 	killPreviousElectronProcesses();
 
-	const electronProcess = spawn(
+	///////////////////////////////////////////
+
+	const electron_process = spawn(
 		"electron",
 		isTest ? [""] : [
 			...electronOptions,
@@ -40,22 +44,16 @@ export function stopPreviousElectronAndStartANewOne(
 		],
 		{ env },
 	)
-		.on("exit", (code, signal) => {
-			code !== 0 && throwPrettyError(
-				`Electron exited with code: ${code}, signal: ${signal}.`,
-			);
+		.on("exit", code => {
+			previousElectronProcesses.delete(electron_process.pid as number);
 
-			process.exitCode = code ?? 0; // This will kill hmr-electron.
-		})
-		.on("error", err => {
-			throwPrettyError(
-				`Error from child_process running Electron: ${err.message}`,
-			);
+			// If the user closes the Electron window, we should kill "hmr-electron":
+			code === 0 && exit(0);
 		})
 		.on("spawn", () => {
 			previousElectronProcesses.set(
-				electronProcess.pid as number,
-				electronProcess,
+				electron_process.pid as number,
+				electron_process,
 			);
 
 			hmrElectronLog(
@@ -63,30 +61,30 @@ export function stopPreviousElectronAndStartANewOne(
 					"Electron process has been spawned!",
 				),
 			);
-			logDbg(
+			dbg(
 				`Electron child process has been spawned with args: ${
-					prettyPrintStringArray(electronProcess.spawnargs)
+					prettyPrintStringArray(electron_process.spawnargs)
 				}`,
 			);
 		});
 
-	if (!silent) {
-		const removeElectronLoggerJunkOutput = new Transform(
-			removeJunkLogs,
-		);
-		const removeElectronLoggerJunkErrors = new Transform(
-			removeJunkLogs,
-		);
+	///////////////////////////////////////////
+	///////////////////////////////////////////
 
-		electronProcess.stdout.pipe(removeElectronLoggerJunkOutput).pipe(
-			process.stdout,
-		);
-		electronProcess.stderr.pipe(removeElectronLoggerJunkErrors).pipe(
-			process.stderr,
-		);
-	}
+	const removeElectronLoggerJunkOutput = new Transform(removeJunkLogs);
+	const removeElectronLoggerJunkErrors = new Transform(removeJunkLogs);
 
-	return electronProcess;
+	electron_process.stdout.pipe(removeElectronLoggerJunkOutput).pipe(
+		process.stdout,
+	);
+	electron_process.stderr.pipe(removeElectronLoggerJunkErrors).pipe(
+		process.stderr,
+	);
+
+	///////////////////////////////////////////
+	///////////////////////////////////////////
+
+	return electron_process;
 }
 
 ///////////////////////////////////////////
@@ -102,15 +100,12 @@ const previousElectronProcesses: Map<number, ChildProcess> = new Map();
 // Helper functions:
 
 function killPreviousElectronProcesses(): void {
-	previousElectronProcesses.forEach((electronProcess, pid) => {
-		if (electronProcess.killed) previousElectronProcesses.delete(pid);
-
-		electronProcess.removeAllListeners();
-		logDbg(
-			"electron child process listeners names:",
-			electronProcess.eventNames(),
-		);
-		process.kill(pid, 0);
+	previousElectronProcesses.forEach((_electron_process, pid) => {
+		try {
+			kill(pid);
+		} catch (e) {
+			hmrElectronLog("Error when killing process:", e);
+		}
 	});
 }
 
@@ -119,12 +114,7 @@ function killPreviousElectronProcesses(): void {
 ///////////////////////////////////////////
 // Types:
 
-export type StartElectronProps = Readonly<
-	ConfigProps & {
-		silent?: boolean;
-		isTest?: boolean;
-	}
->;
+export type StartElectronProps = Readonly<ConfigProps & { isTest?: boolean; }>;
 
 ///////////////////////////////////////////
 

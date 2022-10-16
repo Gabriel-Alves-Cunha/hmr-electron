@@ -14,6 +14,5 @@ export function getPrettyDate(): string {
 	);
 }
 
-function pad(num: number, padding = 2): string {
-	return num.toString().padStart(padding, "0");
-}
+const pad = (num: number, padding = 2): string =>
+	num.toString().padStart(padding, "0");

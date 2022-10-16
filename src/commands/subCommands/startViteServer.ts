@@ -4,10 +4,10 @@ import type { ConfigProps } from "types/config";
 import { createServer } from "vite";
 
 import { viteBuildOptions, viteESbuildOptions } from "./runViteBuild";
+import { logConfig, stringifyJson } from "@utils/debug";
 import { bold, green, underline } from "@utils/cli-colors";
-import { logDbg, stringifyJson } from "@utils/debug";
 import { viteLoggerPlugin } from "@plugins/viteLoggerPlugin";
-import { viteLog } from "@utils/consoleMsgs";
+import { viteLog } from "@common/logs";
 
 export async function startViteServer(config: ConfigProps): Promise<void> {
 	const server = await (await createServer({
@@ -26,7 +26,7 @@ export async function startViteServer(config: ConfigProps): Promise<void> {
 	}))
 		.listen();
 
-	logDbg("Vite server config =", stringifyJson(server.config));
+	logConfig("Vite server config =", stringifyJson(server.config));
 
 	const { address, port } = server.httpServer!.address() as AddressInfo;
 

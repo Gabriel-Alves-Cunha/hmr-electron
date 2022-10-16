@@ -1,3 +1,5 @@
+import { log } from "node:console";
+
 import { getPrettyDate } from "@utils/getPrettyDate";
 import {
 	underline,
@@ -45,17 +47,33 @@ export function viteConfigFileNotFound(cwd: string): () => never {
 }
 
 export function throwPrettyError(msg: any): never {
-	throw new Error(
-		red(`
-${borderY}
+	msg = `
+${red(borderY)}
 ${getPrettyDate()} ${msg}
-${borderY}
-`),
-	);
+${red(borderY)}
+`;
+
+	throw new Error(msg);
 }
 
 export function prettyPrintStringArray<T>(arr: readonly T[]): string {
 	const arrayItems = arr.map(item => green(`"${item}"`)).join(", ");
 
 	return `[ ${arrayItems} ]`;
+}
+
+export function hmrElectronLog(...args: unknown[]): void {
+	log(
+		getPrettyDate(),
+		hmrElectronConsoleMessagePrefix,
+		...args,
+	);
+}
+
+export function viteLog(...args: unknown[]): void {
+	log(
+		getPrettyDate(),
+		viteConsoleMessagePrefix,
+		...args,
+	);
 }

@@ -2,11 +2,11 @@
 
 __hmr-electron__ is a Typescript package to ease the development of an app with *__Electron + Vite__*.
 
-## Instalation
+## Installation
 
-Use your prefered package manager to install:
+Use your preferred package manager to install:
 
-``` bash
+``` sh
 yarn add --dev hmr-electron
 ```
 
@@ -50,7 +50,7 @@ Set scripts on your __*__package.json__*__
 
 Once you've cloned the repo, make use of the demo package inside '/tests/full/demo' by linking to main package:
 
-``` bash
+``` sh
 # On the repo:
 yarn link
 
@@ -60,9 +60,9 @@ yarn link "hmr-electron"`
 
 This will create a symlink named *__demo/node_modules/hmr-electron__* that links to your local copy of the *__hmr-electron__* project.
 
-This way, you'll only need to do `yarn build` on every change that you make and run the demo project, as it will use the newest build.
+This way, you'll only need to do a `yarn build` on every change that you make and run the demo project, as it will use the newest build.
 
-> You can also contribute by creating tests 😃. This project uses [vitest](https://vitest.dev/), so it's a great developer experience 💙💙! Just run `yarn test`.
+> You can also contribute by creating tests 😃. This project uses [vitest](https://vitest.dev/), so it's a fast developer experience 💙💙! Just run `yarn test`.
 
 ## License
 

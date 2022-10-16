@@ -9,9 +9,8 @@ import { borderY, magenta } from "@utils/cli-colors";
 ///////////////////////////////////////////
 // Main function:
 
-export function diagnoseErrors(errors: CompileError[]): void {
+export const diagnoseErrors = (errors: CompileError[]): void =>
 	error(formatDiagnosticsMessage(errors));
-}
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////

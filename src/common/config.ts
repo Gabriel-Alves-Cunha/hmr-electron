@@ -1,22 +1,30 @@
 import type { ConfigProps, UserProvidedConfigProps } from "types/config";
 
+import { builtinModules } from "node:module";
 import { join, resolve } from "node:path";
 import { log, error } from "node:console";
 import { existsSync } from "node:fs";
+import { env } from "node:process";
 
-import { fileNotFound, throwPrettyError } from "./logs";
-import { logDbg, stringifyJson } from "@utils/debug";
-import { builtinModules } from "node:module";
+import { fileNotFound, throwPrettyError } from "@common/logs";
+import { logConfig, stringifyJson } from "@utils/debug";
 
 // TODO: make use of findPathOrExit() with default places.
 export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 	const {
 		electronOptions = [
+			"--disallow-code-generation-from-strings",
+			"--pending-deprecation",
+			"--verify-base-objects",
 			"--enable-source-maps",
-			"--node-memory-debug",
-			"--trace-warnings",
+			"--trace-deprecation",
+			"--throw-deprecation",
+			"--frozen-intrinsics",
 			"--trace-uncaught",
 			"--trace-warnings",
+			"--deprecation",
+			"--v8-options",
+			"--warnings",
 			"--inspect",
 		],
 		electronEnviromentVariables = {},
@@ -26,14 +34,17 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 
 	///////////////////////////////////////////////
 
-	Object.assign(electronEnviromentVariables, process.env, { FORCE_COLOR: "2" });
+	Object.assign(electronEnviromentVariables, env, { FORCE_COLOR: "2" });
 
 	///////////////////////////////////////////////
 
 	const electronEsbuildExternalPackages =
-		props.electronEsbuildExternalPackages ?
-			props.electronEsbuildExternalPackages.concat(allBuiltinModules) :
-			allBuiltinModules;
+		(props.electronEsbuildExternalPackages ?? []).concat(
+			allBuiltinModules,
+			"electron",
+			"esbuild",
+			"vite",
+		);
 
 	///////////////////////////////////////////////
 
@@ -161,30 +172,29 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 	///////////////////////////////////////////////
 	// Validate if the files exist:
 
-	let exit = false;
+	let doExit = false;
 
 	Object.entries(props).forEach(([key, filePath]) => {
 		if (
 			!key ||
 			!filePath ||
-			Array.isArray(filePath) ||
-			typeof filePath === "object" ||
+			typeof filePath !== "string" ||
 			except.includes(key)
 		)
 			return;
 
 		if (!existsSync(filePath)) {
 			error(fileNotFound(key, filePath));
-			exit = true;
+			doExit = true;
 		}
 	});
 
-	if (exit) {
+	if (doExit) {
 		log("Resolved config props:", stringifyJson(props));
 		throwPrettyError("Resolve the errors above and try again.");
 	}
 
-	logDbg("Resolved config props:", newProps);
+	logConfig("Resolved config props:", newProps);
 
 	return newProps;
 }

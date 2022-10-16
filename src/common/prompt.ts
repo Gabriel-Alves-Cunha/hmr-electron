@@ -1,4 +1,4 @@
-import { createInterface } from "node:readline";
+import { stdin, stdout } from "node:process";
 
 import { getPrettyDate } from "@utils/getPrettyDate";
 import { gray } from "@utils/cli-colors";
@@ -10,28 +10,26 @@ export async function askYesNo(
 	yesValues = yesValues?.map(v => v.toLowerCase()) ?? yes;
 	noValues = noValues?.map(v => v.toLowerCase()) ?? no;
 
-	const readline = createInterface({
-		output: process.stdout,
-		input: process.stdin,
-	});
+	const stopPromptFn: StopPromptFn = () => stdin.end();
 
-	const stopPromptFn: StopPromptFn = () => readline.close();
+	stdout.write(question);
 
 	const readAnswerFn = () =>
 		new Promise<boolean>(resolve => {
-			readline.question(question, async answer => {
-				readline.close();
+			stdin.on("data", data => {
+				const cleaned = data.toString().trim().toLowerCase();
 
-				const cleaned = answer.trim().toLowerCase();
-
-				if (cleaned === "")
+				if (cleaned === "" || (yesValues as string[]).includes(cleaned)) {
+					stdin.end();
 					return resolve(true);
+				}
 
-				if (yesValues.includes(cleaned))
-					return resolve(true);
-
-				if (noValues.includes(cleaned))
+				if ((noValues as string[]).includes(cleaned)) {
+					stdin.end();
 					return resolve(false);
+				}
+
+				stdout.write(question);
 			});
 		});
 
@@ -64,6 +62,6 @@ export type StopPromptFn = () => void;
 
 ///////////////////////////////////////////
 
-type AskYesNoProps = Handler & {
+interface AskYesNoProps extends Handler {
 	onInvalidAnswer?: (props: Required<Handler>) => void;
-};
+}

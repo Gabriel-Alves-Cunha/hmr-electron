@@ -12,59 +12,56 @@ const times = 5;
 describe("testing runElectron()", () => {
 	it("should run electron correctly synchronously", async () => {
 		const processList: ChildProcess[] = [];
-		let stopFn = () => {};
 
 		for (let i = 0; i < times; ++i) {
-			stopFn();
-
-			const childProcess = stopPreviousElectronAndStartANewOne({
-				silent: true,
+			const electronProcess = stopPreviousElectronAndStartANewOne({
 				isTest: true,
 				...config,
 			});
 
-			processList.push(childProcess);
+			processList.push(electronProcess);
+			await sleep(200); // Wait for process to be born.
+
+			// The most recent one must be the only one alive!!
+			if (i > 0) {
+				const previous = processList[i - 1];
+				const mostRecent = processList[i];
+
+				expect(mostRecent).toBeTruthy();
+				expect(previous).toBeTruthy();
+
+				expect(processExists(mostRecent?.pid)).toBe(true);
+				expect(processExists(previous?.pid)).toBe(false);
+			}
 		}
-
-		await sleep(200);
-
-		for (const [index, childProcess] of processList.entries()) {
-			if (index + 1 < times)
-				expect(await processExists(childProcess.pid)).toBe(false);
-			else
-				expect(await processExists(childProcess.pid)).toBe(true);
-		}
-
-		stopFn();
 	});
 
 	it("should run electron correctly concurrently", async () => {
 		const processList: ChildProcess[] = [];
-		expect.assertions(times);
 
-		return new Promise<void>(async resolve => {
-			for (let i = 0; i < times; ++i) {
-				const childProcess = stopPreviousElectronAndStartANewOne({
-					silent: true,
-					isTest: true,
-					...config,
-				});
+		for (let i = 0; i < times; ++i) {
+			const electronProcess = stopPreviousElectronAndStartANewOne({
+				isTest: true,
+				...config,
+			});
 
-				processList.push(childProcess);
+			processList.push(electronProcess);
+			await sleep(200); // Wait for process to be born.
 
-				if (i + 1 === times) {
-					await sleep(2_000);
+			// The most recent one must be the only one alive!!
+			if (i > 0) {
+				const previous = processList[i - 1];
+				const mostRecent = processList[i];
 
-					for (const [index, childProcess] of processList.entries()) {
-						if (index + 1 < times)
-							expect(await processExists(childProcess.pid)).toBe(false);
-						else
-							expect(await processExists(childProcess.pid)).toBe(true);
-					}
+				expect(mostRecent).toBeTruthy();
+				expect(previous).toBeTruthy();
 
-					resolve();
-				}
+				expect(processExists(mostRecent?.pid)).toBe(true);
+				expect(processExists(previous?.pid)).toBe(false);
 			}
-		});
+		}
+
+		const last = processList.at(-1);
+		last?.kill();
 	});
 });

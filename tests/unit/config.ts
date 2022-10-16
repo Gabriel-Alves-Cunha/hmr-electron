@@ -1,13 +1,16 @@
 import type { ConfigProps } from "types/config";
 
+import { env } from "node:process";
+
 export const config: ConfigProps = {
+	electronEsbuildExternalPackages: [],
 	devBuildElectronEntryFilePath:
 		"/home/gabriel/Documents/VSCode/my_projects/hmr-electron/tests/full/demo/dev-build/main/index.cjs",
 	devBuildMainOutputPath:
 		"/home/gabriel/Documents/VSCode/my_projects/hmr-electron/tests/full/demo/dev-build/main/",
 	electronEnviromentVariables: {
 		FORCE_COLOR: "2",
-		...process.env,
+		...env,
 	},
 	devBuildRendererOutputPath:
 		"/home/gabriel/Documents/VSCode/my_projects/hmr-electron/tests/full/demo/dev-build/renderer",
