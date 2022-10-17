@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { resolve } from "node:path";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -8,15 +8,15 @@ import { join } from "node:path";
 
 export function findPathOrExit(
 	defaultPaths: string[],
-	notFoundMessage: () => Error,
+	notFoundMessage: () => never,
 ): string {
 	for (const defaultPlace of defaultPaths) {
-		const path = join(process.cwd(), defaultPlace);
+		const fullPath = resolve(defaultPlace);
 
-		if (existsSync(path)) return path;
+		if (existsSync(fullPath)) return fullPath;
 	}
 
-	throw notFoundMessage();
+	notFoundMessage();
 }
 
 ///////////////////////////////////////////
@@ -62,32 +62,4 @@ export const defaultPathsForViteConfigFile = [
 	"./vite.config.cjs",
 	"./vite.config.mjs",
 	"./vite.config.js",
-];
-
-///////////////////////////////////////////
-
-export const entryFileDefaultPlaces = [
-	"./src/main/index.cjs",
-	"./src/main/index.mjs",
-	"./src/main/index.js",
-
-	"./src/main/index.cts",
-	"./src/main/index.mts",
-	"./src/main/index.ts",
-
-	"./src/index.cjs",
-	"./src/index.mjs",
-	"./src/index.js",
-
-	"./src/index.cts",
-	"./src/index.mts",
-	"./src/index.ts",
-
-	"./index.cjs",
-	"./index.mjs",
-	"./index.js",
-
-	"./index.cts",
-	"./index.mts",
-	"./index.ts",
 ];

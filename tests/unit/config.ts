@@ -14,8 +14,6 @@ export const config: ConfigProps = {
 	},
 	devBuildRendererOutputPath:
 		"/home/gabriel/Documents/VSCode/my_projects/hmr-electron/tests/full/demo/dev-build/renderer",
-	preloadSourceMapFilePath:
-		"/home/gabriel/Documents/VSCode/my_projects/hmr-electron/tests/full/demo/dev-build/main/preload.cjs.map",
 	buildRendererOutputPath:
 		"/home/gabriel/Documents/VSCode/my_projects/hmr-electron/tests/full/demo/build/renderer",
 	electronEntryFilePath:
@@ -50,6 +48,6 @@ export const config: ConfigProps = {
 		"/home/gabriel/Documents/VSCode/my_projects/hmr-electron/tests/full/demo/src/main",
 	srcPath:
 		"/home/gabriel/Documents/VSCode/my_projects/hmr-electron/tests/full/demo/src",
-	cwd:
+	root:
 		"/home/gabriel/Documents/VSCode/my_projects/hmr-electron/tests/full/demo",
 };

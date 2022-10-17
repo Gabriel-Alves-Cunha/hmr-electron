@@ -1,13 +1,13 @@
 import type { CompileError } from "@common/compileError";
 import type { ConfigProps } from "types/config";
 
-import { type BuildFailure, build } from "esbuild";
+import { type BuildFailure, build as buildEsbuild } from "esbuild";
 import { error } from "node:console";
 
+import { stopPreviousElectronAndStartANewOne } from "@commands/subCommands/stopPreviousElectronAndStartANewOne";
 import { ignoreDirectoriesAndFilesPlugin } from "@plugins/ignoreDirectoriesAndFilesPlugin";
 import { getRelativeFilePath } from "@utils/getRelativeFilePath";
 import { hmrElectronLog } from "@common/logs";
-import { dirDbg } from "@utils/debug";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -17,7 +17,6 @@ import { dirDbg } from "@utils/debug";
 export async function runEsbuildForMainProcess(
 	props: BuildProps,
 	onError: (errors: CompileError[]) => void,
-	onBuildComplete: (config: ConfigProps, isWatch: boolean) => void,
 ): Promise<void> {
 	const entryPoints = [props.electronEntryFilePath];
 
@@ -28,19 +27,14 @@ export async function runEsbuildForMainProcess(
 			`Using preload file: "${
 				getRelativeFilePath(
 					props.preloadFilePath,
-					props.cwd,
+					props.root,
 				)
 			}".`,
 		);
 	}
 
-	dirDbg(
-		"props.electronEsbuildExternalPackages: ",
-		props.electronEsbuildExternalPackages,
-	);
-
 	try {
-		const buildResult = await build({
+		const buildResult = await buildEsbuild({
 			plugins: [
 				ignoreDirectoriesAndFilesPlugin([
 					/node_modules/,
@@ -54,13 +48,13 @@ export async function runEsbuildForMainProcess(
 			outExtension: { ".js": ".cjs" },
 			minify: props.isBuild,
 			sourcesContent: false,
+			sourcemap: "external",
 			incremental: false,
 			treeShaking: true,
 			logLevel: "info",
 			platform: "node",
 			target: "esnext",
 			charset: "utf8",
-			sourcemap: true,
 			metafile: true,
 			format: "cjs",
 			bundle: true,
@@ -71,22 +65,22 @@ export async function runEsbuildForMainProcess(
 
 			watch: props.isBuild ? false : {
 				onRebuild: async (error, result) => {
-					if (result?.outputFiles)
-						hmrElectronLog("Esbuild build outputFiles:\n", result.outputFiles);
-
 					if (error) return onError(transformErrors(error));
 
-					onBuildComplete(props, true);
+					if (result?.errors)
+						hmrElectronLog("Esbuild build errors:\n", result.errors);
+
+					stopPreviousElectronAndStartANewOne(props);
 				},
 			},
 
 			...props.esbuildConfig,
 		});
 
-		if (buildResult.outputFiles)
-			hmrElectronLog("Esbuild build outputFiles:\n", buildResult.outputFiles);
+		if (buildResult.errors.length)
+			hmrElectronLog("Esbuild build errors:\n", buildResult.errors);
 
-		onBuildComplete(props, false);
+		stopPreviousElectronAndStartANewOne(props);
 	} catch (err) {
 		isBuildFailure(err) ?
 			onError(transformErrors(err)) :

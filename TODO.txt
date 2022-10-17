@@ -2,4 +2,4 @@
 
 * add ignore to config.
 
-* cant get .js.map to load...
+* cant get .js.map to load... Maybe make source map be on the same file!

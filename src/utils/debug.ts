@@ -23,8 +23,7 @@ const options = {
 /////////////////////////////////////////////////
 
 export function dirDbg(...args: unknown[]): void {
-	doLogDebug &&
-		dir(args, options);
+	doLogDebug && dir(args, options);
 }
 /////////////////////////////////////////////////
 

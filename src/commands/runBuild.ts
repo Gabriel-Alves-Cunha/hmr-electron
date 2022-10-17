@@ -14,7 +14,6 @@ export async function runBuild(config: ConfigProps): Promise<void> {
 		await runEsbuildForMainProcess(
 			{ ...config, isBuild: true },
 			diagnoseErrors,
-			() => {},
 		),
 
 		await runViteBuild(config),

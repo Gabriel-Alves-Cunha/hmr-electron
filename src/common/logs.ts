@@ -18,13 +18,6 @@ export const hmrElectronConsoleMessagePrefix = bgYellow(
 	bold(black("[hmr-electron]")),
 );
 
-export function entryFilePathNotFound(path: string | undefined): () => never {
-	return () =>
-		throwPrettyError(
-			`${underline("entryFilePath")} not found. Received: ${blue(path)}`,
-		);
-}
-
 export function configFilePathNotFound(): never {
 	throwPrettyError(
 		`No config file (${underline("'hmr-electron.config.ts'")}) found.`,
@@ -37,13 +30,10 @@ export function fileNotFound(file: string, path: string | undefined): string {
 	}`;
 }
 
-export function viteConfigFileNotFound(cwd: string): () => never {
-	return () =>
-		throwPrettyError(
-			`Vite config file for main process in "${cwd}" ${
-				underline("NOT")
-			} found.`,
-		);
+export function viteConfigFileNotFound(): never {
+	throwPrettyError(
+		`Vite config file for main process ${underline("NOT")} found.`,
+	);
 }
 
 export function throwPrettyError(msg: any): never {

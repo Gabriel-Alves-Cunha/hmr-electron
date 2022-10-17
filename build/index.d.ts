@@ -3,7 +3,6 @@ import type { BuildOptions } from "esbuild";
 declare module "hmr-electron";
 
 export declare type UserProvidedConfigProps = {
-	preloadSourceMapFilePath?: string | undefined;
 	preloadFilePath?: string | undefined;
 
 	buildRendererOutputPath?: string;
@@ -35,5 +34,5 @@ export declare type UserProvidedConfigProps = {
 	electronEntryFilePath: string;
 	electronOptions?: string[];
 
-	cwd?: string;
+	root?: string;
 };

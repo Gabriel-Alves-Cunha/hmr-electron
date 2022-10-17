@@ -4,32 +4,42 @@ import { builtinModules } from "node:module";
 import { join, resolve } from "node:path";
 import { log, error } from "node:console";
 import { existsSync } from "node:fs";
-import { env } from "node:process";
+import { cwd, env } from "node:process";
 
-import { fileNotFound, throwPrettyError } from "@common/logs";
 import { logConfig, stringifyJson } from "@utils/debug";
+import {
+	defaultPathsForViteConfigFile,
+	findPathOrExit,
+} from "./findPathOrExit";
+import {
+	viteConfigFileNotFound,
+	throwPrettyError,
+	fileNotFound,
+} from "@common/logs";
 
-// TODO: make use of findPathOrExit() with default places.
 export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 	const {
 		electronOptions = [
 			"--disallow-code-generation-from-strings",
 			"--pending-deprecation",
 			"--verify-base-objects",
+			"--track-heap-objects",
 			"--enable-source-maps",
 			"--trace-deprecation",
 			"--throw-deprecation",
 			"--frozen-intrinsics",
 			"--trace-uncaught",
 			"--trace-warnings",
+			"--trace-sync-io",
 			"--deprecation",
 			"--v8-options",
+			"--trace-tls",
 			"--warnings",
 			"--inspect",
 		],
 		electronEnviromentVariables = {},
-		cwd = process.cwd(),
 		esbuildConfig = {},
+		root = cwd(),
 	} = props;
 
 	///////////////////////////////////////////////
@@ -48,7 +58,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 
 	///////////////////////////////////////////////
 
-	const srcPath = props.srcPath ? resolve(props.srcPath) : join(cwd, "src");
+	const srcPath = resolve(props.srcPath ?? "src");
 
 	const mainPath = props.mainPath ?
 		resolve(props.mainPath) :
@@ -56,19 +66,17 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 
 	const rendererPath = props.rendererPath ?
 		resolve(props.rendererPath) :
-		join(srcPath, "renderer");
+		join(srcPath, renderer);
 
 	///////////////////////////////////////////////
 
-	const devOutputPath = props.devOutputPath ?
-		resolve(props.devOutputPath) :
-		join(cwd, "dev-build");
+	const devOutputPath = resolve(props.devOutputPath ?? "dev-build");
 
 	const devBuildMainOutputPath = props.devBuildMainOutputPath ?
 		resolve(props.devBuildMainOutputPath) :
 		join(devOutputPath, main);
 
-	const devBuildRendererOutputPath = join(devOutputPath, "renderer");
+	const devBuildRendererOutputPath = join(devOutputPath, renderer);
 
 	const devBuildElectronEntryFilePath = props.devBuildElectronEntryFilePath ?
 		resolve(props.devBuildElectronEntryFilePath) :
@@ -80,13 +88,6 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 		resolve(props.preloadFilePath) :
 		undefined;
 
-	let preloadSourceMapFilePath: string | undefined;
-	if (props.preloadFilePath) {
-		preloadSourceMapFilePath = props.preloadSourceMapFilePath ?
-			resolve(props.preloadSourceMapFilePath) :
-			join(devOutputPath, main, "preload.cjs.map");
-	}
-
 	///////////////////////////////////////////////
 
 	const rendererTSconfigPath = props.rendererTSconfigPath ?
@@ -97,33 +98,25 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 		resolve(props.mainTSconfigPath) :
 		join(mainPath, tsconfigJson);
 
-	const baseTSconfigPath = props.baseTSconfigPath ?
-		resolve(props.baseTSconfigPath) :
-		join(cwd, tsconfigJson);
+	const baseTSconfigPath = resolve(props.baseTSconfigPath ?? tsconfigJson);
 
 	///////////////////////////////////////////////
 
-	const nodeModulesPath = props.nodeModulesPath ?
-		resolve(props.nodeModulesPath) :
-		join(cwd, "./node_modules");
+	const nodeModulesPath = resolve(props.nodeModulesPath ?? "./node_modules");
 
 	const viteConfigPath = props.viteConfigPath ?
 		resolve(props.viteConfigPath) :
-		join(cwd, "vite.config.ts");
+		findPathOrExit(defaultPathsForViteConfigFile, viteConfigFileNotFound);
 
-	const packageJsonPath = props.packageJsonPath ?
-		resolve(props.packageJsonPath) :
-		join(cwd, "package.json");
+	const packageJsonPath = resolve(props.packageJsonPath ?? "package.json");
 
 	///////////////////////////////////////////////
 
-	const buildOutputPath = props.buildOutputPath ?
-		resolve(props.buildOutputPath) :
-		join(cwd, "build");
+	const buildOutputPath = resolve(props.buildOutputPath ?? "build");
 
 	const buildRendererOutputPath = props.buildRendererOutputPath ?
 		resolve(props.buildRendererOutputPath) :
-		join(buildOutputPath, "renderer");
+		join(buildOutputPath, renderer);
 
 	const buildMainOutputPath = props.buildMainOutputPath ?
 		resolve(props.buildMainOutputPath) :
@@ -145,7 +138,6 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 		devBuildElectronEntryFilePath,
 		electronEnviromentVariables,
 		devBuildRendererOutputPath,
-		preloadSourceMapFilePath,
 		buildRendererOutputPath,
 		devBuildMainOutputPath,
 		electronEntryFilePath,
@@ -165,7 +157,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 		rendererPath,
 		mainPath,
 		srcPath,
-		cwd,
+		root,
 	};
 
 	///////////////////////////////////////////////
@@ -220,4 +212,5 @@ const allBuiltinModules = builtinModulesWithNode.concat(builtinModules);
 ///////////////////////////////////////////////
 
 const tsconfigJson = "tsconfig.json";
+const renderer = "renderer";
 const main = "main";

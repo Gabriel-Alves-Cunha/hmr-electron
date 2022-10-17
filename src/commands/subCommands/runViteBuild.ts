@@ -2,16 +2,16 @@ import type { BuildOptions, ESBuildOptions } from "vite";
 import type { CommonOptions } from "esbuild";
 import type { ConfigProps } from "types/config";
 
-import { build as viteBuild } from "vite";
+import { build as buildVite } from "vite";
 
 import { supported } from "@commands/esbuild";
 
 export async function runViteBuild(config: ConfigProps): Promise<void> {
 	const isBuild = true;
 
-	await viteBuild({
-		build: viteBuildOptions(config, isBuild),
-		esbuild: viteESbuildOptions(),
+	await buildVite({
+		build: defaultViteBuildOptions(config, isBuild),
+		esbuild: defaultViteESbuildOptions(),
 		css: { devSourcemap: true },
 		mode: "production",
 		logLevel: "info",
@@ -25,7 +25,7 @@ export async function runViteBuild(config: ConfigProps): Promise<void> {
 ///////////////////////////////////////////
 // Helper functions:
 
-export const viteBuildOptions = (
+export const defaultViteBuildOptions = (
 	config: ConfigProps,
 	isBuild: boolean,
 ): BuildOptions => ({
@@ -34,9 +34,10 @@ export const viteBuildOptions = (
 		config.devBuildRendererOutputPath,
 	chunkSizeWarningLimit: 1_000,
 	reportCompressedSize: false,
+	sourcemap: "inline",
+	emptyOutDir: true,
 	minify: "esbuild",
 	target: "esnext",
-	sourcemap: true,
 
 	rollupOptions: {
 		external: config.electronEsbuildExternalPackages,
@@ -48,7 +49,7 @@ export const viteBuildOptions = (
 			entryFileNames: "[name].[ext]",
 			chunkFileNames: "[name].[ext]",
 			minifyInternalExports: true,
-			sourcemap: true,
+			sourcemap: "inline",
 			format: "esm",
 
 			generatedCode: {
@@ -62,17 +63,17 @@ export const viteBuildOptions = (
 
 ///////////////////////////////////////////
 
-export const viteESbuildOptions = (
+export const defaultViteESbuildOptions = (
 	platform: CommonOptions["platform"] = "browser",
 ): ESBuildOptions => ({
 	minifyIdentifiers: false,
 	minifyWhitespace: false,
 	sourcesContent: false,
+	sourcemap: "external",
 	minifySyntax: false,
 	treeShaking: true,
 	target: "esnext",
 	logLevel: "info",
-	sourcemap: true,
 	charset: "utf8",
 	format: "esm",
 	logLimit: 10,

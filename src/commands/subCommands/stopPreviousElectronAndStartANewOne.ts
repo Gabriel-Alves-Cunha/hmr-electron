@@ -1,13 +1,12 @@
 import type { ConfigProps } from "types/config";
 
 import { type ChildProcess, spawn } from "node:child_process";
+import { exit, kill } from "node:process";
 import { Transform } from "node:stream";
-import { kill, exit } from "node:process";
 
 import { prettyPrintStringArray } from "@common/logs";
 import { hmrElectronLog } from "@common/logs";
 import { removeJunkLogs } from "@utils/removeJunkLogs";
-import { gray } from "@utils/cli-colors";
 import { dbg } from "@utils/debug";
 
 ///////////////////////////////////////////
@@ -44,23 +43,13 @@ export function stopPreviousElectronAndStartANewOne(
 		],
 		{ env },
 	)
-		.on("exit", code => {
-			previousElectronProcesses.delete(electron_process.pid as number);
-
-			// If the user closes the Electron window, we should kill "hmr-electron":
-			code === 0 && exit(0);
-		})
+		.on("exit", () => exit(0)) // This will kill "hmr-electron".
 		.on("spawn", () => {
 			previousElectronProcesses.set(
 				electron_process.pid as number,
 				electron_process,
 			);
 
-			hmrElectronLog(
-				gray(
-					"Electron process has been spawned!",
-				),
-			);
 			dbg(
 				`Electron child process has been spawned with args: ${
 					prettyPrintStringArray(electron_process.spawnargs)
@@ -100,8 +89,11 @@ const previousElectronProcesses: Map<number, ChildProcess> = new Map();
 // Helper functions:
 
 function killPreviousElectronProcesses(): void {
-	previousElectronProcesses.forEach((_electron_process, pid) => {
+	previousElectronProcesses.forEach((electron_process, pid) => {
 		try {
+			electron_process.removeAllListeners(); // This is very much needed. An EPIPE error always appear without it.
+			electron_process.on("exit", () => previousElectronProcesses.delete(pid));
+
 			kill(pid);
 		} catch (e) {
 			hmrElectronLog("Error when killing process:", e);

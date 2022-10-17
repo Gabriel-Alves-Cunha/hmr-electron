@@ -3,23 +3,25 @@ import type { ConfigProps } from "types/config";
 
 import { createServer } from "vite";
 
-import { viteBuildOptions, viteESbuildOptions } from "./runViteBuild";
 import { logConfig, stringifyJson } from "@utils/debug";
 import { bold, green, underline } from "@utils/cli-colors";
 import { viteLoggerPlugin } from "@plugins/viteLoggerPlugin";
 import { viteLog } from "@common/logs";
+import {
+	defaultViteESbuildOptions,
+	defaultViteBuildOptions,
+} from "./runViteBuild";
 
 export async function startViteServer(config: ConfigProps): Promise<void> {
 	const server = await (await createServer({
-		build: viteBuildOptions(config, false),
-		esbuild: viteESbuildOptions(),
+		build: defaultViteBuildOptions(config, false),
+		esbuild: defaultViteESbuildOptions(),
 		css: { devSourcemap: true },
 		mode: "development",
 		logLevel: "info",
 
 		plugins: [
-			// electronPreloadSourceMapVitePlugin(config.preloadSourceMapFilePath),
-			viteLoggerPlugin(config.srcPath),
+			viteLoggerPlugin(),
 		],
 
 		configFile: config.viteConfigPath,
