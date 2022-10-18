@@ -1,8 +1,8 @@
 import type { UserProvidedConfigProps } from "types/config";
 
+import { build as buildEsbuild } from "esbuild";
 import { existsSync, rmSync } from "node:fs";
 import { extname } from "node:path";
-import { build } from "esbuild";
 
 import { dbg, logConfig, stringifyJson } from "@utils/debug";
 import { makeTempFileWithData } from "@utils/makeTempFileWithData";
@@ -28,7 +28,8 @@ export async function readConfigFile(
 		// Transpiling from ts -> js:
 
 		if (tsExtensions.includes(extname(filePath))) {
-			const buildResult = await build({
+			// TODO: maybe make esbuild to write the file
+			const buildResult = await buildEsbuild({
 				minifyIdentifiers: false,
 				minifyWhitespace: false,
 				entryPoints: [filePath],

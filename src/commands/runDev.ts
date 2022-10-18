@@ -1,7 +1,7 @@
 import type { ConfigProps } from "types/config";
 
-import { runEsbuildForMainProcess } from "./esbuild";
-import { startViteServer } from "./subCommands/startViteServer";
+import { runEsbuildForMainProcess } from "./runEsbuildForMainProcess";
+import { startViteFrontendServer } from "./subCommands/startViteFrontendServer";
 import { diagnoseErrors } from "@common/diagnoseErrors";
 
 ///////////////////////////////////////////
@@ -9,12 +9,13 @@ import { diagnoseErrors } from "@common/diagnoseErrors";
 ///////////////////////////////////////////
 // Main function:
 
-// TODO: maybe Promise.all()?
 export async function runDev(config: ConfigProps): Promise<void> {
-	startViteServer(config);
+	await Promise.all([
+		runEsbuildForMainProcess(
+			{ ...config, isBuild: false },
+			diagnoseErrors,
+		),
 
-	runEsbuildForMainProcess(
-		{ ...config, isBuild: false },
-		diagnoseErrors,
-	);
+		startViteFrontendServer(config),
+	]);
 }

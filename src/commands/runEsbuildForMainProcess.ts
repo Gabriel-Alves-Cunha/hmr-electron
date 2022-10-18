@@ -44,11 +44,15 @@ export async function runEsbuildForMainProcess(
 				props.buildMainOutputPath :
 				props.devBuildMainOutputPath,
 			external: props.electronEsbuildExternalPackages,
+			minifyIdentifiers: props.isBuild,
 			tsconfig: props.mainTSconfigPath,
+			minifyWhitespace: props.isBuild,
 			outExtension: { ".js": ".cjs" },
+			minifySyntax: props.isBuild,
 			minify: props.isBuild,
 			sourcesContent: false,
 			sourcemap: "external",
+			legalComments: "none",
 			incremental: false,
 			treeShaking: true,
 			logLevel: "info",
@@ -80,7 +84,7 @@ export async function runEsbuildForMainProcess(
 		if (buildResult.errors.length)
 			hmrElectronLog("Esbuild build errors:\n", buildResult.errors);
 
-		stopPreviousElectronAndStartANewOne(props);
+		!props.isBuild && stopPreviousElectronAndStartANewOne(props);
 	} catch (err) {
 		isBuildFailure(err) ?
 			onError(transformErrors(err)) :

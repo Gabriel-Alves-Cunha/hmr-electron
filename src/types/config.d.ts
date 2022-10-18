@@ -13,20 +13,15 @@ export type UserProvidedConfigProps = {
 	devBuildMainOutputPath?: string;
 	devOutputPath?: string;
 
-	rendererTSconfigPath?: string;
 	mainTSconfigPath?: string;
-	baseTSconfigPath?: string;
 
-	hmrElectronPath?: string;
-	nodeModulesPath?: string;
-	packageJsonPath?: string;
 	viteConfigPath?: string;
 
-	rendererPath?: string;
 	mainPath?: string;
 	srcPath?: string;
 
 	electronEsbuildExternalPackages?: string[];
+	viteExternalPackages?: string[];
 	esbuildConfig?: BuildOptions;
 
 	electronEnviromentVariables?: NodeJS.ProcessEnv;

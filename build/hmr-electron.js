@@ -147,7 +147,6 @@ function makeConfigProps(props) {
     electronOptions = [
       "--disallow-code-generation-from-strings",
       "--pending-deprecation",
-      "--verify-base-objects",
       "--track-heap-objects",
       "--enable-source-maps",
       "--trace-deprecation",
@@ -157,7 +156,6 @@ function makeConfigProps(props) {
       "--trace-warnings",
       "--trace-sync-io",
       "--deprecation",
-      "--v8-options",
       "--trace-tls",
       "--warnings",
       "--inspect"
@@ -173,24 +171,19 @@ function makeConfigProps(props) {
     "esbuild",
     "vite"
   );
+  const viteExternalPackages = props.viteExternalPackages ?? [];
   const srcPath = resolve(props.srcPath ?? "src");
   const mainPath = props.mainPath ? resolve(props.mainPath) : join(srcPath, main);
-  const rendererPath = props.rendererPath ? resolve(props.rendererPath) : join(srcPath, renderer);
   const devOutputPath = resolve(props.devOutputPath ?? "dev-build");
   const devBuildMainOutputPath = props.devBuildMainOutputPath ? resolve(props.devBuildMainOutputPath) : join(devOutputPath, main);
   const devBuildRendererOutputPath = join(devOutputPath, renderer);
   const devBuildElectronEntryFilePath = props.devBuildElectronEntryFilePath ? resolve(props.devBuildElectronEntryFilePath) : join(devBuildMainOutputPath, "index.cjs");
   const preloadFilePath = props.preloadFilePath ? resolve(props.preloadFilePath) : void 0;
-  const rendererTSconfigPath = props.rendererTSconfigPath ? resolve(props.rendererTSconfigPath) : join(rendererPath, tsconfigJson);
   const mainTSconfigPath = props.mainTSconfigPath ? resolve(props.mainTSconfigPath) : join(mainPath, tsconfigJson);
-  const baseTSconfigPath = resolve(props.baseTSconfigPath ?? tsconfigJson);
-  const nodeModulesPath = resolve(props.nodeModulesPath ?? "./node_modules");
   const viteConfigPath = props.viteConfigPath ? resolve(props.viteConfigPath) : findPathOrExit(defaultPathsForViteConfigFile, viteConfigFileNotFound);
-  const packageJsonPath = resolve(props.packageJsonPath ?? "package.json");
   const buildOutputPath = resolve(props.buildOutputPath ?? "build");
   const buildRendererOutputPath = props.buildRendererOutputPath ? resolve(props.buildRendererOutputPath) : join(buildOutputPath, renderer);
   const buildMainOutputPath = props.buildMainOutputPath ? resolve(props.buildMainOutputPath) : join(buildOutputPath, main);
-  const hmrElectronPath = props.hmrElectronPath ? resolve(props.hmrElectronPath) : join(nodeModulesPath, "hmr-electron");
   const electronEntryFilePath = resolve(props.electronEntryFilePath);
   const newProps = {
     electronEsbuildExternalPackages,
@@ -200,20 +193,15 @@ function makeConfigProps(props) {
     buildRendererOutputPath,
     devBuildMainOutputPath,
     electronEntryFilePath,
-    rendererTSconfigPath,
+    viteExternalPackages,
     buildMainOutputPath,
-    baseTSconfigPath,
     mainTSconfigPath,
     electronOptions,
     buildOutputPath,
-    hmrElectronPath,
-    packageJsonPath,
-    nodeModulesPath,
     preloadFilePath,
     viteConfigPath,
     devOutputPath,
     esbuildConfig,
-    rendererPath,
     mainPath,
     srcPath,
     root
@@ -239,6 +227,7 @@ const except = [
   "buildRendererOutputPath",
   "buildMainOutputPath",
   "buildOutputPath",
+  "viteConfigPath",
   "devOutputPath"
 ];
 const builtinModulesWithNode = builtinModules.map((mod) => `node:${mod}`);
@@ -427,11 +416,15 @@ async function runEsbuildForMainProcess(props, onError) {
       ],
       outdir: props.isBuild ? props.buildMainOutputPath : props.devBuildMainOutputPath,
       external: props.electronEsbuildExternalPackages,
+      minifyIdentifiers: props.isBuild,
       tsconfig: props.mainTSconfigPath,
+      minifyWhitespace: props.isBuild,
       outExtension: { ".js": ".cjs" },
+      minifySyntax: props.isBuild,
       minify: props.isBuild,
       sourcesContent: false,
       sourcemap: "external",
+      legalComments: "none",
       incremental: false,
       treeShaking: true,
       logLevel: "info",
@@ -458,7 +451,7 @@ async function runEsbuildForMainProcess(props, onError) {
     });
     if (buildResult.errors.length)
       hmrElectronLog("Esbuild build errors:\n", buildResult.errors);
-    stopPreviousElectronAndStartANewOne(props);
+    !props.isBuild && stopPreviousElectronAndStartANewOne(props);
   } catch (err) {
     isBuildFailure(err) ? onError(transformErrors(err)) : error(err);
   }
@@ -522,6 +515,66 @@ const supported = {
   arrow: true
 };
 
+async function runViteFrontendBuild(config) {
+  const isBuild = true;
+  await build$1({
+    esbuild: viteESbuildOptions("browser", "esm", isBuild),
+    build: viteBuildOptions(config, "esm", isBuild),
+    css: { devSourcemap: true },
+    mode: "production",
+    logLevel: "info",
+    configFile: config.viteConfigPath
+  });
+}
+const viteBuildOptions = (config, format, isBuild) => {
+  const buildOptions = {
+    outDir: isBuild ? config.buildRendererOutputPath : config.devBuildRendererOutputPath,
+    sourcemap: isBuild ? false : "inline",
+    minify: isBuild ? "esbuild" : false,
+    chunkSizeWarningLimit: 1e3,
+    reportCompressedSize: false,
+    emptyOutDir: true,
+    target: "esnext",
+    rollupOptions: {
+      external: config.viteExternalPackages,
+      preserveEntrySignatures: "strict",
+      strictDeprecations: true,
+      output: {
+        sourcemap: isBuild ? false : "inline",
+        assetFileNames: "assets/[name].[ext]",
+        minifyInternalExports: isBuild,
+        entryFileNames: "[name].mjs",
+        chunkFileNames: "[name].mjs",
+        compact: isBuild,
+        format,
+        generatedCode: {
+          objectShorthand: true,
+          constBindings: true,
+          preset: "es2015"
+        }
+      }
+    }
+  };
+  return buildOptions;
+};
+const viteESbuildOptions = (platform, format, isBuild) => ({
+  minifyIdentifiers: isBuild,
+  minifyWhitespace: isBuild,
+  sourcesContent: false,
+  legalComments: "none",
+  sourcemap: "external",
+  minifySyntax: isBuild,
+  treeShaking: true,
+  target: "esnext",
+  logLevel: "info",
+  charset: "utf8",
+  logLimit: 10,
+  color: true,
+  supported,
+  platform,
+  format
+});
+
 const categoryMessage = red("[ERROR]");
 const border = red(borderY);
 function formatCompileError(err) {
@@ -563,93 +616,24 @@ ${magentaBorder}`;
 }
 const magentaBorder = magenta(borderY);
 
-async function runViteBuild(config) {
-  const isBuild = true;
-  await build$1({
-    build: defaultViteBuildOptions(config, isBuild),
-    esbuild: defaultViteESbuildOptions(),
-    css: { devSourcemap: true },
-    mode: "production",
-    logLevel: "info",
-    configFile: config.viteConfigPath
-  });
-}
-const defaultViteBuildOptions = (config, isBuild) => ({
-  outDir: isBuild ? config.buildRendererOutputPath : config.devBuildRendererOutputPath,
-  chunkSizeWarningLimit: 1e3,
-  reportCompressedSize: false,
-  sourcemap: "inline",
-  emptyOutDir: true,
-  minify: "esbuild",
-  target: "esnext",
-  rollupOptions: {
-    external: config.electronEsbuildExternalPackages,
-    preserveEntrySignatures: "strict",
-    strictDeprecations: true,
-    output: {
-      assetFileNames: "assets/[name].[ext]",
-      entryFileNames: "[name].[ext]",
-      chunkFileNames: "[name].[ext]",
-      minifyInternalExports: true,
-      sourcemap: "inline",
-      format: "esm",
-      generatedCode: {
-        objectShorthand: true,
-        constBindings: true,
-        preset: "es2015"
-      }
-    }
-  }
-});
-const defaultViteESbuildOptions = (platform = "browser") => ({
-  minifyIdentifiers: false,
-  minifyWhitespace: false,
-  sourcesContent: false,
-  sourcemap: "external",
-  minifySyntax: false,
-  treeShaking: true,
-  target: "esnext",
-  logLevel: "info",
-  charset: "utf8",
-  format: "esm",
-  logLimit: 10,
-  color: true,
-  supported,
-  platform
-});
-
 async function runBuild(config) {
   await Promise.all([
-    await runEsbuildForMainProcess(
+    runEsbuildForMainProcess(
       { ...config, isBuild: true },
       diagnoseErrors
     ),
-    await runViteBuild(config)
+    runViteFrontendBuild(config)
   ]);
 }
 
-function viteLoggerPlugin() {
-  const plugin = {
-    name: "hmr-logger",
-    buildEnd(err) {
-      if (err)
-        error(getPrettyDate(), viteConsoleMessagePrefix, err);
-      viteLog(green("Vite build is complete."));
-    }
-  };
-  return plugin;
-}
-
-async function startViteServer(config) {
+async function startViteFrontendServer(config) {
+  const isBuild = false;
   const server = await (await createServer({
-    build: defaultViteBuildOptions(config, false),
-    esbuild: defaultViteESbuildOptions(),
+    esbuild: viteESbuildOptions("browser", "esm", isBuild),
+    build: viteBuildOptions(config, "esm", isBuild),
     css: { devSourcemap: true },
     mode: "development",
     logLevel: "info",
-    plugins: [
-      viteLoggerPlugin()
-    ],
     configFile: config.viteConfigPath
   })).listen();
   logConfig("Vite server config =", stringifyJson(server.config));
@@ -664,11 +648,13 @@ async function startViteServer(config) {
 }
 
 async function runDev(config) {
-  startViteServer(config);
-  runEsbuildForMainProcess(
-    { ...config, isBuild: false },
-    diagnoseErrors
-  );
+  await Promise.all([
+    runEsbuildForMainProcess(
+      { ...config, isBuild: false },
+      diagnoseErrors
+    ),
+    startViteFrontendServer(config)
+  ]);
 }
 
 const name = "hmr-electron";

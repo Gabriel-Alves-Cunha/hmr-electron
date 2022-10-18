@@ -5,30 +5,32 @@ import { createServer } from "vite";
 
 import { logConfig, stringifyJson } from "@utils/debug";
 import { bold, green, underline } from "@utils/cli-colors";
-import { viteLoggerPlugin } from "@plugins/viteLoggerPlugin";
 import { viteLog } from "@common/logs";
 import {
-	defaultViteESbuildOptions,
-	defaultViteBuildOptions,
-} from "./runViteBuild";
+	viteESbuildOptions,
+	viteBuildOptions,
+} from "./runViteFrontendBuild";
 
-export async function startViteServer(config: ConfigProps): Promise<void> {
+export async function startViteFrontendServer(
+	config: ConfigProps,
+): Promise<void> {
+	const isBuild = false;
+
 	const server = await (await createServer({
-		build: defaultViteBuildOptions(config, false),
-		esbuild: defaultViteESbuildOptions(),
+		esbuild: viteESbuildOptions("browser", "esm", isBuild),
+		build: viteBuildOptions(config, "esm", isBuild),
 		css: { devSourcemap: true },
 		mode: "development",
 		logLevel: "info",
-
-		plugins: [
-			viteLoggerPlugin(),
-		],
 
 		configFile: config.viteConfigPath,
 	}))
 		.listen();
 
 	logConfig("Vite server config =", stringifyJson(server.config));
+
+	///////////////////////////////////////////
+	///////////////////////////////////////////
 
 	const { address, port } = server.httpServer!.address() as AddressInfo;
 
