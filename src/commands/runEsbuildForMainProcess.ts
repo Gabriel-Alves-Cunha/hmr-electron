@@ -5,8 +5,7 @@ import { type BuildFailure, build as buildEsbuild } from "esbuild";
 import { error } from "node:console";
 
 import { stopPreviousElectronAndStartANewOne } from "@commands/subCommands/stopPreviousElectronAndStartANewOne";
-import { ignoreDirectoriesAndFilesPlugin } from "@plugins/ignoreDirectoriesAndFilesPlugin";
-import { getRelativeFilePath } from "@utils/getRelativeFilePath";
+import { ignoreDirectoriesAndFiles } from "@plugins/ignoreDirectoriesAndFiles";
 import { hmrElectronLog } from "@common/logs";
 
 ///////////////////////////////////////////
@@ -25,10 +24,7 @@ export async function runEsbuildForMainProcess(
 
 		hmrElectronLog(
 			`Using preload file: "${
-				getRelativeFilePath(
-					props.preloadFilePath,
-					props.root,
-				)
+				props.preloadFilePath.substring(props.root.length)
 			}".`,
 		);
 	}
@@ -36,7 +32,7 @@ export async function runEsbuildForMainProcess(
 	try {
 		const buildResult = await buildEsbuild({
 			plugins: [
-				ignoreDirectoriesAndFilesPlugin([
+				ignoreDirectoriesAndFiles([
 					/node_modules/,
 				]),
 			],
@@ -59,7 +55,6 @@ export async function runEsbuildForMainProcess(
 			platform: "node",
 			target: "esnext",
 			charset: "utf8",
-			metafile: true,
 			format: "cjs",
 			bundle: true,
 			logLimit: 10,
@@ -68,11 +63,8 @@ export async function runEsbuildForMainProcess(
 			supported,
 
 			watch: props.isBuild ? false : {
-				onRebuild: async (error, result) => {
+				onRebuild(error) {
 					if (error) return onError(transformErrors(error));
-
-					if (result?.errors)
-						hmrElectronLog("Esbuild build errors:\n", result.errors);
 
 					stopPreviousElectronAndStartANewOne(props);
 				},
@@ -84,7 +76,8 @@ export async function runEsbuildForMainProcess(
 		if (buildResult.errors.length)
 			hmrElectronLog("Esbuild build errors:\n", buildResult.errors);
 
-		!props.isBuild && stopPreviousElectronAndStartANewOne(props);
+		if (!props.isBuild)
+			stopPreviousElectronAndStartANewOne(props);
 	} catch (err) {
 		isBuildFailure(err) ?
 			onError(transformErrors(err)) :
@@ -97,8 +90,8 @@ export async function runEsbuildForMainProcess(
 ///////////////////////////////////////////
 // Helper functions:
 
-const transformErrors = (error: BuildFailure): CompileError[] =>
-	error.errors.map((e): CompileError => ({
+const transformErrors = (err: BuildFailure): CompileError[] =>
+	err.errors.map((e): CompileError => ({
 		location: e.location,
 		message: e.text,
 	}));
@@ -106,7 +99,7 @@ const transformErrors = (error: BuildFailure): CompileError[] =>
 ///////////////////////////////////////////
 
 const isBuildFailure = (err: any): err is BuildFailure =>
-	err && err.errors && Array.isArray(err.errors);
+	Array.isArray(err?.errors);
 
 ///////////////////////////////////////////
 

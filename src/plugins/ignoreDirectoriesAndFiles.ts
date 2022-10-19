@@ -2,7 +2,8 @@ import type { Plugin } from "esbuild";
 
 import { hmrElectronLog } from "@common/logs";
 
-export function ignoreDirectoriesAndFilesPlugin(regexOfDirs: RegExp[]): Plugin {
+// TODO: I don't even know if this is working...
+export function ignoreDirectoriesAndFiles(regexOfDirs: RegExp[]): Plugin {
 	const plugin: Plugin = {
 		name: "ignore-directories-and-files",
 

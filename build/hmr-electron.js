@@ -147,16 +147,12 @@ function makeConfigProps(props) {
     electronOptions = [
       "--disallow-code-generation-from-strings",
       "--pending-deprecation",
-      "--track-heap-objects",
       "--enable-source-maps",
       "--trace-deprecation",
       "--throw-deprecation",
-      "--frozen-intrinsics",
       "--trace-uncaught",
       "--trace-warnings",
-      "--trace-sync-io",
       "--deprecation",
-      "--trace-tls",
       "--warnings",
       "--inspect"
     ],
@@ -363,7 +359,7 @@ function killPreviousElectronProcesses() {
   });
 }
 
-function ignoreDirectoriesAndFilesPlugin(regexOfDirs) {
+function ignoreDirectoriesAndFiles(regexOfDirs) {
   const plugin = {
     name: "ignore-directories-and-files",
     setup(build) {
@@ -392,25 +388,18 @@ const namespace = "ignore";
 const options = { filter: regexForEverything, namespace };
 const emptyString = "";
 
-function getRelativeFilePath(path, cwd) {
-  return path.substring(cwd.length);
-}
-
 async function runEsbuildForMainProcess(props, onError) {
   const entryPoints = [props.electronEntryFilePath];
   if (props.preloadFilePath) {
     entryPoints.push(props.preloadFilePath);
     hmrElectronLog(
-      `Using preload file: "${getRelativeFilePath(
-        props.preloadFilePath,
-        props.root
-      )}".`
+      `Using preload file: "${props.preloadFilePath.substring(props.root.length)}".`
     );
   }
   try {
     const buildResult = await build({
       plugins: [
-        ignoreDirectoriesAndFilesPlugin([
+        ignoreDirectoriesAndFiles([
           /node_modules/
         ])
       ],
@@ -431,7 +420,6 @@ async function runEsbuildForMainProcess(props, onError) {
       platform: "node",
       target: "esnext",
       charset: "utf8",
-      metafile: true,
       format: "cjs",
       bundle: true,
       logLimit: 10,
@@ -439,11 +427,9 @@ async function runEsbuildForMainProcess(props, onError) {
       entryPoints,
       supported,
       watch: props.isBuild ? false : {
-        onRebuild: async (error2, result) => {
+        onRebuild(error2) {
           if (error2)
             return onError(transformErrors(error2));
-          if (result?.errors)
-            hmrElectronLog("Esbuild build errors:\n", result.errors);
           stopPreviousElectronAndStartANewOne(props);
         }
       },
@@ -451,16 +437,17 @@ async function runEsbuildForMainProcess(props, onError) {
     });
     if (buildResult.errors.length)
       hmrElectronLog("Esbuild build errors:\n", buildResult.errors);
-    !props.isBuild && stopPreviousElectronAndStartANewOne(props);
+    if (!props.isBuild)
+      stopPreviousElectronAndStartANewOne(props);
   } catch (err) {
     isBuildFailure(err) ? onError(transformErrors(err)) : error(err);
   }
 }
-const transformErrors = (error2) => error2.errors.map((e) => ({
+const transformErrors = (err) => err.errors.map((e) => ({
   location: e.location,
   message: e.text
 }));
-const isBuildFailure = (err) => err && err.errors && Array.isArray(err.errors);
+const isBuildFailure = (err) => Array.isArray(err?.errors);
 const supported = {
   "arbitrary-module-namespace-names": true,
   "regexp-sticky-and-unicode-flags": true,
@@ -658,7 +645,7 @@ async function runDev(config) {
 }
 
 const name = "hmr-electron";
-const version = "0.0.4";
+const version = "0.0.5";
 
 async function parseCliArgs() {
   const args = argsAsObj(argv.slice(2));

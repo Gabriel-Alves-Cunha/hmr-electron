@@ -1,1 +1,5 @@
 * add ignore to config.
+
+* add loadEnv.
+
+* see mem usage.
