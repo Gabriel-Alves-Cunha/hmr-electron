@@ -32,6 +32,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 			"--inspect",
 		],
 		electronEnviromentVariables = {},
+		viteExternalPackages = [],
 		esbuildConfig = {},
 		root = cwd(),
 	} = props;
@@ -49,8 +50,6 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 			"esbuild",
 			"vite",
 		);
-
-	const viteExternalPackages = props.viteExternalPackages ?? [];
 
 	///////////////////////////////////////////////
 
@@ -111,7 +110,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 	///////////////////////////////////////////////
 	///////////////////////////////////////////////
 
-	const newProps: ConfigProps = {
+	const newConfig: ConfigProps = {
 		electronEsbuildExternalPackages,
 		devBuildElectronEntryFilePath,
 		electronEnviromentVariables,
@@ -133,13 +132,22 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 		root,
 	};
 
-	///////////////////////////////////////////////
-	///////////////////////////////////////////////
-	// Validate if the files exist:
+	validateFilesExists(newConfig);
 
+	logConfig("Resolved config props:", newConfig);
+
+	return newConfig;
+}
+
+///////////////////////////////////////////////
+///////////////////////////////////////////////
+///////////////////////////////////////////////
+// Helper functions:
+
+function validateFilesExists(config: ConfigProps): void {
 	let doExit = false;
 
-	Object.entries(props).forEach(([key, filePath]) => {
+	Object.entries(config).forEach(([key, filePath]) => {
 		if (
 			!key ||
 			!filePath ||
@@ -155,13 +163,9 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 	});
 
 	if (doExit) {
-		log("Resolved config props:", stringifyJson(props));
+		log("Resolved config config:", stringifyJson(config));
 		throwPrettyError("Resolve the errors above and try again.");
 	}
-
-	logConfig("Resolved config props:", newProps);
-
-	return newProps;
 }
 
 ///////////////////////////////////////////////

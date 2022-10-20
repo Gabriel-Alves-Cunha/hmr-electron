@@ -10,6 +10,7 @@ export const config: ConfigProps = {
 		FORCE_COLOR: "2",
 		...env,
 	},
+	viteExternalPackages: [],
 	devBuildElectronEntryFilePath:
 		"/home/gabriel/Documents/VSCode/my_projects/hmr-electron/tests/full/demo/dev-build/main/index.cjs",
 	devBuildMainOutputPath:

@@ -157,6 +157,7 @@ function makeConfigProps(props) {
       "--inspect"
     ],
     electronEnviromentVariables = {},
+    viteExternalPackages = [],
     esbuildConfig = {},
     root = cwd()
   } = props;
@@ -167,7 +168,6 @@ function makeConfigProps(props) {
     "esbuild",
     "vite"
   );
-  const viteExternalPackages = props.viteExternalPackages ?? [];
   const srcPath = resolve(props.srcPath ?? "src");
   const mainPath = props.mainPath ? resolve(props.mainPath) : join(srcPath, main);
   const devOutputPath = resolve(props.devOutputPath ?? "dev-build");
@@ -181,7 +181,7 @@ function makeConfigProps(props) {
   const buildRendererOutputPath = props.buildRendererOutputPath ? resolve(props.buildRendererOutputPath) : join(buildOutputPath, renderer);
   const buildMainOutputPath = props.buildMainOutputPath ? resolve(props.buildMainOutputPath) : join(buildOutputPath, main);
   const electronEntryFilePath = resolve(props.electronEntryFilePath);
-  const newProps = {
+  const newConfig = {
     electronEsbuildExternalPackages,
     devBuildElectronEntryFilePath,
     electronEnviromentVariables,
@@ -202,8 +202,13 @@ function makeConfigProps(props) {
     srcPath,
     root
   };
+  validateFilesExists(newConfig);
+  logConfig("Resolved config props:", newConfig);
+  return newConfig;
+}
+function validateFilesExists(config) {
   let doExit = false;
-  Object.entries(props).forEach(([key, filePath]) => {
+  Object.entries(config).forEach(([key, filePath]) => {
     if (!key || !filePath || typeof filePath !== "string" || except.includes(key))
       return;
     if (!existsSync(filePath)) {
@@ -212,11 +217,9 @@ function makeConfigProps(props) {
     }
   });
   if (doExit) {
-    log("Resolved config props:", stringifyJson(props));
+    log("Resolved config config:", stringifyJson(config));
     throwPrettyError("Resolve the errors above and try again.");
   }
-  logConfig("Resolved config props:", newProps);
-  return newProps;
 }
 const except = [
   "preloadSourceMapFilePath",
