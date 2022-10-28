@@ -50,6 +50,8 @@ export function stopPreviousElectronAndStartANewOne(
 				electron_process,
 			);
 
+			hmrElectronLog("Electron reloaded");
+
 			dbg(
 				`Electron child process has been spawned with args: ${
 					prettyPrintStringArray(electron_process.spawnargs)
@@ -96,7 +98,7 @@ function killPreviousElectronProcesses(): void {
 
 			kill(pid);
 		} catch (e) {
-			hmrElectronLog("Error when killing process:", e);
+			hmrElectronLog("Error when killing Electron process:", e);
 		}
 	});
 }

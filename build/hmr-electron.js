@@ -222,8 +222,11 @@ function validateFilesExists(config) {
   }
 }
 const except = [
+  "devBuildElectronEntryFilePath",
+  "devBuildRendererOutputPath",
   "preloadSourceMapFilePath",
   "buildRendererOutputPath",
+  "devBuildMainOutputPath",
   "buildMainOutputPath",
   "buildOutputPath",
   "viteConfigPath",
@@ -335,6 +338,7 @@ function stopPreviousElectronAndStartANewOne({
       electron_process.pid,
       electron_process
     );
+    hmrElectronLog("Electron reloaded");
     dbg(
       `Electron child process has been spawned with args: ${prettyPrintStringArray(electron_process.spawnargs)}`
     );
@@ -357,7 +361,7 @@ function killPreviousElectronProcesses() {
       electron_process.on("exit", () => previousElectronProcesses.delete(pid));
       kill(pid);
     } catch (e) {
-      hmrElectronLog("Error when killing process:", e);
+      hmrElectronLog("Error when killing Electron process:", e);
     }
   });
 }
@@ -648,7 +652,7 @@ async function runDev(config) {
 }
 
 const name = "hmr-electron";
-const version = "0.0.5";
+const version = "0.0.6";
 
 async function parseCliArgs() {
   const args = argsAsObj(argv.slice(2));

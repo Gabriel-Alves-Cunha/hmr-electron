@@ -174,8 +174,11 @@ function validateFilesExists(config: ConfigProps): void {
 // Constants:
 
 const except = [
+	"devBuildElectronEntryFilePath",
+	"devBuildRendererOutputPath",
 	"preloadSourceMapFilePath",
 	"buildRendererOutputPath",
+	"devBuildMainOutputPath",
 	"buildMainOutputPath",
 	"buildOutputPath",
 	"viteConfigPath",
