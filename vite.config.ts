@@ -36,7 +36,7 @@ export default defineConfig(() => {
 			lib: { entry: "src/main.ts", formats: ["es"] },
 			chunkSizeWarningLimit: 1_000,
 			reportCompressedSize: false,
-			emptyOutDir: true,
+			emptyOutDir: false,
 			sourcemap: false,
 			target: "esnext",
 			minify: false,

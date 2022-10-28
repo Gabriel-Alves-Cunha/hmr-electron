@@ -652,7 +652,7 @@ async function runDev(config) {
 }
 
 const name = "hmr-electron";
-const version = "0.0.6";
+const version = "0.0.7";
 
 async function parseCliArgs() {
   const args = argsAsObj(argv.slice(2));

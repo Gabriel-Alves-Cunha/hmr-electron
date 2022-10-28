@@ -4,7 +4,7 @@
 	"repository": "https://github.com/Gabriel-Alves-Cunha/hmr-electron.git",
 	"main": "build/bin/hmr-electron.js",
 	"typings": "build/index.d.ts",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"private": false,
 	"type": "module",
 	"license": "MIT",
