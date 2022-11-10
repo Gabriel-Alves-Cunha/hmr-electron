@@ -15,6 +15,6 @@
 	},
 	"dependencies": {
 		"electron": "^21.1.1",
-		"hmr-electron": "^0.0.3"
+		"hmr-electron": "^0.0.5"
 	}
 }
