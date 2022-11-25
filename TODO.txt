@@ -1,5 +1,3 @@
-* add ignore to config.
-
-* add loadEnv.
-
 * see mem usage.
+
+* use node args processing

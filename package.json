@@ -1,7 +1,7 @@
 {
 	"name": "hmr-electron",
-	"author": "Gabriel Alves Cunha <gabriel925486@outlook.com>",
 	"repository": "https://github.com/Gabriel-Alves-Cunha/hmr-electron.git",
+	"author": "Gabriel Alves Cunha <gabriel925486@outlook.com>",
 	"main": "build/bin/hmr-electron.js",
 	"typings": "build/index.d.ts",
 	"version": "0.0.7",
@@ -10,21 +10,25 @@
 	"license": "MIT",
 	"scripts": {
 		"ts:check": "tsc --noEmit --pretty --extendedDiagnostics",
+		"fmt": "rome format . --write",
 		"prepack": "yarn build",
+		"lint": "rome check .",
 		"build": "vite build",
-		"fmt": "dprint fmt",
 		"test": "vitest"
 	},
 	"devDependencies": {
-		"@types/node": "^18.11.7",
-		"dprint": "^0.32.2",
-		"typescript": "^4.8.4",
-		"vite": "^3.2.1",
-		"vitest": "^0.24.3"
+		"@types/node": "^18.11.9",
+		"electron": "^21.3.1",
+		"esbuild": "^0.15.15",
+		"rome": "^10.0.1",
+		"typescript": "^4.9.3",
+		"vite": "^3.2.4",
+		"vitest": "^0.25.3"
 	},
-	"dependencies": {
-		"electron": "^21.2.0",
-		"esbuild": "^0.15.12"
+	"peerDependencies": {
+		"electron": "^21.3.1",
+		"esbuild": "^0.15.15",
+		"vite": "^3.2.4"
 	},
 	"engines": {
 		"node": ">=16"

@@ -32,9 +32,7 @@ export async function runEsbuildForMainProcess(
 	try {
 		const buildResult = await buildEsbuild({
 			plugins: [
-				ignoreDirectoriesAndFiles([
-					/node_modules/,
-				]),
+				ignoreDirectoriesAndFiles(props.esbuildIgnore),
 			],
 			outdir: props.isBuild ?
 				props.buildMainOutputPath :
@@ -56,11 +54,10 @@ export async function runEsbuildForMainProcess(
 			target: "esnext",
 			charset: "utf8",
 			format: "cjs",
-			bundle: true,
 			logLimit: 10,
+			bundle: true,
 			color: true,
 			entryPoints,
-			supported,
 
 			watch: props.isBuild ? false : {
 				onRebuild(error) {
@@ -100,62 +97,6 @@ const transformErrors = (err: BuildFailure): CompileError[] =>
 
 const isBuildFailure = (err: any): err is BuildFailure =>
 	Array.isArray(err?.errors);
-
-///////////////////////////////////////////
-
-export const supported = {
-	"arbitrary-module-namespace-names": true,
-	"regexp-sticky-and-unicode-flags": true,
-	"regexp-unicode-property-escapes": true,
-	"typeof-exotic-object-is-object": true,
-	"class-private-static-accessor": true,
-	"regexp-lookbehind-assertions": true,
-	"class-private-static-method": true,
-	"regexp-named-capture-groups": true,
-	"class-private-static-field": true,
-	"class-private-brand-check": true,
-	"node-colon-prefix-require": true,
-	"node-colon-prefix-import": true,
-	"class-private-accessor": true,
-	"optional-catch-binding": true,
-	"class-private-method": true,
-	"regexp-match-indices": true,
-	"class-private-field": true,
-	"nested-rest-binding": true,
-	"class-static-blocks": true,
-	"regexp-dot-all-flag": true,
-	"class-static-field": true,
-	"logical-assignment": true,
-	"nullish-coalescing": true,
-	"object-rest-spread": true,
-	"exponent-operator": true,
-	"import-assertions": true,
-	"object-extensions": true,
-	"default-argument": true,
-	"object-accessors": true,
-	"template-literal": true,
-	"async-generator": true,
-	"top-level-await": true,
-	"unicode-escapes": true,
-	"export-star-as": true,
-	"optional-chain": true,
-	"dynamic-import": true,
-	"const-and-let": true,
-	"rest-argument": true,
-	"array-spread": true,
-	destructuring: true,
-	"import-meta": true,
-	"async-await": true,
-	"class-field": true,
-	"new-target": true,
-	"for-await": true,
-	generator: true,
-	"for-of": true,
-	hashbang: true,
-	bigint: true,
-	class: true,
-	arrow: true,
-};
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////

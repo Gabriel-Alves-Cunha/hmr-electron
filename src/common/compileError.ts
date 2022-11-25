@@ -19,7 +19,7 @@ column: ${yellow(err.location.column)}
 `;
 
 	const code = `\
-${gray(err.location.line + " |")}  ${err.location.lineText}
+${gray(`${err.location.line} |`)}  ${err.location.lineText}
 ${" ".repeat(err.location.column + `${err.location.line}`.length + 4)}\
 ${red("~".repeat(err.location.length))}`;
 
@@ -43,12 +43,12 @@ export type CompileError = Readonly<{
 	message: string;
 	location:
 		| {
-			lineText: string;
-			column: number;
-			length: number;
-			file: string;
-			line: number;
-		}
+				lineText: string;
+				column: number;
+				length: number;
+				file: string;
+				line: number;
+		  }
 		| undefined
 		| null;
 }>;

@@ -23,16 +23,13 @@ export type UserProvidedConfigProps = {
 	electronEsbuildExternalPackages?: string[];
 	viteExternalPackages?: string[];
 	esbuildConfig?: BuildOptions;
+	esbuildIgnore?: RegExp[];
 
-	electronEnviromentVariables?: NodeJS.ProcessEnv;
+	readEnviromentVariables?: boolean;
 	electronEntryFilePath: string;
 	electronOptions?: string[];
 
 	root?: string;
 };
 
-export type ConfigProps = Readonly<
-	Required<
-		UserProvidedConfigProps
-	>
->;
+export type ConfigProps = Readonly<Required<UserProvidedConfigProps>>;

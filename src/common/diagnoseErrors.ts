@@ -18,22 +18,23 @@ export const diagnoseErrors = (errors: CompileError[]): void =>
 // Helper function:
 
 function formatDiagnosticsMessage(errors: CompileError[]): string {
-	const errorMessage =
-		`Found ${errors.length} errors. Watching for file changes...`;
-	const messages = errors.map(err => formatCompileError(err));
+	const errorMessage = `Found ${errors.length} errors. Watching for file changes...`;
+	const messages = errors.map((err) => formatCompileError(err));
+	const length = messages.length;
 
 	let diagnosticsDetails = "";
-	messages.forEach((msg, index, { length }) => {
+	let index = 0;
+
+	for (const msg of messages) {
 		diagnosticsDetails += `  • ${msg}.`;
 
-		if (index + 1 !== length)
-			diagnosticsDetails += "\n";
-	});
+		if (index + 1 !== length) diagnosticsDetails += "\n";
+	}
 
 	return `${magentaBorder}
-${hmrElectronConsoleMessagePrefix} ${
-		magenta("Some typescript compilation errors occurred:")
-	}
+${hmrElectronConsoleMessagePrefix} ${magenta(
+		"Some typescript compilation errors occurred:",
+	)}
 
 ${diagnosticsDetails}
 

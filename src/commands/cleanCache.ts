@@ -1,12 +1,10 @@
 import type { ConfigProps } from "types/config";
 
-import { rm } from "node:fs/promises";
+import { rmSync } from "node:fs";
 
-export async function cleanCache(config: ConfigProps): Promise<void> {
-	await Promise.all([
-		rm(config.buildOutputPath, options),
-		rm(config.devOutputPath, options),
-	]);
+export function cleanCache(config: ConfigProps): void {
+	rmSync(config.buildOutputPath, options);
+	rmSync(config.devOutputPath, options);
 }
 
 const options = { recursive: true, force: true };

@@ -13,9 +13,9 @@ describe("test remove junk", () => {
 				"WARNING: Textured window <AtomNSWindow: 0x7fb75f68a770>",
 		);
 		testStream.push(
-			"[90789:0810/225804.894349:ERROR:CONSOLE(105)] \"Uncaught" +
+			'[90789:0810/225804.894349:ERROR:CONSOLE(105)] "Uncaught' +
 				" (in promise) Error: Could not instantiate: ProductRegistryImpl." +
-				"Registry\", source: chrome-devtools://devtools/bundled/inspector.js (105)",
+				'Registry", source: chrome-devtools://devtools/bundled/inspector.js (105)',
 		);
 		testStream.push(
 			"ALSA lib confmisc.c:767:(parse_card) cannot find card '0'",
@@ -23,12 +23,10 @@ describe("test remove junk", () => {
 		testStream.push("unknown libva error, driver_name = (null)");
 		testStream.push(null);
 
-		const res = await new Promise<string>(resolve => {
-			testStream
-				.pipe(new Transform(removeJunkLogs))
-				.on("data", data => {
-					resolve(data.toString());
-				});
+		const res = await new Promise<string>((resolve) => {
+			testStream.pipe(new Transform(removeJunkLogs)).on("data", (data) => {
+				resolve(data.toString());
+			});
 		});
 
 		expect(res).toEqual("Hello World");

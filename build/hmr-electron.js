@@ -1,53 +1,35 @@
 import { resolve, join, extname } from 'node:path';
-import { env, cwd, exit, kill, argv } from 'node:process';
+import { env, exit, cwd, kill, argv } from 'node:process';
 import { log, dir, error } from 'node:console';
-import { existsSync, writeFileSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { builtinModules } from 'node:module';
 import { build } from 'esbuild';
-import { randomBytes } from 'node:crypto';
 import { tmpdir } from 'node:os';
-import { rm } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { Transform } from 'node:stream';
 import { build as build$1, createServer } from 'vite';
 
 function findPathOrExit(defaultPaths, notFoundMessage) {
-  for (const defaultPlace of defaultPaths) {
-    const fullPath = resolve(defaultPlace);
+  for (const fullPath of defaultPaths())
     if (existsSync(fullPath))
       return fullPath;
-  }
   notFoundMessage();
 }
-const defaultPathsForConfig = [
-  "./hmr-electron.config.json",
-  "./hmr-electron.config.cts",
-  "./hmr-electron.config.mts",
-  "./hmr-electron.config.ts",
-  "./hmr-electron.config.cjs",
-  "./hmr-electron.config.mjs",
-  "./hmr-electron.config.js"
-];
-const defaultPathsForViteConfigFile = [
-  "./src/renderer/vite.config.cts",
-  "./src/renderer/vite.config.mts",
-  "./src/renderer/vite.config.ts",
-  "./src/renderer/vite.config.cjs",
-  "./src/renderer/vite.config.mjs",
-  "./src/renderer/vite.config.js",
-  "./src/vite.config.cts",
-  "./src/vite.config.mts",
-  "./src/vite.config.ts",
-  "./src/vite.config.cjs",
-  "./src/vite.config.mjs",
-  "./src/vite.config.js",
-  "./vite.config.cts",
-  "./vite.config.mts",
-  "./vite.config.ts",
-  "./vite.config.cjs",
-  "./vite.config.mjs",
-  "./vite.config.js"
-];
+const extensions = ["json", "ts", "mts", "cts", "js", "mjs", "cjs"];
+const hmrElectronConfig = "hmr-electron.config.";
+const viteConfig = "vite.config.";
+function* defaultPathsForConfig() {
+  for (const ext of extensions)
+    yield resolve(`${hmrElectronConfig}${ext}`);
+}
+function* defaultPathsForViteConfigFile() {
+  for (const ext of extensions)
+    yield resolve(`${viteConfig}${ext}`);
+  for (const ext of extensions)
+    yield resolve("src", `${viteConfig}${ext}`);
+  for (const ext of extensions)
+    yield resolve("src", "renderer", `${viteConfig}${ext}`);
+}
 
 const ansi = (a, b) => (msg) => `\x1B[${a}m${msg}\x1B[${b}m`;
 const underline = ansi(4, 24);
@@ -70,7 +52,9 @@ function getPrettyDate() {
   return bgBlue(
     bold(
       black(
-        `[${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())} ${pad(date.getMilliseconds(), 3)}]`
+        `[${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(
+          date.getSeconds()
+        )} ${pad(date.getMilliseconds(), 3)}]`
       )
     )
   );
@@ -87,7 +71,9 @@ function configFilePathNotFound() {
   );
 }
 function fileNotFound(file, path) {
-  return `File ${underline(green(`"${file}"`))} not found. Received: ${blue(path)}`;
+  return `File ${underline(green(`"${file}"`))} not found. Received: ${blue(
+    path
+  )}`;
 }
 function viteConfigFileNotFound() {
   throwPrettyError(
@@ -107,23 +93,13 @@ function prettyPrintStringArray(arr) {
   return `[ ${arrayItems} ]`;
 }
 function hmrElectronLog(...args) {
-  log(
-    getPrettyDate(),
-    hmrElectronConsoleMessagePrefix,
-    ...args
-  );
+  log(getPrettyDate(), hmrElectronConsoleMessagePrefix, ...args);
 }
 function viteLog(...args) {
-  log(
-    getPrettyDate(),
-    viteConsoleMessagePrefix,
-    ...args
-  );
+  log(getPrettyDate(), viteConsoleMessagePrefix, ...args);
 }
 
-function stringifyJson(obj) {
-  return JSON.stringify(obj, null, 2);
-}
+const stringifyJson = (obj) => JSON.stringify(obj, null, 2);
 const doLogConfig = env.DEBUG?.includes("hmr-electron:config-result") ?? false;
 const doLogDebug = env.DEBUG?.includes("hmr-electron") ?? false;
 const options$2 = {
@@ -142,6 +118,39 @@ function logConfig(...args) {
 }
 dbg("Hello from the debug side!");
 
+const LINE = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/gm;
+function parseEnvFile(src) {
+  const obj = {};
+  let lines = src.replace(/\r\n?/gm, "\n");
+  let match;
+  while ((match = LINE.exec(lines)) !== null) {
+    const key = match[1];
+    let value = (match[2] ?? "").trim();
+    const maybeQuote = value[0];
+    value = value.replace(/^(['"`])([\s\S]*)\1$/gm, "$2");
+    if (maybeQuote === '"') {
+      value = value.replace(/\\n/g, "\n");
+      value = value.replace(/\\r/g, "\r");
+    }
+    obj[key] = value;
+  }
+  return obj;
+}
+function addEnvToNodeProcessEnv(dotenvPath) {
+  try {
+    const parsed = parseEnvFile(
+      readFileSync(dotenvPath, { encoding: "utf-8" })
+    );
+    for (const key of Object.keys(parsed))
+      Object.hasOwn(env, key) ? hmrElectronLog(
+        `"${key}" is already defined in \`process.env\` and was NOT overwritten!`
+      ) : env[key] = parsed[key];
+  } catch (error) {
+    hmrElectronLog(`Failed to load ${dotenvPath} ${error.message}`);
+    exit(1);
+  }
+}
+
 function makeConfigProps(props) {
   const {
     electronOptions = [
@@ -156,18 +165,24 @@ function makeConfigProps(props) {
       "--warnings",
       "--inspect"
     ],
-    electronEnviromentVariables = {},
+    electronEsbuildExternalPackages = [],
+    readEnviromentVariables = false,
     viteExternalPackages = [],
+    esbuildIgnore = [],
     esbuildConfig = {},
     root = cwd()
   } = props;
-  Object.assign(electronEnviromentVariables, env, { FORCE_COLOR: "2" });
-  const electronEsbuildExternalPackages = (props.electronEsbuildExternalPackages ?? []).concat(
-    allBuiltinModules,
+  if (readEnviromentVariables)
+    addEnvToNodeProcessEnv(join(root, ".env"));
+  env["FORCE_COLOR"] = "2";
+  console.log(env);
+  electronEsbuildExternalPackages.push(
+    ...allBuiltinModules,
     "electron",
     "esbuild",
     "vite"
   );
+  esbuildIgnore.push(/node_modules/);
   const srcPath = resolve(props.srcPath ?? "src");
   const mainPath = props.mainPath ? resolve(props.mainPath) : join(srcPath, main);
   const devOutputPath = resolve(props.devOutputPath ?? "dev-build");
@@ -184,9 +199,9 @@ function makeConfigProps(props) {
   const newConfig = {
     electronEsbuildExternalPackages,
     devBuildElectronEntryFilePath,
-    electronEnviromentVariables,
     devBuildRendererOutputPath,
     buildRendererOutputPath,
+    readEnviromentVariables,
     devBuildMainOutputPath,
     electronEntryFilePath,
     viteExternalPackages,
@@ -198,6 +213,7 @@ function makeConfigProps(props) {
     viteConfigPath,
     devOutputPath,
     esbuildConfig,
+    esbuildIgnore,
     mainPath,
     srcPath,
     root
@@ -208,14 +224,14 @@ function makeConfigProps(props) {
 }
 function validateFilesExists(config) {
   let doExit = false;
-  Object.entries(config).forEach(([key, filePath]) => {
-    if (!key || !filePath || typeof filePath !== "string" || except.includes(key))
-      return;
+  for (const [key, filePath] of Object.entries(config)) {
+    if (!(key && filePath) || typeof filePath !== "string" || except.includes(key))
+      continue;
     if (!existsSync(filePath)) {
       error(fileNotFound(key, filePath));
       doExit = true;
     }
-  });
+  }
   if (doExit) {
     log("Resolved config config:", stringifyJson(config));
     throwPrettyError("Resolve the errors above and try again.");
@@ -232,17 +248,23 @@ const except = [
   "viteConfigPath",
   "devOutputPath"
 ];
-const builtinModulesWithNode = builtinModules.map((mod) => `node:${mod}`);
-const allBuiltinModules = builtinModulesWithNode.concat(builtinModules);
+const allBuiltinModules = builtinModules.map((module) => `node:${module}`).concat(builtinModules);
 const tsconfigJson = "tsconfig.json";
 const renderer = "renderer";
 const main = "main";
 
-function makeTempFileWithData(extension, dataToFillFileWith) {
-  const filepath = join(tmpdir(), randomBytes(16).toString("hex") + extension);
+function makeConfigFile() {
+  const dataToFillFileWith = `import type { UserProvidedConfigProps } from "hmr-electron";
+
+const config: UserProvidedConfigProps = {
+	electronEntryFilePath: "src/main/index.ts",
+	preloadFilePath: "src/main/preload.ts",
+};
+
+export default config;
+`;
   try {
-    writeFileSync(filepath, dataToFillFileWith);
-    return filepath;
+    writeFileSync(resolve("hmr-electron.config.ts"), dataToFillFileWith);
   } catch (error) {
     throw error;
   }
@@ -250,7 +272,9 @@ function makeTempFileWithData(extension, dataToFillFileWith) {
 
 async function readConfigFile(filePath) {
   !existsSync(filePath) && throwPrettyError(`There must be a config file! Received: "${filePath}"`);
-  let hasFilenameChanged = false;
+  const outfile = "config-file-hmr-electron.mjs";
+  let hasTranspilationHappened = false;
+  const out = join(tmpdir(), outfile);
   try {
     if (tsExtensions.includes(extname(filePath))) {
       const buildResult = await build({
@@ -259,6 +283,7 @@ async function readConfigFile(filePath) {
         entryPoints: [filePath],
         minifySyntax: false,
         treeShaking: true,
+        outdir: tmpdir(),
         sourcemap: false,
         target: "esnext",
         logLevel: "info",
@@ -266,22 +291,13 @@ async function readConfigFile(filePath) {
         charset: "utf8",
         format: "esm",
         logLimit: 10,
-        write: false,
-        color: true
+        color: true,
+        write: true,
+        outfile
       });
-      const [outputFile] = buildResult.outputFiles;
-      if (!outputFile)
-        throwPrettyError(
-          `Output for transpiling to '.js' on 'readConfigFile()' not present! ${stringifyJson(buildResult)}`
-        );
-      const { text } = outputFile;
-      dbg(`Text result from readConfigFile():
-${bold(text)}
-`);
-      filePath = makeTempFileWithData(".mjs", text);
-      hasFilenameChanged = true;
+      hasTranspilationHappened = true;
     }
-    const { default: userConfig } = await import(filePath);
+    const { default: userConfig } = await (hasTranspilationHappened ? import(out) : import(filePath));
     logConfig(`User config = ${stringifyJson(userConfig)}`);
     if (!userConfig)
       throwPrettyError("Config file is required!");
@@ -290,18 +306,13 @@ ${bold(text)}
     return userConfig;
   } catch (e) {
     return throwPrettyError(e);
-  } finally {
-    if (hasFilenameChanged)
-      rmSync(filePath);
   }
 }
 const tsExtensions = [".ts", ".mts", ".cts"];
 
-async function cleanCache(config) {
-  await Promise.all([
-    rm(config.buildOutputPath, options$1),
-    rm(config.devOutputPath, options$1)
-  ]);
+function cleanCache(config) {
+  rmSync(config.buildOutputPath, options$1);
+  rmSync(config.devOutputPath, options$1);
 }
 const options$1 = { recursive: true, force: true };
 
@@ -320,7 +331,6 @@ const junkRegex_3 = /ALSA lib [a-z]+\.c:\d+:\([a-z_]+\)/;
 const junkError_1 = "unknown libva error, driver_name = (null)";
 
 function stopPreviousElectronAndStartANewOne({
-  electronEnviromentVariables: env,
   devBuildElectronEntryFilePath,
   electronOptions,
   isTest = false
@@ -328,11 +338,7 @@ function stopPreviousElectronAndStartANewOne({
   killPreviousElectronProcesses();
   const electron_process = spawn(
     "electron",
-    isTest ? [""] : [
-      ...electronOptions,
-      devBuildElectronEntryFilePath
-    ],
-    { env }
+    isTest ? [""] : [...electronOptions, devBuildElectronEntryFilePath]
   ).on("exit", () => exit(0)).on("spawn", () => {
     previousElectronProcesses.set(
       electron_process.pid,
@@ -340,22 +346,20 @@ function stopPreviousElectronAndStartANewOne({
     );
     hmrElectronLog("Electron reloaded");
     dbg(
-      `Electron child process has been spawned with args: ${prettyPrintStringArray(electron_process.spawnargs)}`
+      `Electron child process has been spawned with args: ${prettyPrintStringArray(
+        electron_process.spawnargs
+      )}`
     );
   });
   const removeElectronLoggerJunkOutput = new Transform(removeJunkLogs);
   const removeElectronLoggerJunkErrors = new Transform(removeJunkLogs);
-  electron_process.stdout.pipe(removeElectronLoggerJunkOutput).pipe(
-    process.stdout
-  );
-  electron_process.stderr.pipe(removeElectronLoggerJunkErrors).pipe(
-    process.stderr
-  );
+  electron_process.stdout.pipe(removeElectronLoggerJunkOutput).pipe(process.stdout);
+  electron_process.stderr.pipe(removeElectronLoggerJunkErrors).pipe(process.stderr);
   return electron_process;
 }
 const previousElectronProcesses = /* @__PURE__ */ new Map();
 function killPreviousElectronProcesses() {
-  previousElectronProcesses.forEach((electron_process, pid) => {
+  for (const [pid, electron_process] of previousElectronProcesses)
     try {
       electron_process.removeAllListeners();
       electron_process.on("exit", () => previousElectronProcesses.delete(pid));
@@ -363,37 +367,32 @@ function killPreviousElectronProcesses() {
     } catch (e) {
       hmrElectronLog("Error when killing Electron process:", e);
     }
-  });
 }
 
 function ignoreDirectoriesAndFiles(regexOfDirs) {
   const plugin = {
     name: "ignore-directories-and-files",
     setup(build) {
-      build.onResolve(
-        options,
-        (args) => ({ path: args.path, namespace })
-      );
-      regexOfDirs.forEach(
-        (regex) => build.onResolve({ filter: regex }, (args) => {
+      build.onResolve(options, (args) => ({ path: args.path, namespace }));
+      for (const regex of regexOfDirs) {
+        build.onResolve({ filter: regex }, (args) => {
           if (args.path.match(regex)) {
             hmrElectronLog(`Ignoring "${args.path}"`);
             return { path: args.path, namespace };
           } else
             return { path: args.path };
-        })
-      );
+        });
+      }
       build.onLoad(options, () => ({
-        contents: emptyString
+        contents: ""
       }));
     }
   };
   return plugin;
 }
-const regexForEverything = /.*/;
+const regexForEverything = /[\s\S]*/gm;
 const namespace = "ignore";
 const options = { filter: regexForEverything, namespace };
-const emptyString = "";
 
 async function runEsbuildForMainProcess(props, onError) {
   const entryPoints = [props.electronEntryFilePath];
@@ -406,9 +405,7 @@ async function runEsbuildForMainProcess(props, onError) {
   try {
     const buildResult = await build({
       plugins: [
-        ignoreDirectoriesAndFiles([
-          /node_modules/
-        ])
+        ignoreDirectoriesAndFiles(props.esbuildIgnore)
       ],
       outdir: props.isBuild ? props.buildMainOutputPath : props.devBuildMainOutputPath,
       external: props.electronEsbuildExternalPackages,
@@ -428,11 +425,10 @@ async function runEsbuildForMainProcess(props, onError) {
       target: "esnext",
       charset: "utf8",
       format: "cjs",
-      bundle: true,
       logLimit: 10,
+      bundle: true,
       color: true,
       entryPoints,
-      supported,
       watch: props.isBuild ? false : {
         onRebuild(error2) {
           if (error2)
@@ -455,59 +451,6 @@ const transformErrors = (err) => err.errors.map((e) => ({
   message: e.text
 }));
 const isBuildFailure = (err) => Array.isArray(err?.errors);
-const supported = {
-  "arbitrary-module-namespace-names": true,
-  "regexp-sticky-and-unicode-flags": true,
-  "regexp-unicode-property-escapes": true,
-  "typeof-exotic-object-is-object": true,
-  "class-private-static-accessor": true,
-  "regexp-lookbehind-assertions": true,
-  "class-private-static-method": true,
-  "regexp-named-capture-groups": true,
-  "class-private-static-field": true,
-  "class-private-brand-check": true,
-  "node-colon-prefix-require": true,
-  "node-colon-prefix-import": true,
-  "class-private-accessor": true,
-  "optional-catch-binding": true,
-  "class-private-method": true,
-  "regexp-match-indices": true,
-  "class-private-field": true,
-  "nested-rest-binding": true,
-  "class-static-blocks": true,
-  "regexp-dot-all-flag": true,
-  "class-static-field": true,
-  "logical-assignment": true,
-  "nullish-coalescing": true,
-  "object-rest-spread": true,
-  "exponent-operator": true,
-  "import-assertions": true,
-  "object-extensions": true,
-  "default-argument": true,
-  "object-accessors": true,
-  "template-literal": true,
-  "async-generator": true,
-  "top-level-await": true,
-  "unicode-escapes": true,
-  "export-star-as": true,
-  "optional-chain": true,
-  "dynamic-import": true,
-  "const-and-let": true,
-  "rest-argument": true,
-  "array-spread": true,
-  destructuring: true,
-  "import-meta": true,
-  "async-await": true,
-  "class-field": true,
-  "new-target": true,
-  "for-await": true,
-  generator: true,
-  "for-of": true,
-  hashbang: true,
-  bigint: true,
-  class: true,
-  arrow: true
-};
 
 async function runViteFrontendBuild(config) {
   const isBuild = true;
@@ -564,7 +507,6 @@ const viteESbuildOptions = (platform, format, isBuild) => ({
   charset: "utf8",
   logLimit: 10,
   color: true,
-  supported,
   platform,
   format
 });
@@ -578,7 +520,7 @@ function formatCompileError(err) {
 line: ${yellow(err.location.line)}
 column: ${yellow(err.location.column)}
 `;
-  const code = `${gray(err.location.line + " |")}  ${err.location.lineText}
+  const code = `${gray(`${err.location.line} |`)}  ${err.location.lineText}
 ${" ".repeat(err.location.column + `${err.location.line}`.length + 4)}${red("~".repeat(err.location.length))}`;
   return `${getPrettyDate()} ${categoryMessage}
 ${border}
@@ -594,14 +536,18 @@ const diagnoseErrors = (errors) => error(formatDiagnosticsMessage(errors));
 function formatDiagnosticsMessage(errors) {
   const errorMessage = `Found ${errors.length} errors. Watching for file changes...`;
   const messages = errors.map((err) => formatCompileError(err));
+  const length = messages.length;
   let diagnosticsDetails = "";
-  messages.forEach((msg, index, { length }) => {
+  let index = 0;
+  for (const msg of messages) {
     diagnosticsDetails += `  • ${msg}.`;
     if (index + 1 !== length)
       diagnosticsDetails += "\n";
-  });
+  }
   return `${magentaBorder}
-${hmrElectronConsoleMessagePrefix} ${magenta("Some typescript compilation errors occurred:")}
+${hmrElectronConsoleMessagePrefix} ${magenta(
+    "Some typescript compilation errors occurred:"
+  )}
 
 ${diagnosticsDetails}
 
@@ -612,10 +558,7 @@ const magentaBorder = magenta(borderY);
 
 async function runBuild(config) {
   await Promise.all([
-    runEsbuildForMainProcess(
-      { ...config, isBuild: true },
-      diagnoseErrors
-    ),
+    runEsbuildForMainProcess({ ...config, isBuild: true }, diagnoseErrors),
     runViteFrontendBuild(config)
   ]);
 }
@@ -635,7 +578,9 @@ async function startViteFrontendServer(config) {
   viteLog(
     bold(
       green(
-        `Dev server running at address ${underline(`http://${address}:${port}`)}.`
+        `Dev server running at address ${underline(
+          `http://${address}:${port}`
+        )}.`
       )
     )
   );
@@ -643,10 +588,7 @@ async function startViteFrontendServer(config) {
 
 async function runDev(config) {
   await Promise.all([
-    runEsbuildForMainProcess(
-      { ...config, isBuild: false },
-      diagnoseErrors
-    ),
+    runEsbuildForMainProcess({ ...config, isBuild: false }, diagnoseErrors),
     startViteFrontendServer(config)
   ]);
 }
@@ -655,41 +597,41 @@ const name = "hmr-electron";
 const version = "0.0.7";
 
 async function parseCliArgs() {
-  const args = argsAsObj(argv.slice(2));
+  const args = argsAsObj();
   if (Object.keys(args).length === 0)
     return printHelpMsg();
   const configFilePathFromArgs = args["--config-file"];
   const configFilePath = configFilePathFromArgs ? resolve(configFilePathFromArgs) : findPathOrExit(defaultPathsForConfig, configFilePathNotFound);
   const userConfig = await readConfigFile(configFilePath);
   const configProps = makeConfigProps(userConfig);
+  if (args["init"])
+    return makeConfigFile();
   if (args["clean"])
-    return await cleanCache(configProps);
+    return cleanCache(configProps);
   if (args["dev"]) {
     if (args["--clean-cache"])
-      await cleanCache(configProps);
+      cleanCache(configProps);
     return await runDev(configProps);
   }
   if (args["build"]) {
-    await cleanCache(configProps);
+    cleanCache(configProps);
     return await runBuild(configProps);
   }
-  hmrElectronLog(
-    `No commands matched. Args = ${args}`
-  );
+  hmrElectronLog(`No commands matched. Args = ${args}`);
 }
-function argsAsObj(args) {
+function argsAsObj() {
   const obj = {};
-  args.forEach((arg) => {
+  for (const arg of argv.slice(2)) {
     const [key, value] = arg.split("=");
     if (!key)
-      return;
+      continue;
     if (!value)
       obj[key] = true;
     else if (value === "false")
       obj[key] = false;
     else
       obj[key] = value;
-  });
+  }
   dbg("argsAsObj =", stringifyJson(obj));
   return obj;
 }
@@ -700,10 +642,11 @@ ${yellow("⚡")} Start developing your Electron + Vite app.
 
 ${bold("Usage:")} ${name} [command] [options]
 
-  You must have an ${blue("hmr-electron.config.(ts|js)")}
+  You must have a config file ('${blue("hmr-electron.config.ts")}')
   file at the root of your package.
 
 ${bold("Commands and options:")}
+	init  ${blue("Make a config file")}
   dev   [--config-file${greenEqual}<configFilePath>] [--clean-cache]
   build [--config-file${greenEqual}<configFilePath>]
   clean [--config-file${greenEqual}<configFilePath>]`);

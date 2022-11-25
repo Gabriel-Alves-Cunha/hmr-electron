@@ -1,16 +1,16 @@
+/// <reference types="vitest" />
+/// <reference types="vite/client" />
+
 import { type UserConfigExport, defineConfig } from "vite";
+import { configDefaults } from "vitest/config";
 import { builtinModules } from "node:module";
 import { resolve } from "node:path";
-import {
-	type UserConfigExport as VitestUserConfigExport,
-	configDefaults,
-} from "vitest/config";
 
-const builtinModulesWithNode = builtinModules.map(mod => `node:${mod}`);
+const builtinModulesWithNode = builtinModules.map((mod) => `node:${mod}`);
 const allBuiltinModules = builtinModulesWithNode.concat(builtinModules);
 
 export default defineConfig(() => {
-	const config: UserConfigExport & VitestUserConfigExport = {
+	const config: UserConfigExport = {
 		build: {
 			rollupOptions: {
 				// make sure to externalize deps that shouldn't be bundled

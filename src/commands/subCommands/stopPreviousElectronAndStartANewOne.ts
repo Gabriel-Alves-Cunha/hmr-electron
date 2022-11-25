@@ -14,14 +14,11 @@ import { dbg } from "@utils/debug";
 ///////////////////////////////////////////
 // Main function:
 
-export function stopPreviousElectronAndStartANewOne(
-	{
-		electronEnviromentVariables: env,
-		devBuildElectronEntryFilePath,
-		electronOptions,
-		isTest = false,
-	}: StartElectronProps,
-): Readonly<ChildProcess> {
+export function stopPreviousElectronAndStartANewOne({
+	devBuildElectronEntryFilePath,
+	electronOptions,
+	isTest = false,
+}: StartElectronProps): Readonly<ChildProcess> {
 	// TODO: make sure mem usage is ok!
 	// logDbg(
 	// 	"hmr-electron memory usage:",
@@ -37,11 +34,7 @@ export function stopPreviousElectronAndStartANewOne(
 
 	const electron_process = spawn(
 		"electron",
-		isTest ? [""] : [
-			...electronOptions,
-			devBuildElectronEntryFilePath,
-		],
-		{ env },
+		isTest ? [""] : [...electronOptions, devBuildElectronEntryFilePath],
 	)
 		.on("exit", () => exit(0)) // This will kill "hmr-electron".
 		.on("spawn", () => {
@@ -53,9 +46,9 @@ export function stopPreviousElectronAndStartANewOne(
 			hmrElectronLog("Electron reloaded");
 
 			dbg(
-				`Electron child process has been spawned with args: ${
-					prettyPrintStringArray(electron_process.spawnargs)
-				}`,
+				`Electron child process has been spawned with args: ${prettyPrintStringArray(
+					electron_process.spawnargs,
+				)}`,
 			);
 		});
 
@@ -65,12 +58,12 @@ export function stopPreviousElectronAndStartANewOne(
 	const removeElectronLoggerJunkOutput = new Transform(removeJunkLogs);
 	const removeElectronLoggerJunkErrors = new Transform(removeJunkLogs);
 
-	electron_process.stdout.pipe(removeElectronLoggerJunkOutput).pipe(
-		process.stdout,
-	);
-	electron_process.stderr.pipe(removeElectronLoggerJunkErrors).pipe(
-		process.stderr,
-	);
+	electron_process.stdout
+		.pipe(removeElectronLoggerJunkOutput)
+		.pipe(process.stdout);
+	electron_process.stderr
+		.pipe(removeElectronLoggerJunkErrors)
+		.pipe(process.stderr);
 
 	///////////////////////////////////////////
 	///////////////////////////////////////////
@@ -91,7 +84,7 @@ const previousElectronProcesses: Map<number, ChildProcess> = new Map();
 // Helper functions:
 
 function killPreviousElectronProcesses(): void {
-	previousElectronProcesses.forEach((electron_process, pid) => {
+	for (const [pid, electron_process] of previousElectronProcesses)
 		try {
 			electron_process.removeAllListeners(); // This is very much needed. An EPIPE error always appear without it.
 			electron_process.on("exit", () => previousElectronProcesses.delete(pid));
@@ -100,7 +93,6 @@ function killPreviousElectronProcesses(): void {
 		} catch (e) {
 			hmrElectronLog("Error when killing Electron process:", e);
 		}
-	});
 }
 
 ///////////////////////////////////////////
@@ -108,7 +100,7 @@ function killPreviousElectronProcesses(): void {
 ///////////////////////////////////////////
 // Types:
 
-export type StartElectronProps = Readonly<ConfigProps & { isTest?: boolean; }>;
+export type StartElectronProps = Readonly<ConfigProps & { isTest?: boolean }>;
 
 ///////////////////////////////////////////
 

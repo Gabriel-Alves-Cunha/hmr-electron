@@ -11,10 +11,7 @@ import { diagnoseErrors } from "@common/diagnoseErrors";
 
 export async function runDev(config: ConfigProps): Promise<void> {
 	await Promise.all([
-		runEsbuildForMainProcess(
-			{ ...config, isBuild: false },
-			diagnoseErrors,
-		),
+		runEsbuildForMainProcess({ ...config, isBuild: false }, diagnoseErrors),
 
 		startViteFrontendServer(config),
 	]);

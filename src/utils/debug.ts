@@ -1,14 +1,12 @@
 import { log, dir } from "node:console";
 import { env } from "node:process";
 
-export function stringifyJson(obj: unknown) {
-	return JSON.stringify(obj, null, 2);
-}
+export const stringifyJson = (obj: unknown) => JSON.stringify(obj, null, 2);
 
 /////////////////////////////////////////////////
 
-export const doLogConfig = env.DEBUG?.includes("hmr-electron:config-result") ??
-	false;
+export const doLogConfig =
+	env.DEBUG?.includes("hmr-electron:config-result") ?? false;
 export const doLogDebug = env.DEBUG?.includes("hmr-electron") ?? false;
 
 const options = {

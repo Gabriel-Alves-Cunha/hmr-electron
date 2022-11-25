@@ -22,8 +22,9 @@ export type UserProvidedConfigProps = {
 	electronEsbuildExternalPackages?: string[];
 	viteExternalPackages?: string[];
 	esbuildConfig?: BuildOptions;
+	esbuildIgnore?: RegExp[];
 
-	electronEnviromentVariables?: NodeJS.ProcessEnv;
+	readEnviromentVariables?: boolean;
 	electronEntryFilePath: string;
 	electronOptions?: string[];
 

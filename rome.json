@@ -1,0 +1,15 @@
+{
+	"linter": {
+		"ignore": ["node_modules", "*-lock.json", "build", "full"],
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"style": {
+				"useBlockStatements": "off"
+			}
+		}
+	},
+	"formatter": {
+		"ignore": ["node_modules", "*-lock.json", "build", "full"]
+	}
+}

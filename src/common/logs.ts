@@ -25,9 +25,9 @@ export function configFilePathNotFound(): never {
 }
 
 export function fileNotFound(file: string, path: string | undefined): string {
-	return `File ${underline(green(`"${file}"`))} not found. Received: ${
-		blue(path)
-	}`;
+	return `File ${underline(green(`"${file}"`))} not found. Received: ${blue(
+		path,
+	)}`;
 }
 
 export function viteConfigFileNotFound(): never {
@@ -47,23 +47,15 @@ ${red(borderY)}
 }
 
 export function prettyPrintStringArray<T>(arr: readonly T[]): string {
-	const arrayItems = arr.map(item => green(`"${item}"`)).join(", ");
+	const arrayItems = arr.map((item) => green(`"${item}"`)).join(", ");
 
 	return `[ ${arrayItems} ]`;
 }
 
 export function hmrElectronLog(...args: unknown[]): void {
-	log(
-		getPrettyDate(),
-		hmrElectronConsoleMessagePrefix,
-		...args,
-	);
+	log(getPrettyDate(), hmrElectronConsoleMessagePrefix, ...args);
 }
 
 export function viteLog(...args: unknown[]): void {
-	log(
-		getPrettyDate(),
-		viteConsoleMessagePrefix,
-		...args,
-	);
+	log(getPrettyDate(), viteConsoleMessagePrefix, ...args);
 }

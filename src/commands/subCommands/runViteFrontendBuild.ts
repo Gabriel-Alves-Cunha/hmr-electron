@@ -4,8 +4,6 @@ import type { ConfigProps } from "types/config";
 
 import { build as buildVite } from "vite";
 
-import { supported } from "@commands/runEsbuildForMainProcess";
-
 export async function runViteFrontendBuild(config: ConfigProps): Promise<void> {
 	const isBuild = true;
 
@@ -31,9 +29,9 @@ export const viteBuildOptions = (
 	isBuild: boolean,
 ): BuildOptions => {
 	const buildOptions: BuildOptions = {
-		outDir: isBuild ?
-			config.buildRendererOutputPath :
-			config.devBuildRendererOutputPath,
+		outDir: isBuild
+			? config.buildRendererOutputPath
+			: config.devBuildRendererOutputPath,
 		sourcemap: isBuild ? false : "inline",
 		minify: isBuild ? "esbuild" : false,
 		chunkSizeWarningLimit: 1_000,
@@ -86,7 +84,6 @@ export const viteESbuildOptions = (
 	charset: "utf8",
 	logLimit: 10,
 	color: true,
-	supported,
 	platform,
 	format,
 });
@@ -100,8 +97,9 @@ export const viteESbuildOptions = (
 
 type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
 	k: infer I,
-) => void ? I :
-	never;
+) => void
+	? I
+	: never;
 type UnionToOvlds<U> = UnionToIntersection<
 	U extends any ? (f: U) => void : never
 >;

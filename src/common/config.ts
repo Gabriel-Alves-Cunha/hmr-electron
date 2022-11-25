@@ -1,5 +1,6 @@
 import type { ConfigProps, UserProvidedConfigProps } from "types/config";
 
+import { addEnvToNodeProcessEnv } from "@src/loadEnv";
 import { builtinModules } from "node:module";
 import { join, resolve } from "node:path";
 import { log, error } from "node:console";
@@ -31,77 +32,86 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 			"--warnings",
 			"--inspect",
 		],
-		electronEnviromentVariables = {},
+		electronEsbuildExternalPackages = [],
+		readEnviromentVariables = false,
 		viteExternalPackages = [],
+		esbuildIgnore = [],
 		esbuildConfig = {},
 		root = cwd(),
 	} = props;
 
 	///////////////////////////////////////////////
 
-	Object.assign(electronEnviromentVariables, env, { FORCE_COLOR: "2" });
+	if (readEnviromentVariables) addEnvToNodeProcessEnv(join(root, ".env"));
+
+	env["FORCE_COLOR"] = "2";
+
+	console.log(env);
 
 	///////////////////////////////////////////////
 
-	const electronEsbuildExternalPackages =
-		(props.electronEsbuildExternalPackages ?? []).concat(
-			allBuiltinModules,
-			"electron",
-			"esbuild",
-			"vite",
-		);
+	electronEsbuildExternalPackages.push(
+		...allBuiltinModules,
+		"electron",
+		"esbuild",
+		"vite",
+	);
+
+	///////////////////////////////////////////////
+
+	esbuildIgnore.push(/node_modules/);
 
 	///////////////////////////////////////////////
 
 	const srcPath = resolve(props.srcPath ?? "src");
 
-	const mainPath = props.mainPath ?
-		resolve(props.mainPath) :
-		join(srcPath, main);
+	const mainPath = props.mainPath
+		? resolve(props.mainPath)
+		: join(srcPath, main);
 
 	///////////////////////////////////////////////
 
 	const devOutputPath = resolve(props.devOutputPath ?? "dev-build");
 
-	const devBuildMainOutputPath = props.devBuildMainOutputPath ?
-		resolve(props.devBuildMainOutputPath) :
-		join(devOutputPath, main);
+	const devBuildMainOutputPath = props.devBuildMainOutputPath
+		? resolve(props.devBuildMainOutputPath)
+		: join(devOutputPath, main);
 
 	const devBuildRendererOutputPath = join(devOutputPath, renderer);
 
-	const devBuildElectronEntryFilePath = props.devBuildElectronEntryFilePath ?
-		resolve(props.devBuildElectronEntryFilePath) :
-		join(devBuildMainOutputPath, "index.cjs");
+	const devBuildElectronEntryFilePath = props.devBuildElectronEntryFilePath
+		? resolve(props.devBuildElectronEntryFilePath)
+		: join(devBuildMainOutputPath, "index.cjs");
 
 	///////////////////////////////////////////////
 
-	const preloadFilePath = props.preloadFilePath ?
-		resolve(props.preloadFilePath) :
-		undefined;
+	const preloadFilePath = props.preloadFilePath
+		? resolve(props.preloadFilePath)
+		: undefined;
 
 	///////////////////////////////////////////////
 
-	const mainTSconfigPath = props.mainTSconfigPath ?
-		resolve(props.mainTSconfigPath) :
-		join(mainPath, tsconfigJson);
+	const mainTSconfigPath = props.mainTSconfigPath
+		? resolve(props.mainTSconfigPath)
+		: join(mainPath, tsconfigJson);
 
 	///////////////////////////////////////////////
 
-	const viteConfigPath = props.viteConfigPath ?
-		resolve(props.viteConfigPath) :
-		findPathOrExit(defaultPathsForViteConfigFile, viteConfigFileNotFound);
+	const viteConfigPath = props.viteConfigPath
+		? resolve(props.viteConfigPath)
+		: findPathOrExit(defaultPathsForViteConfigFile, viteConfigFileNotFound);
 
 	///////////////////////////////////////////////
 
 	const buildOutputPath = resolve(props.buildOutputPath ?? "build");
 
-	const buildRendererOutputPath = props.buildRendererOutputPath ?
-		resolve(props.buildRendererOutputPath) :
-		join(buildOutputPath, renderer);
+	const buildRendererOutputPath = props.buildRendererOutputPath
+		? resolve(props.buildRendererOutputPath)
+		: join(buildOutputPath, renderer);
 
-	const buildMainOutputPath = props.buildMainOutputPath ?
-		resolve(props.buildMainOutputPath) :
-		join(buildOutputPath, main);
+	const buildMainOutputPath = props.buildMainOutputPath
+		? resolve(props.buildMainOutputPath)
+		: join(buildOutputPath, main);
 
 	///////////////////////////////////////////////
 
@@ -113,9 +123,9 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 	const newConfig: ConfigProps = {
 		electronEsbuildExternalPackages,
 		devBuildElectronEntryFilePath,
-		electronEnviromentVariables,
 		devBuildRendererOutputPath,
 		buildRendererOutputPath,
+		readEnviromentVariables,
 		devBuildMainOutputPath,
 		electronEntryFilePath,
 		viteExternalPackages,
@@ -127,6 +137,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 		viteConfigPath,
 		devOutputPath,
 		esbuildConfig,
+		esbuildIgnore,
 		mainPath,
 		srcPath,
 		root,
@@ -147,20 +158,19 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 function validateFilesExists(config: ConfigProps): void {
 	let doExit = false;
 
-	Object.entries(config).forEach(([key, filePath]) => {
+	for (const [key, filePath] of Object.entries(config)) {
 		if (
-			!key ||
-			!filePath ||
+			!(key && filePath) ||
 			typeof filePath !== "string" ||
 			except.includes(key)
 		)
-			return;
+			continue;
 
 		if (!existsSync(filePath)) {
 			error(fileNotFound(key, filePath));
 			doExit = true;
 		}
-	});
+	}
 
 	if (doExit) {
 		log("Resolved config config:", stringifyJson(config));
@@ -187,8 +197,9 @@ const except = [
 
 ///////////////////////////////////////////
 
-const builtinModulesWithNode = builtinModules.map(mod => `node:${mod}`);
-const allBuiltinModules = builtinModulesWithNode.concat(builtinModules);
+const allBuiltinModules = builtinModules
+	.map((module) => `node:${module}`)
+	.concat(builtinModules);
 
 ///////////////////////////////////////////////
 
