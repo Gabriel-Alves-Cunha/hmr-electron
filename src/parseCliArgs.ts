@@ -31,6 +31,12 @@ export async function parseCliArgs(): Promise<void> {
 
 	//////////////////////////////////////////
 	//////////////////////////////////////////
+	// Init command:
+
+	if (args["init"]) return makeConfigFile();
+
+	//////////////////////////////////////////
+	//////////////////////////////////////////
 	// Read config file for next commands:
 
 	const configFilePathFromArgs = args["--config-file"];
@@ -41,18 +47,6 @@ export async function parseCliArgs(): Promise<void> {
 	const userConfig = await readConfigFile(configFilePath);
 
 	const configProps = makeConfigProps(userConfig);
-
-	//////////////////////////////////////////
-	//////////////////////////////////////////
-	// Init command:
-
-	if (args["init"]) return makeConfigFile();
-
-	//////////////////////////////////////////
-	//////////////////////////////////////////
-	// Clean command:
-
-	if (args["clean"]) return cleanCache(configProps);
 
 	//////////////////////////////////////////
 	//////////////////////////////////////////
@@ -117,10 +111,9 @@ ${bold("Usage:")} ${name} [command] [options]
   file at the root of your package.
 
 ${bold("Commands and options:")}
-	init  ${blue("Make a config file")}
+  init  ${blue("Make a config file")}
   dev   [--config-file${greenEqual}<configFilePath>] [--clean-cache]
-  build [--config-file${greenEqual}<configFilePath>]
-  clean [--config-file${greenEqual}<configFilePath>]`);
+  build [--config-file${greenEqual}<configFilePath>]`);
 }
 
 const greenEqual = green("=");

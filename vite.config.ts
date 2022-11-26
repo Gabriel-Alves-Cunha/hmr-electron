@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 /// <reference types="vite/client" />
 
-import { type UserConfigExport, defineConfig } from "vite";
+import { type UserConfig, defineConfig } from "vite";
 import { configDefaults } from "vitest/config";
 import { builtinModules } from "node:module";
 import { resolve } from "node:path";
@@ -10,7 +10,9 @@ const builtinModulesWithNode = builtinModules.map((mod) => `node:${mod}`);
 const allBuiltinModules = builtinModulesWithNode.concat(builtinModules);
 
 export default defineConfig(() => {
-	const config: UserConfigExport = {
+	const minify = true;
+
+	const config: UserConfig = {
 		build: {
 			rollupOptions: {
 				// make sure to externalize deps that shouldn't be bundled
@@ -26,7 +28,7 @@ export default defineConfig(() => {
 						constBindings: true,
 						preset: "es2015",
 					},
-					minifyInternalExports: false,
+					minifyInternalExports: minify,
 					sourcemap: false,
 					dir: "./build",
 					format: "esm",
@@ -39,13 +41,13 @@ export default defineConfig(() => {
 			emptyOutDir: false,
 			sourcemap: false,
 			target: "esnext",
-			minify: false,
+			minify,
 		},
 
 		esbuild: {
-			minifyIdentifiers: false,
-			minifyWhitespace: false,
-			minifySyntax: false,
+			minifyIdentifiers: minify,
+			minifyWhitespace: minify,
+			minifySyntax: minify,
 			treeShaking: true,
 			sourcemap: false,
 			target: "esnext",

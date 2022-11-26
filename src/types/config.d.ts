@@ -25,7 +25,6 @@ export type UserProvidedConfigProps = {
 	esbuildConfig?: BuildOptions;
 	esbuildIgnore?: RegExp[];
 
-	readEnviromentVariables?: boolean;
 	electronEntryFilePath: string;
 	electronOptions?: string[];
 

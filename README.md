@@ -2,6 +2,8 @@
 
 __hmr-electron__ is a Typescript package to ease the development of an app with *__Electron + Vite__*.
 
+This project is based on [elecrun](https://github.com/jctaoo/elecrun). I was bored and liked it.
+
 ## Installation
 
 Use your preferred package manager to install:
@@ -13,6 +15,7 @@ yarn add --dev hmr-electron
 ## Usage
 
 You need to have a file on the root of your package named __*__hmr-electron.config.ts__*__
+Type in your terminal `yarn hmr-electron init` and this file will be created:
 
 ``` ts
 import type { UserProvidedConfigProps } from "hmr-electron";
@@ -39,8 +42,8 @@ Set scripts on your __*__package.json__*__
  "devDependencies": {
   "hmr-electron": "latest",
   "@types/node": "latest",
-  "electron": "latest",
   "typescript": "latest",
+  "electron": "latest",
   "vite": "latest"
  }
 }
@@ -51,8 +54,8 @@ Set scripts on your __*__package.json__*__
 Once you've cloned the repo, make use of the demo package inside '/tests/full/demo' by linking to main package:
 
 ``` sh
-# On the repo:
-yarn link
+# On this repo:
+yarn link # `unlink` to unlink.
 
 # On /tests/full/demo
 yarn link "hmr-electron"`

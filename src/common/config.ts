@@ -1,6 +1,5 @@
 import type { ConfigProps, UserProvidedConfigProps } from "types/config";
 
-import { addEnvToNodeProcessEnv } from "@src/loadEnv";
 import { builtinModules } from "node:module";
 import { join, resolve } from "node:path";
 import { log, error } from "node:console";
@@ -8,6 +7,7 @@ import { existsSync } from "node:fs";
 import { cwd, env } from "node:process";
 
 import { logConfig, stringifyJson } from "@utils/debug";
+import { addEnvToNodeProcessEnv } from "@src/loadEnv";
 import {
 	defaultPathsForViteConfigFile,
 	findPathOrExit,
@@ -33,7 +33,6 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 			"--inspect",
 		],
 		electronEsbuildExternalPackages = [],
-		readEnviromentVariables = false,
 		viteExternalPackages = [],
 		esbuildIgnore = [],
 		esbuildConfig = {},
@@ -42,11 +41,9 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 
 	///////////////////////////////////////////////
 
-	if (readEnviromentVariables) addEnvToNodeProcessEnv(join(root, ".env"));
+	addEnvToNodeProcessEnv(join(root, ".env"));
 
 	env["FORCE_COLOR"] = "2";
-
-	console.log(env);
 
 	///////////////////////////////////////////////
 
@@ -125,7 +122,6 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 		devBuildElectronEntryFilePath,
 		devBuildRendererOutputPath,
 		buildRendererOutputPath,
-		readEnviromentVariables,
 		devBuildMainOutputPath,
 		electronEntryFilePath,
 		viteExternalPackages,
@@ -145,7 +141,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 
 	validateFilesExists(newConfig);
 
-	logConfig("Resolved config props:", newConfig);
+	logConfig("Resolved config:", stringifyJson(newConfig));
 
 	return newConfig;
 }
@@ -173,7 +169,7 @@ function validateFilesExists(config: ConfigProps): void {
 	}
 
 	if (doExit) {
-		log("Resolved config config:", stringifyJson(config));
+		log("Resolved config:", stringifyJson(config));
 		throwPrettyError("Resolve the errors above and try again.");
 	}
 }

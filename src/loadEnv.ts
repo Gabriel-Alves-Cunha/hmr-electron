@@ -3,8 +3,28 @@ import { env, exit } from "node:process";
 
 import { hmrElectronLog } from "@common/logs";
 
-const LINE =
-	/(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/gm;
+// All this is from the package 'dotenv' at https://github.com/motdotla/dotenv
+
+// Populates process.env from .env file
+export function addEnvToNodeProcessEnv(dotenvPath: string): void {
+	try {
+		// Specifying an encoding returns a string instead of a buffer
+		const parsed = parseEnvFile(
+			readFileSync(dotenvPath, { encoding: "utf-8" }),
+		);
+
+		for (const key of Object.keys(parsed))
+			Object.hasOwn(env, key)
+				? hmrElectronLog(
+						`"${key}" is already defined in \`process.env\` and was NOT overwritten!`,
+				  )
+				: (env[key] = parsed[key]);
+	} catch (error) {
+		hmrElectronLog(`Failed to load ${dotenvPath} ${(error as Error).message}`);
+
+		exit(1);
+	}
+}
 
 // Parse src into a Record<string, string>
 function parseEnvFile(src: string) {
@@ -40,23 +60,5 @@ function parseEnvFile(src: string) {
 	return obj;
 }
 
-// Populates process.env from .env file
-export function addEnvToNodeProcessEnv(dotenvPath: string): void {
-	try {
-		// Specifying an encoding returns a string instead of a buffer
-		const parsed = parseEnvFile(
-			readFileSync(dotenvPath, { encoding: "utf-8" }),
-		);
-
-		for (const key of Object.keys(parsed))
-			Object.hasOwn(env, key)
-				? hmrElectronLog(
-						`"${key}" is already defined in \`process.env\` and was NOT overwritten!`,
-				  )
-				: (env[key] = parsed[key]);
-	} catch (error) {
-		hmrElectronLog(`Failed to load ${dotenvPath} ${(error as Error).message}`);
-
-		exit(1);
-	}
-}
+const LINE =
+	/(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/gm;

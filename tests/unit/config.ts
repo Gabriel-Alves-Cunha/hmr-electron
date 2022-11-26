@@ -2,7 +2,6 @@ import type { ConfigProps } from "types/config";
 
 export const config: ConfigProps = {
 	electronEsbuildExternalPackages: [],
-	readEnviromentVariables: false,
 	viteExternalPackages: [],
 	electronOptions: [],
 	esbuildIgnore: [],

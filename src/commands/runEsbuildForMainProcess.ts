@@ -3,6 +3,7 @@ import type { ConfigProps } from "types/config";
 
 import { type BuildFailure, build as buildEsbuild } from "esbuild";
 import { error } from "node:console";
+import { exit } from "node:process";
 
 import { stopPreviousElectronAndStartANewOne } from "@commands/subCommands/stopPreviousElectronAndStartANewOne";
 import { ignoreDirectoriesAndFiles } from "@plugins/ignoreDirectoriesAndFiles";
@@ -60,8 +61,15 @@ export async function runEsbuildForMainProcess(
 			entryPoints,
 
 			watch: props.isBuild ? false : {
-				onRebuild(error) {
-					if (error) return onError(transformErrors(error));
+				onRebuild(err) {
+					if (err) {
+						if (isBuildFailure(err)) {
+							error(err);
+							exit(1);
+						}
+
+						return onError(transformErrors(err));
+					}
 
 					stopPreviousElectronAndStartANewOne(props);
 				},
@@ -76,9 +84,12 @@ export async function runEsbuildForMainProcess(
 		if (!props.isBuild)
 			stopPreviousElectronAndStartANewOne(props);
 	} catch (err) {
-		isBuildFailure(err) ?
-			onError(transformErrors(err)) :
+		 if (isBuildFailure(err))
+			onError(transformErrors(err))
+		else {
 			error(err);
+			exit(1);
+		}
 	}
 }
 

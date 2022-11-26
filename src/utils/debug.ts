@@ -5,9 +5,9 @@ export const stringifyJson = (obj: unknown) => JSON.stringify(obj, null, 2);
 
 /////////////////////////////////////////////////
 
-export const doLogConfig =
-	env.DEBUG?.includes("hmr-electron:config-result") ?? false;
-export const doLogDebug = env.DEBUG?.includes("hmr-electron") ?? false;
+const debug = env.DEBUG?.split(",");
+export const doLogConfig = debug?.includes("hmr-electron:config-result");
+export const doLogDebug = debug?.includes("hmr-electron");
 
 const options = {
 	maxStringLength: 1_000,

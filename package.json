@@ -4,7 +4,7 @@
 	"author": "Gabriel Alves Cunha <gabriel925486@outlook.com>",
 	"main": "build/bin/hmr-electron.js",
 	"typings": "build/index.d.ts",
-	"version": "0.0.7",
+	"version": "0.0.8",
 	"private": false,
 	"type": "module",
 	"license": "MIT",
@@ -34,6 +34,7 @@
 		"node": ">=16"
 	},
 	"keywords": [
+		"hot reload",
 		"typescript",
 		"electron",
 		"esbuild",

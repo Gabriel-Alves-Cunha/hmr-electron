@@ -1,159 +1,124 @@
-import { resolve, join, extname } from 'node:path';
-import { env, exit, cwd, kill, argv } from 'node:process';
-import { log, dir, error } from 'node:console';
-import { existsSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
-import { builtinModules } from 'node:module';
-import { build } from 'esbuild';
-import { tmpdir } from 'node:os';
-import { spawn } from 'node:child_process';
-import { Transform } from 'node:stream';
-import { build as build$1, createServer } from 'vite';
-
-function findPathOrExit(defaultPaths, notFoundMessage) {
-  for (const fullPath of defaultPaths())
-    if (existsSync(fullPath))
-      return fullPath;
-  notFoundMessage();
+import { resolve as r, join as c } from "node:path";
+import { env as y, exit as $, cwd as Pe, kill as ye, argv as $e } from "node:process";
+import { log as m, dir as be, error as b } from "node:console";
+import { existsSync as F, readFileSync as Ee, writeFileSync as Fe, rmSync as j } from "node:fs";
+import { builtinModules as J } from "node:module";
+import { buildSync as Oe, build as xe } from "esbuild";
+import { tmpdir as we } from "node:os";
+import { spawn as Se } from "node:child_process";
+import { Transform as U } from "node:stream";
+import { build as Ce, createServer as ke } from "vite";
+function oe(e, n) {
+  for (const t of e())
+    if (F(t))
+      return t;
+  n();
 }
-const extensions = ["json", "ts", "mts", "cts", "js", "mjs", "cjs"];
-const hmrElectronConfig = "hmr-electron.config.";
-const viteConfig = "vite.config.";
-function* defaultPathsForConfig() {
-  for (const ext of extensions)
-    yield resolve(`${hmrElectronConfig}${ext}`);
+const v = ["json", "ts", "mts", "cts", "js", "mjs", "cjs"], Be = "hmr-electron.config.", B = "vite.config.";
+function* Re() {
+  for (const e of v)
+    yield r(`${Be}${e}`);
 }
-function* defaultPathsForViteConfigFile() {
-  for (const ext of extensions)
-    yield resolve(`${viteConfig}${ext}`);
-  for (const ext of extensions)
-    yield resolve("src", `${viteConfig}${ext}`);
-  for (const ext of extensions)
-    yield resolve("src", "renderer", `${viteConfig}${ext}`);
+function* je() {
+  for (const e of v)
+    yield r(`${B}${e}`);
+  for (const e of v)
+    yield r("src", `${B}${e}`);
+  for (const e of v)
+    yield r("src", "renderer", `${B}${e}`);
 }
-
-const ansi = (a, b) => (msg) => `\x1B[${a}m${msg}\x1B[${b}m`;
-const underline = ansi(4, 24);
-const bold = ansi(1, 22);
-const bgYellow = ansi(43, 49);
-const bgGreen = ansi(42, 49);
-const bgBlue = ansi(44, 49);
-const magenta = ansi(35, 39);
-const yellow = ansi(33, 39);
-const green = ansi(32, 39);
-const black = ansi(30, 39);
-const blue = ansi(34, 39);
-const gray = ansi(90, 39);
-const cyan = ansi(36, 39);
-const red = ansi(31, 39);
-const borderY = "────────────────────────────────────────────────────────────────────────────────";
-
-function getPrettyDate() {
-  const date = new Date();
-  return bgBlue(
-    bold(
-      black(
-        `[${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(
-          date.getSeconds()
-        )} ${pad(date.getMilliseconds(), 3)}]`
+const a = (e, n) => (t) => `\x1B[${e}m${t}\x1B[${n}m`, O = a(4, 24), f = a(1, 22), Me = a(43, 49), Le = a(42, 49), Ae = a(44, 49), M = a(35, 39), L = a(33, 39), x = a(32, 39), T = a(30, 39), P = a(34, 39), Ne = a(90, 39), Te = a(36, 39), g = a(31, 39), E = "────────────────────────────────────────────────────────────────────────────────";
+function w() {
+  const e = new Date();
+  return Ae(
+    f(
+      T(
+        `[${p(e.getHours())}:${p(e.getMinutes())}:${p(
+          e.getSeconds()
+        )} ${p(e.getMilliseconds(), 3)}]`
       )
     )
   );
 }
-const pad = (num, padding = 2) => num.toString().padStart(padding, "0");
-
-const viteConsoleMessagePrefix = bgGreen(bold(black("[VITE]")));
-const hmrElectronConsoleMessagePrefix = bgYellow(
-  bold(black("[hmr-electron]"))
+const p = (e, n = 2) => e.toString().padStart(n, "0"), De = Le(f(T("[VITE]"))), ie = Me(
+  f(T("[hmr-electron]"))
 );
-function configFilePathNotFound() {
-  throwPrettyError(
-    `No config file (${underline("'hmr-electron.config.ts'")}) found.`
+function Ie() {
+  u(
+    `No config file (${O("'hmr-electron.config.ts'")}) found.`
   );
 }
-function fileNotFound(file, path) {
-  return `File ${underline(green(`"${file}"`))} not found. Received: ${blue(
-    path
+function _e(e, n) {
+  return `File ${O(x(`"${e}"`))} not found. Received: ${P(
+    n
   )}`;
 }
-function viteConfigFileNotFound() {
-  throwPrettyError(
-    `Vite config file for main process ${underline("NOT")} found.`
+function Ve() {
+  u(
+    `Vite config file for main process ${O("NOT")} found.`
   );
 }
-function throwPrettyError(msg) {
-  msg = `
-${red(borderY)}
-${getPrettyDate()} ${msg}
-${red(borderY)}
-`;
-  throw new Error(msg);
+function u(e) {
+  throw e = `
+${g(E)}
+${w()} ${e}
+${g(E)}
+`, new Error(e);
 }
-function prettyPrintStringArray(arr) {
-  const arrayItems = arr.map((item) => green(`"${item}"`)).join(", ");
-  return `[ ${arrayItems} ]`;
+function We(e) {
+  return `[ ${e.map((t) => x(`"${t}"`)).join(", ")} ]`;
 }
-function hmrElectronLog(...args) {
-  log(getPrettyDate(), hmrElectronConsoleMessagePrefix, ...args);
+function d(...e) {
+  m(w(), ie, ...e);
 }
-function viteLog(...args) {
-  log(getPrettyDate(), viteConsoleMessagePrefix, ...args);
+function Je(...e) {
+  m(w(), De, ...e);
 }
-
-const stringifyJson = (obj) => JSON.stringify(obj, null, 2);
-const doLogConfig = env.DEBUG?.includes("hmr-electron:config-result") ?? false;
-const doLogDebug = env.DEBUG?.includes("hmr-electron") ?? false;
-const options$2 = {
+const h = (e) => JSON.stringify(e, null, 2), re = y.DEBUG?.split(","), Ue = re?.includes("hmr-electron:config-result"), He = re?.includes("hmr-electron"), ze = {
   maxStringLength: 1e3,
   maxArrayLength: 300,
-  compact: false,
-  sorted: false,
-  colors: true,
+  compact: !1,
+  sorted: !1,
+  colors: !0,
   depth: 10
 };
-function dbg(...args) {
-  doLogDebug && log(...args);
+function D(...e) {
+  He && m(...e);
 }
-function logConfig(...args) {
-  doLogConfig && dir(args, options$2);
+function I(...e) {
+  Ue && be(e, ze);
 }
-dbg("Hello from the debug side!");
-
-const LINE = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/gm;
-function parseEnvFile(src) {
-  const obj = {};
-  let lines = src.replace(/\r\n?/gm, "\n");
-  let match;
-  while ((match = LINE.exec(lines)) !== null) {
-    const key = match[1];
-    let value = (match[2] ?? "").trim();
-    const maybeQuote = value[0];
-    value = value.replace(/^(['"`])([\s\S]*)\1$/gm, "$2");
-    if (maybeQuote === '"') {
-      value = value.replace(/\\n/g, "\n");
-      value = value.replace(/\\r/g, "\r");
-    }
-    obj[key] = value;
-  }
-  return obj;
-}
-function addEnvToNodeProcessEnv(dotenvPath) {
+D("Hello from the debug side!");
+function qe(e) {
   try {
-    const parsed = parseEnvFile(
-      readFileSync(dotenvPath, { encoding: "utf-8" })
+    const n = Ye(
+      Ee(e, { encoding: "utf-8" })
     );
-    for (const key of Object.keys(parsed))
-      Object.hasOwn(env, key) ? hmrElectronLog(
-        `"${key}" is already defined in \`process.env\` and was NOT overwritten!`
-      ) : env[key] = parsed[key];
-  } catch (error) {
-    hmrElectronLog(`Failed to load ${dotenvPath} ${error.message}`);
-    exit(1);
+    for (const t of Object.keys(n))
+      Object.hasOwn(y, t) ? d(
+        `"${t}" is already defined in \`process.env\` and was NOT overwritten!`
+      ) : y[t] = n[t];
+  } catch (n) {
+    d(`Failed to load ${e} ${n.message}`), $(1);
   }
 }
-
-function makeConfigProps(props) {
+function Ye(e) {
+  const n = {};
+  let t = e.replace(/\r\n?/gm, `
+`), o;
+  for (; (o = Ge.exec(t)) !== null; ) {
+    const i = o[1];
+    let s = (o[2] ?? "").trim();
+    const l = s[0];
+    s = s.replace(/^(['"`])([\s\S]*)\1$/gm, "$2"), l === '"' && (s = s.replace(/\\n/g, `
+`), s = s.replace(/\\r/g, "\r")), n[i] = s;
+  }
+  return n;
+}
+const Ge = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/gm;
+function Qe(e) {
   const {
-    electronOptions = [
+    electronOptions: n = [
       "--disallow-code-generation-from-strings",
       "--pending-deprecation",
       "--enable-source-maps",
@@ -165,79 +130,48 @@ function makeConfigProps(props) {
       "--warnings",
       "--inspect"
     ],
-    electronEsbuildExternalPackages = [],
-    readEnviromentVariables = false,
-    viteExternalPackages = [],
-    esbuildIgnore = [],
-    esbuildConfig = {},
-    root = cwd()
-  } = props;
-  if (readEnviromentVariables)
-    addEnvToNodeProcessEnv(join(root, ".env"));
-  env["FORCE_COLOR"] = "2";
-  console.log(env);
-  electronEsbuildExternalPackages.push(
-    ...allBuiltinModules,
+    electronEsbuildExternalPackages: t = [],
+    viteExternalPackages: o = [],
+    esbuildIgnore: i = [],
+    esbuildConfig: s = {},
+    root: l = Pe()
+  } = e;
+  qe(c(l, ".env")), y.FORCE_COLOR = "2", t.push(
+    ...Ze,
     "electron",
     "esbuild",
     "vite"
-  );
-  esbuildIgnore.push(/node_modules/);
-  const srcPath = resolve(props.srcPath ?? "src");
-  const mainPath = props.mainPath ? resolve(props.mainPath) : join(srcPath, main);
-  const devOutputPath = resolve(props.devOutputPath ?? "dev-build");
-  const devBuildMainOutputPath = props.devBuildMainOutputPath ? resolve(props.devBuildMainOutputPath) : join(devOutputPath, main);
-  const devBuildRendererOutputPath = join(devOutputPath, renderer);
-  const devBuildElectronEntryFilePath = props.devBuildElectronEntryFilePath ? resolve(props.devBuildElectronEntryFilePath) : join(devBuildMainOutputPath, "index.cjs");
-  const preloadFilePath = props.preloadFilePath ? resolve(props.preloadFilePath) : void 0;
-  const mainTSconfigPath = props.mainTSconfigPath ? resolve(props.mainTSconfigPath) : join(mainPath, tsconfigJson);
-  const viteConfigPath = props.viteConfigPath ? resolve(props.viteConfigPath) : findPathOrExit(defaultPathsForViteConfigFile, viteConfigFileNotFound);
-  const buildOutputPath = resolve(props.buildOutputPath ?? "build");
-  const buildRendererOutputPath = props.buildRendererOutputPath ? resolve(props.buildRendererOutputPath) : join(buildOutputPath, renderer);
-  const buildMainOutputPath = props.buildMainOutputPath ? resolve(props.buildMainOutputPath) : join(buildOutputPath, main);
-  const electronEntryFilePath = resolve(props.electronEntryFilePath);
-  const newConfig = {
-    electronEsbuildExternalPackages,
-    devBuildElectronEntryFilePath,
-    devBuildRendererOutputPath,
-    buildRendererOutputPath,
-    readEnviromentVariables,
-    devBuildMainOutputPath,
-    electronEntryFilePath,
-    viteExternalPackages,
-    buildMainOutputPath,
-    mainTSconfigPath,
-    electronOptions,
-    buildOutputPath,
-    preloadFilePath,
-    viteConfigPath,
-    devOutputPath,
-    esbuildConfig,
-    esbuildIgnore,
-    mainPath,
-    srcPath,
-    root
+  ), i.push(/node_modules/);
+  const _ = r(e.srcPath ?? "src"), V = e.mainPath ? r(e.mainPath) : c(_, R), S = r(e.devOutputPath ?? "dev-build"), W = e.devBuildMainOutputPath ? r(e.devBuildMainOutputPath) : c(S, R), ue = c(S, H), de = e.devBuildElectronEntryFilePath ? r(e.devBuildElectronEntryFilePath) : c(W, "index.cjs"), fe = e.preloadFilePath ? r(e.preloadFilePath) : void 0, ge = e.mainTSconfigPath ? r(e.mainTSconfigPath) : c(V, et), me = e.viteConfigPath ? r(e.viteConfigPath) : oe(je, Ve), C = r(e.buildOutputPath ?? "build"), he = e.buildRendererOutputPath ? r(e.buildRendererOutputPath) : c(C, H), pe = e.buildMainOutputPath ? r(e.buildMainOutputPath) : c(C, R), ve = r(e.electronEntryFilePath), k = {
+    electronEsbuildExternalPackages: t,
+    devBuildElectronEntryFilePath: de,
+    devBuildRendererOutputPath: ue,
+    buildRendererOutputPath: he,
+    devBuildMainOutputPath: W,
+    electronEntryFilePath: ve,
+    viteExternalPackages: o,
+    buildMainOutputPath: pe,
+    mainTSconfigPath: ge,
+    electronOptions: n,
+    buildOutputPath: C,
+    preloadFilePath: fe,
+    viteConfigPath: me,
+    devOutputPath: S,
+    esbuildConfig: s,
+    esbuildIgnore: i,
+    mainPath: V,
+    srcPath: _,
+    root: l
   };
-  validateFilesExists(newConfig);
-  logConfig("Resolved config props:", newConfig);
-  return newConfig;
+  return Ke(k), I("Resolved config:", h(k)), k;
 }
-function validateFilesExists(config) {
-  let doExit = false;
-  for (const [key, filePath] of Object.entries(config)) {
-    if (!(key && filePath) || typeof filePath !== "string" || except.includes(key))
-      continue;
-    if (!existsSync(filePath)) {
-      error(fileNotFound(key, filePath));
-      doExit = true;
-    }
-  }
-  if (doExit) {
-    log("Resolved config config:", stringifyJson(config));
-    throwPrettyError("Resolve the errors above and try again.");
-  }
+function Ke(e) {
+  let n = !1;
+  for (const [t, o] of Object.entries(e))
+    !(t && o) || typeof o != "string" || Xe.includes(t) || F(o) || (b(_e(t, o)), n = !0);
+  n && (m("Resolved config:", h(e)), u("Resolve the errors above and try again."));
 }
-const except = [
+const Xe = [
   "devBuildElectronEntryFilePath",
   "devBuildRendererOutputPath",
   "preloadSourceMapFilePath",
@@ -247,410 +181,317 @@ const except = [
   "buildOutputPath",
   "viteConfigPath",
   "devOutputPath"
-];
-const allBuiltinModules = builtinModules.map((module) => `node:${module}`).concat(builtinModules);
-const tsconfigJson = "tsconfig.json";
-const renderer = "renderer";
-const main = "main";
-
-function makeConfigFile() {
-  const dataToFillFileWith = `import type { UserProvidedConfigProps } from "hmr-electron";
+], Ze = J.map((e) => `node:${e}`).concat(J), et = "tsconfig.json", H = "renderer", R = "main";
+function tt() {
+  const e = r("hmr-electron.config.ts");
+  try {
+    F(e) && u("There already exists a config file for hmr-electron."), Fe(e, nt);
+  } catch (n) {
+    throw n;
+  }
+}
+const nt = `import type { UserProvidedConfigProps } from "hmr-electron";
 
 const config: UserProvidedConfigProps = {
-	electronEntryFilePath: "src/main/index.ts",
-	preloadFilePath: "src/main/preload.ts",
+electronEntryFilePath: "src/main/index.ts",
+preloadFilePath: "src/main/preload.ts",
 };
 
 export default config;
 `;
+async function ot(e) {
+  F(e) || u(`There must be a config file! Received: "${e}"`);
+  const n = c(we(), "config-file-hmr-electron.mjs");
+  let t = !1;
   try {
-    writeFileSync(resolve("hmr-electron.config.ts"), dataToFillFileWith);
-  } catch (error) {
-    throw error;
+    it.some((i) => e.endsWith(i)) && (Oe({
+      minifyIdentifiers: !1,
+      minifyWhitespace: !1,
+      entryPoints: [e],
+      minifySyntax: !1,
+      treeShaking: !0,
+      sourcemap: !1,
+      target: "esnext",
+      logLevel: "info",
+      platform: "node",
+      charset: "utf8",
+      format: "esm",
+      watch: !1,
+      logLimit: 10,
+      color: !0,
+      write: !0,
+      outfile: n
+    }), t = !0);
+    const { default: o } = await (t ? import(n) : import(e));
+    return I(`User config = ${h(o)}`), o || u("Config file is required!"), o.electronEntryFilePath || u("`config.electronEntryFilePath` is required!"), o;
+  } catch (o) {
+    return u(o);
+  } finally {
+    t && j(n);
   }
 }
-
-async function readConfigFile(filePath) {
-  !existsSync(filePath) && throwPrettyError(`There must be a config file! Received: "${filePath}"`);
-  const outfile = "config-file-hmr-electron.mjs";
-  let hasTranspilationHappened = false;
-  const out = join(tmpdir(), outfile);
-  try {
-    if (tsExtensions.includes(extname(filePath))) {
-      const buildResult = await build({
-        minifyIdentifiers: false,
-        minifyWhitespace: false,
-        entryPoints: [filePath],
-        minifySyntax: false,
-        treeShaking: true,
-        outdir: tmpdir(),
-        sourcemap: false,
-        target: "esnext",
-        logLevel: "info",
-        platform: "node",
-        charset: "utf8",
-        format: "esm",
-        logLimit: 10,
-        color: true,
-        write: true,
-        outfile
-      });
-      hasTranspilationHappened = true;
-    }
-    const { default: userConfig } = await (hasTranspilationHappened ? import(out) : import(filePath));
-    logConfig(`User config = ${stringifyJson(userConfig)}`);
-    if (!userConfig)
-      throwPrettyError("Config file is required!");
-    if (!userConfig.electronEntryFilePath)
-      throwPrettyError("`config.electronEntryFilePath` is required!");
-    return userConfig;
-  } catch (e) {
-    return throwPrettyError(e);
-  }
+const it = [".ts", ".mts", ".cts"];
+function z(e) {
+  j(e.buildOutputPath, q), j(e.devOutputPath, q);
 }
-const tsExtensions = [".ts", ".mts", ".cts"];
-
-function cleanCache(config) {
-  rmSync(config.buildOutputPath, options$1);
-  rmSync(config.devOutputPath, options$1);
-}
-const options$1 = { recursive: true, force: true };
-
-const removeJunkLogs = {
-  transform(chunk, _encoding, doneCb) {
-    const source = chunk.toString();
-    const error = null;
-    if (source.includes(junkError_1, 49) || junkRegex_1.test(source) || junkRegex_2.test(source) || junkRegex_3.test(source))
-      return;
-    doneCb(error, source);
+const q = { recursive: !0, force: !0 }, Y = {
+  transform(e, n, t) {
+    const o = e.toString(), i = null;
+    o.includes(ct, 49) || rt.test(o) || st.test(o) || at.test(o) || t(i, o);
   }
-};
-const junkRegex_1 = /\d+-\d+-\d+ \d+:\d+:\d+\.\d+ Electron(?: Helper)?\[\d+:\d+]/;
-const junkRegex_2 = /\[\d+:\d+\/|\d+\.\d+:ERROR:CONSOLE\(\d+\)\]/;
-const junkRegex_3 = /ALSA lib [a-z]+\.c:\d+:\([a-z_]+\)/;
-const junkError_1 = "unknown libva error, driver_name = (null)";
-
-function stopPreviousElectronAndStartANewOne({
-  devBuildElectronEntryFilePath,
-  electronOptions,
-  isTest = false
+}, rt = /\d+-\d+-\d+ \d+:\d+:\d+\.\d+ Electron(?: Helper)?\[\d+:\d+]/, st = /\[\d+:\d+\/|\d+\.\d+:ERROR:CONSOLE\(\d+\)\]/, at = /ALSA lib [a-z]+\.c:\d+:\([a-z_]+\)/, ct = "unknown libva error, driver_name = (null)";
+function G({
+  devBuildElectronEntryFilePath: e,
+  electronOptions: n,
+  isTest: t = !1
 }) {
-  killPreviousElectronProcesses();
-  const electron_process = spawn(
+  lt();
+  const o = Se(
     "electron",
-    isTest ? [""] : [...electronOptions, devBuildElectronEntryFilePath]
-  ).on("exit", () => exit(0)).on("spawn", () => {
-    previousElectronProcesses.set(
-      electron_process.pid,
-      electron_process
-    );
-    hmrElectronLog("Electron reloaded");
-    dbg(
-      `Electron child process has been spawned with args: ${prettyPrintStringArray(
-        electron_process.spawnargs
+    t ? [""] : [...n, e]
+  ).on("exit", () => $(0)).on("spawn", () => {
+    A.set(
+      o.pid,
+      o
+    ), d("Electron reloaded"), D(
+      `Electron child process has been spawned with args: ${We(
+        o.spawnargs
       )}`
     );
-  });
-  const removeElectronLoggerJunkOutput = new Transform(removeJunkLogs);
-  const removeElectronLoggerJunkErrors = new Transform(removeJunkLogs);
-  electron_process.stdout.pipe(removeElectronLoggerJunkOutput).pipe(process.stdout);
-  electron_process.stderr.pipe(removeElectronLoggerJunkErrors).pipe(process.stderr);
-  return electron_process;
+  }), i = new U(Y), s = new U(Y);
+  return o.stdout.pipe(i).pipe(process.stdout), o.stderr.pipe(s).pipe(process.stderr), o;
 }
-const previousElectronProcesses = /* @__PURE__ */ new Map();
-function killPreviousElectronProcesses() {
-  for (const [pid, electron_process] of previousElectronProcesses)
+const A = /* @__PURE__ */ new Map();
+function lt() {
+  for (const [e, n] of A)
     try {
-      electron_process.removeAllListeners();
-      electron_process.on("exit", () => previousElectronProcesses.delete(pid));
-      kill(pid);
-    } catch (e) {
-      hmrElectronLog("Error when killing Electron process:", e);
+      n.removeAllListeners(), n.on("exit", () => A.delete(e)), ye(e);
+    } catch (t) {
+      d("Error when killing Electron process:", t);
     }
 }
-
-function ignoreDirectoriesAndFiles(regexOfDirs) {
-  const plugin = {
+function ut(e) {
+  return {
     name: "ignore-directories-and-files",
-    setup(build) {
-      build.onResolve(options, (args) => ({ path: args.path, namespace }));
-      for (const regex of regexOfDirs) {
-        build.onResolve({ filter: regex }, (args) => {
-          if (args.path.match(regex)) {
-            hmrElectronLog(`Ignoring "${args.path}"`);
-            return { path: args.path, namespace };
-          } else
-            return { path: args.path };
-        });
-      }
-      build.onLoad(options, () => ({
+    setup(t) {
+      t.onResolve(Q, (o) => ({ path: o.path, namespace: N }));
+      for (const o of e)
+        t.onResolve({ filter: o }, (i) => i.path.match(o) ? (d(`Ignoring "${i.path}"`), { path: i.path, namespace: N }) : { path: i.path });
+      t.onLoad(Q, () => ({
         contents: ""
       }));
     }
   };
-  return plugin;
 }
-const regexForEverything = /[\s\S]*/gm;
-const namespace = "ignore";
-const options = { filter: regexForEverything, namespace };
-
-async function runEsbuildForMainProcess(props, onError) {
-  const entryPoints = [props.electronEntryFilePath];
-  if (props.preloadFilePath) {
-    entryPoints.push(props.preloadFilePath);
-    hmrElectronLog(
-      `Using preload file: "${props.preloadFilePath.substring(props.root.length)}".`
-    );
-  }
+const dt = /[\s\S]*/gm, N = "ignore", Q = { filter: dt, namespace: N };
+async function se(e, n) {
+  const t = [e.electronEntryFilePath];
+  e.preloadFilePath && (t.push(e.preloadFilePath), d(
+    `Using preload file: "${e.preloadFilePath.substring(e.root.length)}".`
+  ));
   try {
-    const buildResult = await build({
+    const o = await xe({
       plugins: [
-        ignoreDirectoriesAndFiles(props.esbuildIgnore)
+        ut(e.esbuildIgnore)
       ],
-      outdir: props.isBuild ? props.buildMainOutputPath : props.devBuildMainOutputPath,
-      external: props.electronEsbuildExternalPackages,
-      minifyIdentifiers: props.isBuild,
-      tsconfig: props.mainTSconfigPath,
-      minifyWhitespace: props.isBuild,
+      outdir: e.isBuild ? e.buildMainOutputPath : e.devBuildMainOutputPath,
+      external: e.electronEsbuildExternalPackages,
+      minifyIdentifiers: e.isBuild,
+      tsconfig: e.mainTSconfigPath,
+      minifyWhitespace: e.isBuild,
       outExtension: { ".js": ".cjs" },
-      minifySyntax: props.isBuild,
-      minify: props.isBuild,
-      sourcesContent: false,
+      minifySyntax: e.isBuild,
+      minify: e.isBuild,
+      sourcesContent: !1,
       sourcemap: "external",
       legalComments: "none",
-      incremental: false,
-      treeShaking: true,
+      incremental: !1,
+      treeShaking: !0,
       logLevel: "info",
       platform: "node",
       target: "esnext",
       charset: "utf8",
       format: "cjs",
       logLimit: 10,
-      bundle: true,
-      color: true,
-      entryPoints,
-      watch: props.isBuild ? false : {
-        onRebuild(error2) {
-          if (error2)
-            return onError(transformErrors(error2));
-          stopPreviousElectronAndStartANewOne(props);
+      bundle: !0,
+      color: !0,
+      entryPoints: t,
+      watch: e.isBuild ? !1 : {
+        onRebuild(i) {
+          if (i)
+            return X(i) && (b(i), $(1)), n(K(i));
+          G(e);
         }
       },
-      ...props.esbuildConfig
+      ...e.esbuildConfig
     });
-    if (buildResult.errors.length)
-      hmrElectronLog("Esbuild build errors:\n", buildResult.errors);
-    if (!props.isBuild)
-      stopPreviousElectronAndStartANewOne(props);
-  } catch (err) {
-    isBuildFailure(err) ? onError(transformErrors(err)) : error(err);
+    o.errors.length && d(`Esbuild build errors:
+`, o.errors), e.isBuild || G(e);
+  } catch (o) {
+    X(o) ? n(K(o)) : (b(o), $(1));
   }
 }
-const transformErrors = (err) => err.errors.map((e) => ({
-  location: e.location,
-  message: e.text
-}));
-const isBuildFailure = (err) => Array.isArray(err?.errors);
-
-async function runViteFrontendBuild(config) {
-  const isBuild = true;
-  await build$1({
-    esbuild: viteESbuildOptions("browser", "esm", isBuild),
-    build: viteBuildOptions(config, "esm", isBuild),
-    css: { devSourcemap: true },
+const K = (e) => e.errors.map((n) => ({
+  location: n.location,
+  message: n.text
+})), X = (e) => Array.isArray(e?.errors);
+async function ft(e) {
+  await Ce({
+    esbuild: ce("browser", "esm", !0),
+    build: ae(e, "esm", !0),
+    css: { devSourcemap: !0 },
     mode: "production",
     logLevel: "info",
-    configFile: config.viteConfigPath
+    configFile: e.viteConfigPath
   });
 }
-const viteBuildOptions = (config, format, isBuild) => {
-  const buildOptions = {
-    outDir: isBuild ? config.buildRendererOutputPath : config.devBuildRendererOutputPath,
-    sourcemap: isBuild ? false : "inline",
-    minify: isBuild ? "esbuild" : false,
-    chunkSizeWarningLimit: 1e3,
-    reportCompressedSize: false,
-    emptyOutDir: true,
-    target: "esnext",
-    rollupOptions: {
-      external: config.viteExternalPackages,
-      preserveEntrySignatures: "strict",
-      strictDeprecations: true,
-      output: {
-        sourcemap: isBuild ? false : "inline",
-        assetFileNames: "assets/[name].[ext]",
-        minifyInternalExports: isBuild,
-        entryFileNames: "[name].mjs",
-        chunkFileNames: "[name].mjs",
-        compact: isBuild,
-        format,
-        generatedCode: {
-          objectShorthand: true,
-          constBindings: true,
-          preset: "es2015"
-        }
+const ae = (e, n, t) => ({
+  outDir: t ? e.buildRendererOutputPath : e.devBuildRendererOutputPath,
+  sourcemap: t ? !1 : "inline",
+  minify: t ? "esbuild" : !1,
+  chunkSizeWarningLimit: 1e3,
+  reportCompressedSize: !1,
+  emptyOutDir: !0,
+  target: "esnext",
+  rollupOptions: {
+    external: e.viteExternalPackages,
+    preserveEntrySignatures: "strict",
+    strictDeprecations: !0,
+    output: {
+      sourcemap: t ? !1 : "inline",
+      assetFileNames: "assets/[name].[ext]",
+      minifyInternalExports: t,
+      entryFileNames: "[name].mjs",
+      chunkFileNames: "[name].mjs",
+      compact: t,
+      format: n,
+      generatedCode: {
+        objectShorthand: !0,
+        constBindings: !0,
+        preset: "es2015"
       }
     }
-  };
-  return buildOptions;
-};
-const viteESbuildOptions = (platform, format, isBuild) => ({
-  minifyIdentifiers: isBuild,
-  minifyWhitespace: isBuild,
-  sourcesContent: false,
+  }
+}), ce = (e, n, t) => ({
+  minifyIdentifiers: t,
+  minifyWhitespace: t,
+  sourcesContent: !1,
   legalComments: "none",
   sourcemap: "external",
-  minifySyntax: isBuild,
-  treeShaking: true,
+  minifySyntax: t,
+  treeShaking: !0,
   target: "esnext",
   logLevel: "info",
   charset: "utf8",
   logLimit: 10,
-  color: true,
-  platform,
-  format
-});
+  color: !0,
+  platform: e,
+  format: n
+}), gt = g("[ERROR]"), Z = g(E);
+function mt(e) {
+  if (!e.location)
+    return e.message;
+  const n = `file: ${Te(`"${e.location.file}"`)}
+line: ${L(e.location.line)}
+column: ${L(e.location.column)}
+`, t = `${Ne(`${e.location.line} |`)}  ${e.location.lineText}
+${" ".repeat(e.location.column + `${e.location.line}`.length + 4)}${g("~".repeat(e.location.length))}`;
+  return `${w()} ${gt}
+${Z}
+${n}
+${e.message}
 
-const categoryMessage = red("[ERROR]");
-const border = red(borderY);
-function formatCompileError(err) {
-  if (!err.location)
-    return err.message;
-  const pathMessage = `file: ${cyan(`"${err.location.file}"`)}
-line: ${yellow(err.location.line)}
-column: ${yellow(err.location.column)}
-`;
-  const code = `${gray(`${err.location.line} |`)}  ${err.location.lineText}
-${" ".repeat(err.location.column + `${err.location.line}`.length + 4)}${red("~".repeat(err.location.length))}`;
-  return `${getPrettyDate()} ${categoryMessage}
-${border}
-${pathMessage}
-${err.message}
+${t}
 
-${code}
-
-${border}`;
+${Z}`;
 }
-
-const diagnoseErrors = (errors) => error(formatDiagnosticsMessage(errors));
-function formatDiagnosticsMessage(errors) {
-  const errorMessage = `Found ${errors.length} errors. Watching for file changes...`;
-  const messages = errors.map((err) => formatCompileError(err));
-  const length = messages.length;
-  let diagnosticsDetails = "";
-  let index = 0;
-  for (const msg of messages) {
-    diagnosticsDetails += `  • ${msg}.`;
-    if (index + 1 !== length)
-      diagnosticsDetails += "\n";
-  }
-  return `${magentaBorder}
-${hmrElectronConsoleMessagePrefix} ${magenta(
+const le = (e) => b(ht(e));
+function ht(e) {
+  const n = `Found ${e.length} errors. Watching for file changes...`, t = e.map((l) => mt(l)), o = t.length;
+  let i = "", s = 0;
+  for (const l of t)
+    i += `  • ${l}.`, s + 1 !== o && (i += `
+`);
+  return `${ee}
+${ie} ${M(
     "Some typescript compilation errors occurred:"
   )}
 
-${diagnosticsDetails}
+${i}
 
-${magenta(errorMessage)}
-${magentaBorder}`;
+${M(n)}
+${ee}`;
 }
-const magentaBorder = magenta(borderY);
-
-async function runBuild(config) {
+const ee = M(E);
+async function pt(e) {
   await Promise.all([
-    runEsbuildForMainProcess({ ...config, isBuild: true }, diagnoseErrors),
-    runViteFrontendBuild(config)
+    se({ ...e, isBuild: !0 }, le),
+    ft(e)
   ]);
 }
-
-async function startViteFrontendServer(config) {
-  const isBuild = false;
-  const server = await (await createServer({
-    esbuild: viteESbuildOptions("browser", "esm", isBuild),
-    build: viteBuildOptions(config, "esm", isBuild),
-    css: { devSourcemap: true },
+async function vt(e) {
+  const t = await (await ke({
+    esbuild: ce("browser", "esm", !1),
+    build: ae(e, "esm", !1),
+    css: { devSourcemap: !0 },
     mode: "development",
     logLevel: "info",
-    configFile: config.viteConfigPath
+    configFile: e.viteConfigPath
   })).listen();
-  logConfig("Vite server config =", stringifyJson(server.config));
-  const { address, port } = server.httpServer.address();
-  viteLog(
-    bold(
-      green(
-        `Dev server running at address ${underline(
-          `http://${address}:${port}`
+  I("Vite server config =", h(t.config));
+  const { address: o, port: i } = t.httpServer.address();
+  Je(
+    f(
+      x(
+        `Dev server running at address ${O(
+          `http://${o}:${i}`
         )}.`
       )
     )
   );
 }
-
-async function runDev(config) {
+async function Pt(e) {
   await Promise.all([
-    runEsbuildForMainProcess({ ...config, isBuild: false }, diagnoseErrors),
-    startViteFrontendServer(config)
+    se({ ...e, isBuild: !1 }, le),
+    vt(e)
   ]);
 }
-
-const name = "hmr-electron";
-const version = "0.0.7";
-
-async function parseCliArgs() {
-  const args = argsAsObj();
-  if (Object.keys(args).length === 0)
-    return printHelpMsg();
-  const configFilePathFromArgs = args["--config-file"];
-  const configFilePath = configFilePathFromArgs ? resolve(configFilePathFromArgs) : findPathOrExit(defaultPathsForConfig, configFilePathNotFound);
-  const userConfig = await readConfigFile(configFilePath);
-  const configProps = makeConfigProps(userConfig);
-  if (args["init"])
-    return makeConfigFile();
-  if (args["clean"])
-    return cleanCache(configProps);
-  if (args["dev"]) {
-    if (args["--clean-cache"])
-      cleanCache(configProps);
-    return await runDev(configProps);
-  }
-  if (args["build"]) {
-    cleanCache(configProps);
-    return await runBuild(configProps);
-  }
-  hmrElectronLog(`No commands matched. Args = ${args}`);
+const te = "hmr-electron", yt = "0.0.7";
+async function $t() {
+  const e = bt();
+  if (Object.keys(e).length === 0)
+    return Et();
+  if (e.init)
+    return tt();
+  const n = e["--config-file"], t = n ? r(n) : oe(Re, Ie), o = await ot(t), i = Qe(o);
+  if (e.dev)
+    return e["--clean-cache"] && z(i), await Pt(i);
+  if (e.build)
+    return z(i), await pt(i);
+  d(`No commands matched. Args = ${e}`);
 }
-function argsAsObj() {
-  const obj = {};
-  for (const arg of argv.slice(2)) {
-    const [key, value] = arg.split("=");
-    if (!key)
-      continue;
-    if (!value)
-      obj[key] = true;
-    else if (value === "false")
-      obj[key] = false;
-    else
-      obj[key] = value;
+function bt() {
+  const e = {};
+  for (const n of $e.slice(2)) {
+    const [t, o] = n.split("=");
+    !t || (o ? o === "false" ? e[t] = !1 : e[t] = o : e[t] = !0);
   }
-  dbg("argsAsObj =", stringifyJson(obj));
-  return obj;
+  return D("argsAsObj =", h(e)), e;
 }
-function printHelpMsg() {
-  log(`${bold(blue(name))} version ${version}
+function Et() {
+  m(`${f(P(te))} version ${yt}
 
-${yellow("⚡")} Start developing your Electron + Vite app.
+${L("⚡")} Start developing your Electron + Vite app.
 
-${bold("Usage:")} ${name} [command] [options]
+${f("Usage:")} ${te} [command] [options]
 
-  You must have a config file ('${blue("hmr-electron.config.ts")}')
+  You must have a config file ('${P("hmr-electron.config.ts")}')
   file at the root of your package.
 
-${bold("Commands and options:")}
-	init  ${blue("Make a config file")}
-  dev   [--config-file${greenEqual}<configFilePath>] [--clean-cache]
-  build [--config-file${greenEqual}<configFilePath>]
-  clean [--config-file${greenEqual}<configFilePath>]`);
+${f("Commands and options:")}
+  init  ${P("Make a config file")}
+  dev   [--config-file${ne}<configFilePath>] [--clean-cache]
+  build [--config-file${ne}<configFilePath>]`);
 }
-const greenEqual = green("=");
-
-parseCliArgs();
+const ne = x("=");
+$t();
