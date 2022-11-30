@@ -6,10 +6,10 @@ import { throwPrettyError } from "@common/logs";
 export function makeConfigFile(): void {
 	const path = resolve("hmr-electron.config.ts");
 
-	try {
-		if (existsSync(path))
-			throwPrettyError("There already exists a config file for hmr-electron.");
+	if (existsSync(path))
+		throwPrettyError("There already exists a config file for hmr-electron.");
 
+	try {
 		writeFileSync(path, dataToFillFileWith);
 	} catch (error) {
 		throw error;
@@ -20,8 +20,8 @@ const dataToFillFileWith = `\
 import type { UserProvidedConfigProps } from "hmr-electron";
 
 const config: UserProvidedConfigProps = {
-electronEntryFilePath: "src/main/index.ts",
-preloadFilePath: "src/main/preload.ts",
+	electronEntryFilePath: "src/main/index.ts",
+	preloadFilePath: "src/main/preload.ts",
 };
 
 export default config;

@@ -1,7 +1,7 @@
 import { error } from "node:console";
 import { kill } from "node:process";
 
-export function processExists(pid: number | undefined): boolean {
+export function doesProcessExists(pid: number | undefined): boolean {
 	if (!pid) {
 		error(`Invalid pid: \`${pid}\``);
 		return false;

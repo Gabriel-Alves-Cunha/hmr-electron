@@ -27,7 +27,7 @@ function* je() {
   for (const e of v)
     yield r("src", "renderer", `${B}${e}`);
 }
-const a = (e, n) => (t) => `\x1B[${e}m${t}\x1B[${n}m`, O = a(4, 24), f = a(1, 22), Me = a(43, 49), Le = a(42, 49), Ae = a(44, 49), M = a(35, 39), L = a(33, 39), x = a(32, 39), T = a(30, 39), P = a(34, 39), Ne = a(90, 39), Te = a(36, 39), g = a(31, 39), E = "────────────────────────────────────────────────────────────────────────────────";
+const s = (e, n) => (t) => `\x1B[${e}m${t}\x1B[${n}m`, O = s(4, 24), f = s(1, 22), Me = s(43, 49), Le = s(42, 49), Ae = s(44, 49), M = s(35, 39), L = s(33, 39), x = s(32, 39), T = s(30, 39), P = s(34, 39), Ne = s(90, 39), Te = s(36, 39), g = s(31, 39), E = "────────────────────────────────────────────────────────────────────────────────";
 function w() {
   const e = new Date();
   return Ae(
@@ -42,22 +42,11 @@ function w() {
 }
 const p = (e, n = 2) => e.toString().padStart(n, "0"), De = Le(f(T("[VITE]"))), ie = Me(
   f(T("[hmr-electron]"))
+), Ie = () => u(
+  `No config file (${O("'hmr-electron.config.ts'")}) found.`
+), _e = (e, n) => `File ${O(x(`"${e}"`))} not found. Received: ${P(n)}`, Ve = () => u(
+  `Vite config file for main process ${O("NOT")} found.`
 );
-function Ie() {
-  u(
-    `No config file (${O("'hmr-electron.config.ts'")}) found.`
-  );
-}
-function _e(e, n) {
-  return `File ${O(x(`"${e}"`))} not found. Received: ${P(
-    n
-  )}`;
-}
-function Ve() {
-  u(
-    `Vite config file for main process ${O("NOT")} found.`
-  );
-}
 function u(e) {
   throw e = `
 ${g(E)}
@@ -68,13 +57,7 @@ ${g(E)}
 function We(e) {
   return `[ ${e.map((t) => x(`"${t}"`)).join(", ")} ]`;
 }
-function d(...e) {
-  m(w(), ie, ...e);
-}
-function Je(...e) {
-  m(w(), De, ...e);
-}
-const h = (e) => JSON.stringify(e, null, 2), re = y.DEBUG?.split(","), Ue = re?.includes("hmr-electron:config-result"), He = re?.includes("hmr-electron"), ze = {
+const d = (...e) => m(w(), ie, ...e), Je = (...e) => m(w(), De, ...e), h = (e) => JSON.stringify(e, null, 2), re = y.DEBUG?.split(","), Ue = re?.includes("hmr-electron:config-result"), He = re?.includes("hmr-electron"), ze = {
   maxStringLength: 1e3,
   maxArrayLength: 300,
   compact: !1,
@@ -104,14 +87,14 @@ function qe(e) {
 }
 function Ye(e) {
   const n = {};
-  let t = e.replace(/\r\n?/gm, `
-`), o;
-  for (; (o = Ge.exec(t)) !== null; ) {
-    const i = o[1];
-    let s = (o[2] ?? "").trim();
-    const l = s[0];
-    s = s.replace(/^(['"`])([\s\S]*)\1$/gm, "$2"), l === '"' && (s = s.replace(/\\n/g, `
-`), s = s.replace(/\\r/g, "\r")), n[i] = s;
+  let t, o = e.replace(/\r\n?/gm, `
+`);
+  for (; (t = Ge.exec(o)) !== null; ) {
+    const i = t[1];
+    let a = (t[2] ?? "").trim();
+    const l = a[0];
+    a = a.replace(/^(['"`])([\s\S]*)\1$/gm, "$2"), l === '"' && (a = a.replace(/\\n/g, `
+`).replace(/\\r/g, "\r")), n[i] = a;
   }
   return n;
 }
@@ -133,7 +116,7 @@ function Qe(e) {
     electronEsbuildExternalPackages: t = [],
     viteExternalPackages: o = [],
     esbuildIgnore: i = [],
-    esbuildConfig: s = {},
+    esbuildConfig: a = {},
     root: l = Pe()
   } = e;
   qe(c(l, ".env")), y.FORCE_COLOR = "2", t.push(
@@ -157,7 +140,7 @@ function Qe(e) {
     preloadFilePath: fe,
     viteConfigPath: me,
     devOutputPath: S,
-    esbuildConfig: s,
+    esbuildConfig: a,
     esbuildIgnore: i,
     mainPath: V,
     srcPath: _,
@@ -184,8 +167,9 @@ const Xe = [
 ], Ze = J.map((e) => `node:${e}`).concat(J), et = "tsconfig.json", H = "renderer", R = "main";
 function tt() {
   const e = r("hmr-electron.config.ts");
+  F(e) && u("There already exists a config file for hmr-electron.");
   try {
-    F(e) && u("There already exists a config file for hmr-electron."), Fe(e, nt);
+    Fe(e, nt);
   } catch (n) {
     throw n;
   }
@@ -193,42 +177,35 @@ function tt() {
 const nt = `import type { UserProvidedConfigProps } from "hmr-electron";
 
 const config: UserProvidedConfigProps = {
-electronEntryFilePath: "src/main/index.ts",
-preloadFilePath: "src/main/preload.ts",
+	electronEntryFilePath: "src/main/index.ts",
+	preloadFilePath: "src/main/preload.ts",
 };
 
 export default config;
 `;
 async function ot(e) {
   F(e) || u(`There must be a config file! Received: "${e}"`);
-  const n = c(we(), "config-file-hmr-electron.mjs");
-  let t = !1;
-  try {
-    it.some((i) => e.endsWith(i)) && (Oe({
-      minifyIdentifiers: !1,
-      minifyWhitespace: !1,
-      entryPoints: [e],
-      minifySyntax: !1,
-      treeShaking: !0,
-      sourcemap: !1,
-      target: "esnext",
-      logLevel: "info",
-      platform: "node",
-      charset: "utf8",
-      format: "esm",
-      watch: !1,
-      logLimit: 10,
-      color: !0,
-      write: !0,
-      outfile: n
-    }), t = !0);
-    const { default: o } = await (t ? import(n) : import(e));
-    return I(`User config = ${h(o)}`), o || u("Config file is required!"), o.electronEntryFilePath || u("`config.electronEntryFilePath` is required!"), o;
-  } catch (o) {
-    return u(o);
-  } finally {
-    t && j(n);
-  }
+  let n = !1, t = "";
+  it.some((i) => e.endsWith(i)) && (t = c(we(), "config-file-hmr-electron.mjs"), n = !0, Oe({
+    minifyIdentifiers: !1,
+    minifyWhitespace: !1,
+    entryPoints: [e],
+    minifySyntax: !1,
+    treeShaking: !0,
+    sourcemap: !1,
+    target: "esnext",
+    logLevel: "info",
+    platform: "node",
+    charset: "utf8",
+    format: "esm",
+    watch: !1,
+    logLimit: 10,
+    color: !0,
+    write: !0,
+    outfile: t
+  }));
+  const { default: o } = await (n ? import(t) : import(e)).catch(u).finally(() => n && j(t));
+  return I(`User config = ${h(o)}`), o || u("Config file is required!"), o.electronEntryFilePath || u("`config.electronEntryFilePath` is required!"), o;
 }
 const it = [".ts", ".mts", ".cts"];
 function z(e) {
@@ -258,8 +235,8 @@ function G({
         o.spawnargs
       )}`
     );
-  }), i = new U(Y), s = new U(Y);
-  return o.stdout.pipe(i).pipe(process.stdout), o.stderr.pipe(s).pipe(process.stderr), o;
+  }), i = new U(Y), a = new U(Y);
+  return o.stdout.pipe(i).pipe(process.stdout), o.stderr.pipe(a).pipe(process.stderr), o;
 }
 const A = /* @__PURE__ */ new Map();
 function lt() {
@@ -274,9 +251,9 @@ function ut(e) {
   return {
     name: "ignore-directories-and-files",
     setup(t) {
-      t.onResolve(Q, (o) => ({ path: o.path, namespace: N }));
+      t.onResolve(Q, ({ path: o }) => ({ path: o, namespace: N }));
       for (const o of e)
-        t.onResolve({ filter: o }, (i) => i.path.match(o) ? (d(`Ignoring "${i.path}"`), { path: i.path, namespace: N }) : { path: i.path });
+        t.onResolve({ filter: o }, ({ path: i }) => i.match(o) ? (d(`Ignoring "${i}"`), { path: i, namespace: N }) : { path: i });
       t.onLoad(Q, () => ({
         contents: ""
       }));
@@ -408,9 +385,9 @@ ${Z}`;
 const le = (e) => b(ht(e));
 function ht(e) {
   const n = `Found ${e.length} errors. Watching for file changes...`, t = e.map((l) => mt(l)), o = t.length;
-  let i = "", s = 0;
+  let i = "", a = 0;
   for (const l of t)
-    i += `  • ${l}.`, s + 1 !== o && (i += `
+    i += `  • ${l}.`, a + 1 !== o && (i += `
 `);
   return `${ee}
 ${ie} ${M(
@@ -439,14 +416,10 @@ async function vt(e) {
     configFile: e.viteConfigPath
   })).listen();
   I("Vite server config =", h(t.config));
-  const { address: o, port: i } = t.httpServer.address();
+  const o = t.httpServer.address();
   Je(
     f(
-      x(
-        `Dev server running at address ${O(
-          `http://${o}:${i}`
-        )}.`
-      )
+      x(`Dev server running at address ${O(`http://${o}`)}.`)
     )
   );
 }
@@ -456,7 +429,7 @@ async function Pt(e) {
     vt(e)
   ]);
 }
-const te = "hmr-electron", yt = "0.0.7";
+const te = "hmr-electron", yt = "0.0.9";
 async function $t() {
   const e = bt();
   if (Object.keys(e).length === 0)

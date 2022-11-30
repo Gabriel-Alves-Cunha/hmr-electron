@@ -8,7 +8,7 @@ import { hmrElectronLog } from "@common/logs";
 // Populates process.env from .env file
 export function addEnvToNodeProcessEnv(dotenvPath: string): void {
 	try {
-		// Specifying an encoding returns a string instead of a buffer
+		// Specifying an encoding returns a string instead of a buffer.
 		const parsed = parseEnvFile(
 			readFileSync(dotenvPath, { encoding: "utf-8" }),
 		);
@@ -31,9 +31,9 @@ function parseEnvFile(src: string) {
 	const obj: Record<string, string> = {};
 
 	// Convert line breaks to same format:
+	let match: RegExpExecArray | null | undefined;
 	let lines = src.replace(/\r\n?/gm, "\n");
 
-	let match: RegExpExecArray | null | undefined;
 	while ((match = LINE.exec(lines)) !== null) {
 		const key = match[1]!;
 
@@ -48,10 +48,8 @@ function parseEnvFile(src: string) {
 		value = value.replace(/^(['"`])([\s\S]*)\1$/gm, "$2");
 
 		// Expand newlines if double quoted:
-		if (maybeQuote === '"') {
-			value = value.replace(/\\n/g, "\n");
-			value = value.replace(/\\r/g, "\r");
-		}
+		if (maybeQuote === '"')
+			value = value.replace(/\\n/g, "\n").replace(/\\r/g, "\r");
 
 		// Add to object:
 		obj[key] = value;

@@ -1,4 +1,3 @@
-import type { AddressInfo } from "node:net";
 import type { ConfigProps } from "types/config";
 
 import { createServer } from "vite";
@@ -30,15 +29,11 @@ export async function startViteFrontendServer(
 	///////////////////////////////////////////
 	///////////////////////////////////////////
 
-	const { address, port } = server.httpServer!.address() as AddressInfo;
+	const address = server.httpServer!.address();
 
 	viteLog(
 		bold(
-			green(
-				`Dev server running at address ${underline(
-					`http://${address}:${port}`,
-				)}.`,
-			),
+			green(`Dev server running at address ${underline(`http://${address}`)}.`),
 		),
 	);
 }

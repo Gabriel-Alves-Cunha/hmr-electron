@@ -2,12 +2,12 @@ import type { BuildOptions, ESBuildOptions } from "vite";
 import type { CommonOptions } from "esbuild";
 import type { ConfigProps } from "types/config";
 
-import { build as buildVite } from "vite";
+import { build } from "vite";
 
 export async function runViteFrontendBuild(config: ConfigProps): Promise<void> {
 	const isBuild = true;
 
-	await buildVite({
+	await build({
 		esbuild: viteESbuildOptions("browser", "esm", isBuild),
 		build: viteBuildOptions(config, "esm", isBuild),
 		css: { devSourcemap: true },

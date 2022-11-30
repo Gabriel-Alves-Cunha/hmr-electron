@@ -3,7 +3,7 @@ import type { ChildProcess } from "node:child_process";
 import { describe, expect, it } from "vitest";
 
 import { stopPreviousElectronAndStartANewOne } from "@commands/subCommands/stopPreviousElectronAndStartANewOne";
-import { processExists } from "@utils/processExists";
+import { doesProcessExists } from "@tests/unit/doesProcessExists";
 import { config } from "@tests/unit/config";
 import { sleep } from "@tests/unit/sleep";
 
@@ -30,8 +30,8 @@ describe("testing runElectron()", () => {
 				expect(mostRecent).toBeTruthy();
 				expect(previous).toBeTruthy();
 
-				expect(processExists(mostRecent?.pid)).toBe(true);
-				expect(processExists(previous?.pid)).toBe(false);
+				expect(doesProcessExists(mostRecent?.pid)).toBe(true);
+				expect(doesProcessExists(previous?.pid)).toBe(false);
 			}
 		}
 	});
@@ -56,8 +56,8 @@ describe("testing runElectron()", () => {
 				expect(mostRecent).toBeTruthy();
 				expect(previous).toBeTruthy();
 
-				expect(processExists(mostRecent?.pid)).toBe(true);
-				expect(processExists(previous?.pid)).toBe(false);
+				expect(doesProcessExists(mostRecent?.pid)).toBe(true);
+				expect(doesProcessExists(previous?.pid)).toBe(false);
 			}
 		}
 

@@ -8,14 +8,14 @@ export function ignoreDirectoriesAndFiles(regexOfDirs: RegExp[]): Plugin {
 		name: "ignore-directories-and-files",
 
 		setup(build) {
-			build.onResolve(options, (args) => ({ path: args.path, namespace }));
+			build.onResolve(options, ({ path }) => ({ path, namespace }));
 
 			for (const regex of regexOfDirs) {
-				build.onResolve({ filter: regex }, (args) => {
-					if (args.path.match(regex)) {
-						hmrElectronLog(`Ignoring "${args.path}"`);
-						return { path: args.path, namespace };
-					} else return { path: args.path };
+				build.onResolve({ filter: regex }, ({ path }) => {
+					if (path.match(regex)) {
+						hmrElectronLog(`Ignoring "${path}"`);
+						return { path, namespace };
+					} else return { path };
 				});
 			}
 
