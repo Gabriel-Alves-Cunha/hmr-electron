@@ -86,7 +86,7 @@ const previousElectronProcesses: Map<number, ChildProcess> = new Map();
 function killPreviousElectronProcesses(): void {
 	for (const [pid, electron_process] of previousElectronProcesses)
 		try {
-			electron_process.removeAllListeners(); // This is very much needed. An EPIPE error always appear without it.
+			electron_process.removeAllListeners(); // This is very much needed! An EPIPE error always appear without it.
 			electron_process.on("exit", () => previousElectronProcesses.delete(pid));
 
 			kill(pid);

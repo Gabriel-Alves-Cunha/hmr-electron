@@ -20,20 +20,18 @@ const options = {
 
 /////////////////////////////////////////////////
 
-export function dirDbg(...args: unknown[]): void {
-	doLogDebug && dir(args, options);
-}
-/////////////////////////////////////////////////
-
-export function dbg(...args: unknown[]): void {
-	doLogDebug && log(...args);
-}
+export const dirDbg = (...args: unknown[]): void =>
+	(doLogDebug && dir(args, options)) as void;
 
 /////////////////////////////////////////////////
 
-export function logConfig(...args: unknown[]): void {
-	doLogConfig && dir(args, options);
-}
+export const dbg = (...args: unknown[]): void =>
+	(doLogDebug && log(...args)) as void;
+
+/////////////////////////////////////////////////
+
+export const logConfig = (...args: unknown[]): void =>
+	(doLogConfig && dir(args, options)) as void;
 
 /////////////////////////////////////////////////
 

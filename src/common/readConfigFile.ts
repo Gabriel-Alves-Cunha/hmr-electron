@@ -14,26 +14,28 @@ import { throwPrettyError } from "@common/logs";
 // Main function:
 
 export async function readConfigFile(
-	filePath: string,
+	configFilePath: string,
 ): Promise<UserProvidedConfigProps> {
-	if (!existsSync(filePath))
-		throwPrettyError(`There must be a config file! Received: "${filePath}"`);
+	if (!existsSync(configFilePath))
+		throwPrettyError(
+			`There must be a config file! Received: "${configFilePath}"`,
+		);
 
 	// '.mjs' to force node to read the file as es-module.
 	let hasTranspilationHappened = false;
 	let outfile = "";
 
-	if (tsExtensions.some((ext) => filePath.endsWith(ext))) {
-		///////////////////////////////////////////
-		///////////////////////////////////////////
-		// Transpiling from ts -> js:
+	// If is typescript, transpile to javascript:
+	if (
+		tsExtensions.some((tsExtension) => configFilePath.endsWith(tsExtension))
+	) {
 		outfile = join(tmpdir(), "config-file-hmr-electron.mjs");
 		hasTranspilationHappened = true;
 
 		buildSync({
+			entryPoints: [configFilePath],
 			minifyIdentifiers: false,
 			minifyWhitespace: false,
-			entryPoints: [filePath],
 			minifySyntax: false,
 			treeShaking: true,
 			sourcemap: false,
@@ -57,7 +59,7 @@ export async function readConfigFile(
 	///////////////////////////////////////////
 
 	const { default: userConfig }: ConfigFromModule = await import(
-		hasTranspilationHappened ? outfile : filePath
+		hasTranspilationHappened ? outfile : configFilePath
 	)
 		.catch(throwPrettyError)
 		.finally(() => hasTranspilationHappened && rmSync(outfile));

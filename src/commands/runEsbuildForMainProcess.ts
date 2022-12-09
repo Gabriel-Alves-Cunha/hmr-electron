@@ -2,8 +2,8 @@ import type { CompileError } from "@common/compileError";
 import type { ConfigProps } from "types/config";
 
 import { type BuildFailure, build as buildEsbuild } from "esbuild";
+import { exit, on } from "node:process";
 import { error } from "node:console";
-import { exit } from "node:process";
 
 import { stopPreviousElectronAndStartANewOne } from "@commands/subCommands/stopPreviousElectronAndStartANewOne";
 import { ignoreDirectoriesAndFiles } from "@plugins/ignoreDirectoriesAndFiles";
@@ -42,7 +42,7 @@ export async function runEsbuildForMainProcess(
 			minifyIdentifiers: props.isBuild,
 			tsconfig: props.mainTSconfigPath,
 			minifyWhitespace: props.isBuild,
-			outExtension: { ".js": ".cjs" },
+			outExtension: { ".js": ".cjs" }, // Electron, currently, only accepts cjs!
 			minifySyntax: props.isBuild,
 			minify: props.isBuild,
 			sourcesContent: false,
@@ -63,12 +63,8 @@ export async function runEsbuildForMainProcess(
 			watch: props.isBuild ? false : {
 				onRebuild(err) {
 					if (err) {
-						if (isBuildFailure(err)) {
-							error(err);
-							exit(1);
-						}
-
-						return onError(transformErrors(err));
+						error(err);
+						exit(1);
 					}
 
 					stopPreviousElectronAndStartANewOne(props);
@@ -81,15 +77,18 @@ export async function runEsbuildForMainProcess(
 		if (buildResult.errors.length)
 			hmrElectronLog("Esbuild build errors:\n", buildResult.errors);
 
+		on("exit", () => buildResult.stop?.()) // Stop esbuild watch mode
+
+		// On watch mode, in the beginning, start Electron:
 		if (!props.isBuild)
 			stopPreviousElectronAndStartANewOne(props);
 	} catch (err) {
-		 if (isBuildFailure(err))
-			onError(transformErrors(err))
-		else {
+		//  if (isBuildFailure(err))
+		// 	onError(transformErrors(err))
+		// else {
 			error(err);
 			exit(1);
-		}
+		// }
 	}
 }
 

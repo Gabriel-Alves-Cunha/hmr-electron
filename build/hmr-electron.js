@@ -3,7 +3,7 @@ import { env as y, exit as $, cwd as Pe, kill as ye, argv as $e } from "node:pro
 import { log as m, dir as be, error as b } from "node:console";
 import { existsSync as F, readFileSync as Ee, writeFileSync as Fe, rmSync as j } from "node:fs";
 import { builtinModules as J } from "node:module";
-import { buildSync as Oe, build as xe } from "esbuild";
+import { buildSync as xe, build as Oe } from "esbuild";
 import { tmpdir as we } from "node:os";
 import { spawn as Se } from "node:child_process";
 import { Transform as U } from "node:stream";
@@ -27,12 +27,12 @@ function* je() {
   for (const e of v)
     yield r("src", "renderer", `${B}${e}`);
 }
-const s = (e, n) => (t) => `\x1B[${e}m${t}\x1B[${n}m`, O = s(4, 24), f = s(1, 22), Me = s(43, 49), Le = s(42, 49), Ae = s(44, 49), M = s(35, 39), L = s(33, 39), x = s(32, 39), T = s(30, 39), P = s(34, 39), Ne = s(90, 39), Te = s(36, 39), g = s(31, 39), E = "────────────────────────────────────────────────────────────────────────────────";
+const s = (e, n) => (t) => `\x1B[${e}m${t}\x1B[${n}m`, x = s(4, 24), f = s(1, 22), Me = s(43, 49), Le = s(42, 49), Ae = s(44, 49), M = s(35, 39), L = s(33, 39), O = s(32, 39), _ = s(30, 39), P = s(34, 39), Ne = s(90, 39), _e = s(36, 39), g = s(31, 39), E = "────────────────────────────────────────────────────────────────────────────────";
 function w() {
   const e = new Date();
   return Ae(
     f(
-      T(
+      _(
         `[${p(e.getHours())}:${p(e.getMinutes())}:${p(
           e.getSeconds()
         )} ${p(e.getMilliseconds(), 3)}]`
@@ -40,12 +40,12 @@ function w() {
     )
   );
 }
-const p = (e, n = 2) => e.toString().padStart(n, "0"), De = Le(f(T("[VITE]"))), ie = Me(
-  f(T("[hmr-electron]"))
-), Ie = () => u(
-  `No config file (${O("'hmr-electron.config.ts'")}) found.`
-), _e = (e, n) => `File ${O(x(`"${e}"`))} not found. Received: ${P(n)}`, Ve = () => u(
-  `Vite config file for main process ${O("NOT")} found.`
+const p = (e, n = 2) => e.toString().padStart(n, "0"), Te = Le(f(_("[VITE]"))), ie = Me(
+  f(_("[hmr-electron]"))
+), De = () => u(
+  `No config file (${x("'hmr-electron.config.ts'")}) found.`
+), Ie = (e, n) => `File ${x(O(`"${e}"`))} not found. Received: ${P(n)}`, Ve = () => u(
+  `Vite config file for main process ${x("NOT")} found.`
 );
 function u(e) {
   throw e = `
@@ -55,9 +55,9 @@ ${g(E)}
 `, new Error(e);
 }
 function We(e) {
-  return `[ ${e.map((t) => x(`"${t}"`)).join(", ")} ]`;
+  return `[ ${e.map((t) => O(`"${t}"`)).join(", ")} ]`;
 }
-const d = (...e) => m(w(), ie, ...e), Je = (...e) => m(w(), De, ...e), h = (e) => JSON.stringify(e, null, 2), re = y.DEBUG?.split(","), Ue = re?.includes("hmr-electron:config-result"), He = re?.includes("hmr-electron"), ze = {
+const d = (...e) => m(w(), ie, ...e), Je = (...e) => m(w(), Te, ...e), h = (e) => JSON.stringify(e, null, 2), re = y.DEBUG?.split(","), Ue = re?.includes("hmr-electron:config-result"), He = re?.includes("hmr-electron"), ze = {
   maxStringLength: 1e3,
   maxArrayLength: 300,
   compact: !1,
@@ -65,13 +65,13 @@ const d = (...e) => m(w(), ie, ...e), Je = (...e) => m(w(), De, ...e), h = (e) =
   colors: !0,
   depth: 10
 };
-function D(...e) {
+function T(...e) {
   He && m(...e);
 }
-function I(...e) {
+function D(...e) {
   Ue && be(e, ze);
 }
-D("Hello from the debug side!");
+T("Hello from the debug side!");
 function qe(e) {
   try {
     const n = Ye(
@@ -79,7 +79,7 @@ function qe(e) {
     );
     for (const t of Object.keys(n))
       Object.hasOwn(y, t) ? d(
-        `"${t}" is already defined in \`process.env\` and was NOT overwritten!`
+        `"${t}" is already defined in \`process.env\` and was __NOT__ overwritten!`
       ) : y[t] = n[t];
   } catch (n) {
     d(`Failed to load ${e} ${n.message}`), $(1);
@@ -125,7 +125,7 @@ function Qe(e) {
     "esbuild",
     "vite"
   ), i.push(/node_modules/);
-  const _ = r(e.srcPath ?? "src"), V = e.mainPath ? r(e.mainPath) : c(_, R), S = r(e.devOutputPath ?? "dev-build"), W = e.devBuildMainOutputPath ? r(e.devBuildMainOutputPath) : c(S, R), ue = c(S, H), de = e.devBuildElectronEntryFilePath ? r(e.devBuildElectronEntryFilePath) : c(W, "index.cjs"), fe = e.preloadFilePath ? r(e.preloadFilePath) : void 0, ge = e.mainTSconfigPath ? r(e.mainTSconfigPath) : c(V, et), me = e.viteConfigPath ? r(e.viteConfigPath) : oe(je, Ve), C = r(e.buildOutputPath ?? "build"), he = e.buildRendererOutputPath ? r(e.buildRendererOutputPath) : c(C, H), pe = e.buildMainOutputPath ? r(e.buildMainOutputPath) : c(C, R), ve = r(e.electronEntryFilePath), k = {
+  const I = r(e.srcPath ?? "src"), V = e.mainPath ? r(e.mainPath) : c(I, R), S = r(e.devOutputPath ?? "dev-build"), W = e.devBuildMainOutputPath ? r(e.devBuildMainOutputPath) : c(S, R), ue = c(S, H), de = e.devBuildElectronEntryFilePath ? r(e.devBuildElectronEntryFilePath) : c(W, "index.cjs"), fe = e.preloadFilePath ? r(e.preloadFilePath) : void 0, ge = e.mainTSconfigPath ? r(e.mainTSconfigPath) : c(V, et), me = e.viteConfigPath ? r(e.viteConfigPath) : oe(je, Ve), C = r(e.buildOutputPath ?? "build"), he = e.buildRendererOutputPath ? r(e.buildRendererOutputPath) : c(C, H), pe = e.buildMainOutputPath ? r(e.buildMainOutputPath) : c(C, R), ve = r(e.electronEntryFilePath), k = {
     electronEsbuildExternalPackages: t,
     devBuildElectronEntryFilePath: de,
     devBuildRendererOutputPath: ue,
@@ -143,15 +143,15 @@ function Qe(e) {
     esbuildConfig: a,
     esbuildIgnore: i,
     mainPath: V,
-    srcPath: _,
+    srcPath: I,
     root: l
   };
-  return Ke(k), I("Resolved config:", h(k)), k;
+  return Ke(k), D("Resolved config:", h(k)), k;
 }
 function Ke(e) {
   let n = !1;
   for (const [t, o] of Object.entries(e))
-    !(t && o) || typeof o != "string" || Xe.includes(t) || F(o) || (b(_e(t, o)), n = !0);
+    !(t && o) || typeof o != "string" || Xe.includes(t) || F(o) || (b(Ie(t, o)), n = !0);
   n && (m("Resolved config:", h(e)), u("Resolve the errors above and try again."));
 }
 const Xe = [
@@ -186,7 +186,7 @@ export default config;
 async function ot(e) {
   F(e) || u(`There must be a config file! Received: "${e}"`);
   let n = !1, t = "";
-  it.some((i) => e.endsWith(i)) && (t = c(we(), "config-file-hmr-electron.mjs"), n = !0, Oe({
+  it.some((i) => e.endsWith(i)) && (t = c(we(), "config-file-hmr-electron.mjs"), n = !0, xe({
     minifyIdentifiers: !1,
     minifyWhitespace: !1,
     entryPoints: [e],
@@ -205,7 +205,7 @@ async function ot(e) {
     outfile: t
   }));
   const { default: o } = await (n ? import(t) : import(e)).catch(u).finally(() => n && j(t));
-  return I(`User config = ${h(o)}`), o || u("Config file is required!"), o.electronEntryFilePath || u("`config.electronEntryFilePath` is required!"), o;
+  return D(`User config = ${h(o)}`), o || u("Config file is required!"), o.electronEntryFilePath || u("`config.electronEntryFilePath` is required!"), o;
 }
 const it = [".ts", ".mts", ".cts"];
 function z(e) {
@@ -230,7 +230,7 @@ function G({
     A.set(
       o.pid,
       o
-    ), d("Electron reloaded"), D(
+    ), d("Electron reloaded"), T(
       `Electron child process has been spawned with args: ${We(
         o.spawnargs
       )}`
@@ -267,7 +267,7 @@ async function se(e, n) {
     `Using preload file: "${e.preloadFilePath.substring(e.root.length)}".`
   ));
   try {
-    const o = await xe({
+    const o = await Oe({
       plugins: [
         ut(e.esbuildIgnore)
       ],
@@ -303,7 +303,7 @@ async function se(e, n) {
       ...e.esbuildConfig
     });
     o.errors.length && d(`Esbuild build errors:
-`, o.errors), e.isBuild || G(e);
+`, o.errors), process.on("exit", () => o.stop?.()), e.isBuild || G(e);
   } catch (o) {
     X(o) ? n(K(o)) : (b(o), $(1));
   }
@@ -368,7 +368,7 @@ const ae = (e, n, t) => ({
 function mt(e) {
   if (!e.location)
     return e.message;
-  const n = `file: ${Te(`"${e.location.file}"`)}
+  const n = `file: ${_e(`"${e.location.file}"`)}
 line: ${L(e.location.line)}
 column: ${L(e.location.column)}
 `, t = `${Ne(`${e.location.line} |`)}  ${e.location.lineText}
@@ -415,11 +415,11 @@ async function vt(e) {
     logLevel: "info",
     configFile: e.viteConfigPath
   })).listen();
-  I("Vite server config =", h(t.config));
+  D("Vite server config =", h(t.config));
   const o = t.httpServer.address();
   Je(
     f(
-      x(`Dev server running at address ${O(`http://${o}`)}.`)
+      O(`Dev server running at address ${x(`http://${o}`)}.`)
     )
   );
 }
@@ -436,7 +436,7 @@ async function $t() {
     return Et();
   if (e.init)
     return tt();
-  const n = e["--config-file"], t = n ? r(n) : oe(Re, Ie), o = await ot(t), i = Qe(o);
+  const n = e["--config-file"], t = n ? r(n) : oe(Re, De), o = await ot(t), i = Qe(o);
   if (e.dev)
     return e["--clean-cache"] && z(i), await Pt(i);
   if (e.build)
@@ -449,7 +449,7 @@ function bt() {
     const [t, o] = n.split("=");
     !t || (o ? o === "false" ? e[t] = !1 : e[t] = o : e[t] = !0);
   }
-  return D("argsAsObj =", h(e)), e;
+  return T("argsAsObj =", h(e)), e;
 }
 function Et() {
   m(`${f(P(te))} version ${yt}
@@ -466,5 +466,5 @@ ${f("Commands and options:")}
   dev   [--config-file${ne}<configFilePath>] [--clean-cache]
   build [--config-file${ne}<configFilePath>]`);
 }
-const ne = x("=");
+const ne = O("=");
 $t();

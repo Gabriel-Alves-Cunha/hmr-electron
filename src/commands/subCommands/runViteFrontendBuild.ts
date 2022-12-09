@@ -43,13 +43,14 @@ export const viteBuildOptions = (
 			external: config.viteExternalPackages,
 			preserveEntrySignatures: "strict",
 			strictDeprecations: true,
+			perf: true,
 
 			output: {
 				sourcemap: isBuild ? false : "inline",
-				assetFileNames: "assets/[name].[ext]",
+				// assetFileNames: "assets/[name].[ext]",
 				minifyInternalExports: isBuild,
-				entryFileNames: "[name].mjs",
-				chunkFileNames: "[name].mjs",
+				// entryFileNames: "[name].mjs",
+				// chunkFileNames: "[name].mjs",
 				compact: isBuild,
 				format,
 
@@ -74,10 +75,10 @@ export const viteESbuildOptions = (
 ): ESBuildOptions => ({
 	minifyIdentifiers: isBuild,
 	minifyWhitespace: isBuild,
+	minifySyntax: isBuild,
 	sourcesContent: false,
 	legalComments: "none",
 	sourcemap: "external",
-	minifySyntax: isBuild,
 	treeShaking: true,
 	target: "esnext",
 	logLevel: "info",
@@ -95,13 +96,19 @@ export const viteESbuildOptions = (
 
 // This is a hack I found to get the type of `format`...
 
-type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
-	k: infer I,
-) => void
+type UnionToIntersectionHelper<U> = (
+	U extends unknown
+		? (k: U) => void
+		: never
+) extends (k: infer I) => void
 	? I
 	: never;
+
+type UnionToIntersection<U> = boolean extends U
+	? UnionToIntersectionHelper<Exclude<U, boolean>> & boolean
+	: UnionToIntersectionHelper<U>;
 type UnionToOvlds<U> = UnionToIntersection<
-	U extends any ? (f: U) => void : never
+	U extends unknown ? (f: U) => void : never
 >;
 type PopUnion<U> = UnionToOvlds<U> extends (a: infer A) => void ? A : never;
 type RollupOptions = NonNullable<BuildOptions["rollupOptions"]>;

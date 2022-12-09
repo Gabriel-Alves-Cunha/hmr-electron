@@ -16,7 +16,7 @@ export function addEnvToNodeProcessEnv(dotenvPath: string): void {
 		for (const key of Object.keys(parsed))
 			Object.hasOwn(env, key)
 				? hmrElectronLog(
-						`"${key}" is already defined in \`process.env\` and was NOT overwritten!`,
+						`"${key}" is already defined in \`process.env\` and was __NOT__ overwritten!`,
 				  )
 				: (env[key] = parsed[key]);
 	} catch (error) {
@@ -26,7 +26,7 @@ export function addEnvToNodeProcessEnv(dotenvPath: string): void {
 	}
 }
 
-// Parse src into a Record<string, string>
+// Parse into a Record<string, string>
 function parseEnvFile(src: string) {
 	const obj: Record<string, string> = {};
 
