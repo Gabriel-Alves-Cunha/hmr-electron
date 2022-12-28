@@ -5,8 +5,9 @@ import { type BuildFailure, build as buildEsbuild } from "esbuild";
 import { exit, on } from "node:process";
 import { error } from "node:console";
 
-import { stopPreviousElectronAndStartANewOne } from "@commands/subCommands/stopPreviousElectronAndStartANewOne";
+import { stopPreviousElectronAndStartANewOne } from "@commands/stopPreviousElectronAndStartANewOne";
 import { ignoreDirectoriesAndFiles } from "@plugins/ignoreDirectoriesAndFiles";
+import { diagnoseErrors } from "@common/diagnoseErrors";
 import { hmrElectronLog } from "@common/logs";
 
 ///////////////////////////////////////////
@@ -16,7 +17,6 @@ import { hmrElectronLog } from "@common/logs";
 
 export async function runEsbuildForMainProcess(
 	props: BuildProps,
-	onError: (errors: CompileError[]) => void,
 ): Promise<void> {
 	const entryPoints = [props.electronEntryFilePath];
 
@@ -62,10 +62,9 @@ export async function runEsbuildForMainProcess(
 
 			watch: props.isBuild ? false : {
 				onRebuild(err) {
-					if (err) {
-						error(err);
-						exit(1);
-					}
+					err &&
+						diagnoseErrors(transformErrors(err));
+						// exit(1);
 
 					stopPreviousElectronAndStartANewOne(props);
 				},
@@ -103,10 +102,6 @@ const transformErrors = (err: BuildFailure): CompileError[] =>
 		message: e.text,
 	}));
 
-///////////////////////////////////////////
-
-const isBuildFailure = (err: any): err is BuildFailure =>
-	Array.isArray(err?.errors);
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////

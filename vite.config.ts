@@ -1,18 +1,19 @@
 /// <reference types="vitest" />
 /// <reference types="vite/client" />
 
-import { type UserConfig, defineConfig } from "vite";
 import { configDefaults } from "vitest/config";
 import { builtinModules } from "node:module";
+import { defineConfig } from "vite";
 import { resolve } from "node:path";
 
-const builtinModulesWithNode = builtinModules.map((mod) => `node:${mod}`);
-const allBuiltinModules = builtinModulesWithNode.concat(builtinModules);
+const allBuiltinModules = builtinModules
+	.map((mod) => `node:${mod}`)
+	.concat(builtinModules);
 
 export default defineConfig(() => {
 	const minify = true;
 
-	const config: UserConfig = {
+	return {
 		build: {
 			rollupOptions: {
 				// make sure to externalize deps that shouldn't be bundled
@@ -90,20 +91,5 @@ export default defineConfig(() => {
 				{ find: "@src", replacement: resolve("src/") },
 			],
 		},
-	};
-
-	// log(config);
-
-	return config;
+	} satisfies ReturnType<typeof defineConfig>;
 });
-
-function log(...args: unknown[]): void {
-	console.dir(...args, {
-		maxStringLength: 1_000,
-		maxArrayLength: 100,
-		compact: false,
-		sorted: false,
-		colors: true,
-		depth: 10,
-	});
-}

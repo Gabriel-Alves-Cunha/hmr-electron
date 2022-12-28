@@ -68,7 +68,9 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 
 	///////////////////////////////////////////////
 
-	const devOutputPath = resolve(props.devOutputPath ?? "dev-build");
+	const hmr_electron_path = join(root, "node_modules", "hmr-electron");
+
+	const devOutputPath = resolve(props.devOutputPath ?? hmr_electron_path);
 
 	const devBuildMainOutputPath = props.devBuildMainOutputPath
 		? resolve(props.devBuildMainOutputPath)

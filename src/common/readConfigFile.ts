@@ -27,7 +27,9 @@ export async function readConfigFile(
 
 	// If is typescript, transpile to javascript:
 	if (
-		tsExtensions.some((tsExtension) => configFilePath.endsWith(tsExtension))
+		([".ts", ".mts", ".cts"] as const).some((tsExtension) =>
+			configFilePath.endsWith(tsExtension),
+		)
 	) {
 		outfile = join(tmpdir(), "config-file-hmr-electron.mjs");
 		hasTranspilationHappened = true;
@@ -72,13 +74,6 @@ export async function readConfigFile(
 
 	return userConfig;
 }
-
-///////////////////////////////////////////
-///////////////////////////////////////////
-///////////////////////////////////////////
-// Helpers:
-
-const tsExtensions = [".ts", ".mts", ".cts"] as const;
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////

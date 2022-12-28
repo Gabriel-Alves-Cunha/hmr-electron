@@ -1,8 +1,7 @@
 import type { ConfigProps } from "types/config";
 
 import { runEsbuildForMainProcess } from "./runEsbuildForMainProcess";
-import { runViteFrontendBuild } from "./subCommands/runViteFrontendBuild";
-import { diagnoseErrors } from "@common/diagnoseErrors";
+import { runViteFrontendBuild } from "./runViteFrontendBuild";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -11,7 +10,7 @@ import { diagnoseErrors } from "@common/diagnoseErrors";
 
 export async function runBuild(config: ConfigProps): Promise<void> {
 	await Promise.all([
-		runEsbuildForMainProcess({ ...config, isBuild: true }, diagnoseErrors),
+		runEsbuildForMainProcess({ ...config, isBuild: true }),
 
 		runViteFrontendBuild(config),
 	]);

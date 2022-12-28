@@ -2,7 +2,7 @@ import type { ChildProcess } from "node:child_process";
 
 import { describe, expect, it } from "vitest";
 
-import { stopPreviousElectronAndStartANewOne } from "@commands/subCommands/stopPreviousElectronAndStartANewOne";
+import { stopPreviousElectronAndStartANewOne } from "@commands/stopPreviousElectronAndStartANewOne";
 import { doesProcessExists } from "@tests/unit/doesProcessExists";
 import { config } from "@tests/unit/config";
 import { sleep } from "@tests/unit/sleep";
