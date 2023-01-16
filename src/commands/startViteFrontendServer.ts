@@ -4,8 +4,6 @@ import { createServer } from "vite";
 
 import { viteESbuildOptions, viteBuildOptions } from "./runViteFrontendBuild";
 import { logConfig, stringifyJson } from "@utils/debug";
-import { bold, green, underline } from "@utils/cli-colors";
-import { viteLog } from "@common/logs";
 
 export async function startViteFrontendServer(
 	config: ConfigProps,
@@ -26,14 +24,5 @@ export async function startViteFrontendServer(
 
 	logConfig("Vite server config =", stringifyJson(server.config));
 
-	///////////////////////////////////////////
-	///////////////////////////////////////////
-
-	const address = server.httpServer!.address();
-
-	viteLog(
-		bold(
-			green(`Dev server running at address ${underline(`http://${address}`)}.`),
-		),
-	);
+	server.printUrls();
 }

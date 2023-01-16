@@ -2,8 +2,8 @@ import type { CompileError } from "@common/compileError";
 import type { ConfigProps } from "types/config";
 
 import { type BuildFailure, build as buildEsbuild } from "esbuild";
-import { exit, on } from "node:process";
 import { error } from "node:console";
+import { exit } from "node:process";
 
 import { stopPreviousElectronAndStartANewOne } from "@commands/stopPreviousElectronAndStartANewOne";
 import { ignoreDirectoriesAndFiles } from "@plugins/ignoreDirectoriesAndFiles";
@@ -54,6 +54,7 @@ export async function runEsbuildForMainProcess(
 			platform: "node",
 			target: "esnext",
 			charset: "utf8",
+			metafile: false,
 			format: "cjs",
 			logLimit: 10,
 			bundle: true,
@@ -61,7 +62,7 @@ export async function runEsbuildForMainProcess(
 			entryPoints,
 
 			watch: props.isBuild ? false : {
-				onRebuild(err) {
+				onRebuild(err: BuildFailure | null) {
 					err &&
 						diagnoseErrors(transformErrors(err));
 						// exit(1);
@@ -76,7 +77,7 @@ export async function runEsbuildForMainProcess(
 		if (buildResult.errors.length)
 			hmrElectronLog("Esbuild build errors:\n", buildResult.errors);
 
-		on("exit", () => buildResult.stop?.()) // Stop esbuild watch mode
+		process.on("exit", () => buildResult.stop?.()); // Stop esbuild watch mode
 
 		// On watch mode, in the beginning, start Electron:
 		if (!props.isBuild)

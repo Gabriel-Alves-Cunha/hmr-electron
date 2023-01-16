@@ -2,17 +2,11 @@ import { resolve } from "node:path";
 import { argv } from "node:process";
 import { log } from "node:console";
 
+import { configFilePathNotFound, hmrElectronLog } from "@common/logs";
 import { defaultPathsForConfig, findPathOrExit } from "@common/findPathOrExit";
 import { blue, bold, green, yellow } from "@utils/cli-colors";
-import { configFilePathNotFound } from "@common/logs";
 import { dbg, stringifyJson } from "@utils/debug";
-import { makeConfigProps } from "@common/config";
-import { hmrElectronLog } from "@common/logs";
-import { makeConfigFile } from "@commands/makeConfigFile";
-import { readConfigFile } from "@common/readConfigFile";
 import { cleanCache } from "@commands/cleanCache";
-import { runBuild } from "@commands/runBuild";
-import { runDev } from "@commands/runDev";
 
 import { name, version } from "../package.json";
 
@@ -33,7 +27,8 @@ export async function parseCliArgs(): Promise<void> {
 	//////////////////////////////////////////
 	// Init command:
 
-	if (args["init"]) return makeConfigFile();
+	if (args["init"])
+		return (await import("@commands/makeConfigFile")).makeConfigFile();
 
 	//////////////////////////////////////////
 	//////////////////////////////////////////
@@ -44,9 +39,13 @@ export async function parseCliArgs(): Promise<void> {
 		? resolve(configFilePathFromArgs as string)
 		: findPathOrExit(defaultPathsForConfig, configFilePathNotFound);
 
-	const userConfig = await readConfigFile(configFilePath);
+	const userConfig = await (
+		await import("@common/readConfigFile")
+	).readConfigFile(configFilePath);
 
-	const configProps = makeConfigProps(userConfig);
+	const configProps = (await import("@common/config")).makeConfigProps(
+		userConfig,
+	);
 
 	//////////////////////////////////////////
 	//////////////////////////////////////////
@@ -55,7 +54,7 @@ export async function parseCliArgs(): Promise<void> {
 	if (args["dev"]) {
 		if (args["--clean-cache"]) cleanCache(configProps);
 
-		return await runDev(configProps);
+		return await (await import("@commands/runDev")).runDev(configProps);
 	}
 
 	//////////////////////////////////////////
@@ -65,7 +64,7 @@ export async function parseCliArgs(): Promise<void> {
 	if (args["build"]) {
 		cleanCache(configProps);
 
-		return await runBuild(configProps);
+		return await (await import("@commands/runBuild")).runBuild(configProps);
 	}
 
 	//////////////////////////////////////////
