@@ -29,7 +29,11 @@ export default defineConfig(() => {
 						constBindings: true,
 						preset: "es2015",
 					},
+
+					assetFileNames: "assets/[name].[ext]",
 					minifyInternalExports: minify,
+					// entryFileNames: "[name].mjs", // This cannot be set! It overrides the entry name.
+					chunkFileNames: "[name].mjs",
 					sourcemap: false,
 					dir: "./build",
 					format: "esm",

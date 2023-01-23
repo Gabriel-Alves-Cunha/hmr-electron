@@ -4,9 +4,9 @@
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
-		"build": "hmr-electron build",
-		"clean": "hmr-electron clean",
-		"dev": "hmr-electron dev"
+		"build": "../../../build/bin/hmr-electron.js build",
+		"clean": "../../../build/bin/hmr-electron.js clean",
+		"dev": "../../../build/bin/hmr-electron.js dev"
 	},
 	"devDependencies": {
 		"@types/node": "latest",
@@ -14,6 +14,6 @@
 		"vite": "latest"
 	},
 	"dependencies": {
-		"electron": "^21.1.1"
+		"electron": "^22.0.3"
 	}
 }

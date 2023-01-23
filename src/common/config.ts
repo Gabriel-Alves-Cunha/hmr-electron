@@ -141,7 +141,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 		root,
 	};
 
-	validateFilesExists(newConfig);
+	makeSureFilesExists(newConfig);
 
 	logConfig("Resolved config:", stringifyJson(newConfig));
 
@@ -153,7 +153,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 ///////////////////////////////////////////////
 // Helper functions:
 
-function validateFilesExists(config: ConfigProps): void {
+function makeSureFilesExists(config: ConfigProps): void {
 	let doExit = false;
 
 	for (const [key, filePath] of Object.entries(config)) {

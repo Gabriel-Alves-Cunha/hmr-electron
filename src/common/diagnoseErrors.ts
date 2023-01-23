@@ -1,6 +1,6 @@
 import { error } from "node:console";
 
-import { type CompileError, formatCompileError } from "@common/compileError";
+import { type CompileError, formatCompileError } from "@common/formatCompileError";
 import { hmrElectronConsoleMessagePrefix } from "./logs";
 import { borderY, magenta } from "@utils/cli-colors";
 

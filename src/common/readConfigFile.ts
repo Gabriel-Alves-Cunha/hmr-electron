@@ -1,7 +1,7 @@
 import type { UserProvidedConfigProps } from "types/config";
 
 import { existsSync, rmSync } from "node:fs";
-import { buildSync } from "esbuild";
+import { buildSync, version } from "esbuild";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -21,8 +21,8 @@ export async function readConfigFile(
 			`There must be a config file! Received: "${configFilePath}"`,
 		);
 
-	// '.mjs' to force node to read the file as es-module.
 	let hasTranspilationHappened = false;
+	// outfile has to be '.mjs' to force node to read the file as es-module.
 	let outfile = "";
 
 	// If is typescript, transpile to javascript:
@@ -39,14 +39,13 @@ export async function readConfigFile(
 			minifyIdentifiers: false,
 			minifyWhitespace: false,
 			minifySyntax: false,
+			logLevel: "warning",
 			treeShaking: true,
 			sourcemap: false,
 			target: "esnext",
-			logLevel: "info",
 			platform: "node",
 			charset: "utf8",
 			format: "esm",
-			watch: false,
 			logLimit: 10,
 			color: true,
 			write: true,

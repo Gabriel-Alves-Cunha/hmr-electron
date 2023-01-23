@@ -14,6 +14,7 @@ export function ignoreDirectoriesAndFiles(regexOfDirs: RegExp[]): Plugin {
 				build.onResolve({ filter: regex }, ({ path }) => {
 					if (path.match(regex)) {
 						hmrElectronLog(`Ignoring "${path}"`);
+
 						return { path, namespace };
 					} else return { path };
 				});

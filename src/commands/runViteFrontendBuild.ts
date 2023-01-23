@@ -47,10 +47,10 @@ export const viteBuildOptions = (
 
 			output: {
 				sourcemap: isBuild ? false : "inline",
-				// assetFileNames: "assets/[name].[ext]",
+				assetFileNames: "assets/[name].[ext]",
 				minifyInternalExports: isBuild,
 				// entryFileNames: "[name].mjs",
-				// chunkFileNames: "[name].mjs",
+				chunkFileNames: "[name].mjs",
 				compact: isBuild,
 				format,
 

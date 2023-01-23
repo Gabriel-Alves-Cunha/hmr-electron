@@ -1,14 +1,12 @@
-import type { CompileError } from "@common/compileError";
 import type { ConfigProps } from "types/config";
 
-import { type BuildFailure, build as buildEsbuild } from "esbuild";
+import { context } from "esbuild";
 import { error } from "node:console";
 import { exit } from "node:process";
 
-import { stopPreviousElectronAndStartANewOne } from "@commands/stopPreviousElectronAndStartANewOne";
 import { ignoreDirectoriesAndFiles } from "@plugins/ignoreDirectoriesAndFiles";
-import { diagnoseErrors } from "@common/diagnoseErrors";
 import { hmrElectronLog } from "@common/logs";
+import { onEnd } from "@plugins/onEnd";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -31,9 +29,10 @@ export async function runEsbuildForMainProcess(
 	}
 
 	try {
-		const buildResult = await buildEsbuild({
+		const esbuildContext = await context({
 			plugins: [
 				ignoreDirectoriesAndFiles(props.esbuildIgnore),
+				onEnd(props),
 			],
 			outdir: props.isBuild ?
 				props.buildMainOutputPath :
@@ -48,7 +47,6 @@ export async function runEsbuildForMainProcess(
 			sourcesContent: false,
 			sourcemap: "external",
 			legalComments: "none",
-			incremental: false,
 			treeShaking: true,
 			logLevel: "info",
 			platform: "node",
@@ -61,52 +59,24 @@ export async function runEsbuildForMainProcess(
 			color: true,
 			entryPoints,
 
-			watch: props.isBuild ? false : {
-				onRebuild(err: BuildFailure | null) {
-					err &&
-						diagnoseErrors(transformErrors(err));
-						// exit(1);
-
-					stopPreviousElectronAndStartANewOne(props);
-				},
-			},
-
 			...props.esbuildConfig,
 		});
 
-		if (buildResult.errors.length)
-			hmrElectronLog("Esbuild build errors:\n", buildResult.errors);
+		process.on("exit", () => esbuildContext.dispose().then()); // This also stops esbuild watch mode
 
-		process.on("exit", () => buildResult.stop?.()); // Stop esbuild watch mode
-
-		// On watch mode, in the beginning, start Electron:
-		if (!props.isBuild)
-			stopPreviousElectronAndStartANewOne(props);
+		if (!props.isBuild) await esbuildContext.watch();
 	} catch (err) {
-		//  if (isBuildFailure(err))
-		// 	onError(transformErrors(err))
-		// else {
-			error(err);
-			exit(1);
-		// }
+		error(err);
+		exit(1);
+	}
+	finally {
+		console.log("esbuild finished")
 	}
 }
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 ///////////////////////////////////////////
-// Helper functions:
-
-const transformErrors = (err: BuildFailure): CompileError[] =>
-	err.errors.map((e): CompileError => ({
-		location: e.location,
-		message: e.text,
-	}));
-
-
-///////////////////////////////////////////
-///////////////////////////////////////////
-///////////////////////////////////////////
 // Types:
 
-type BuildProps = Readonly<ConfigProps & { isBuild: boolean; }>;
+export type BuildProps = Readonly<ConfigProps & { isBuild: boolean; }>;
