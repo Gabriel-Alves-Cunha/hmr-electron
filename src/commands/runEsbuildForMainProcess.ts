@@ -32,7 +32,7 @@ export async function runEsbuildForMainProcess(
 		const esbuildContext = await context({
 			plugins: [
 				ignoreDirectoriesAndFiles(props.esbuildIgnore),
-				onEnd(props),
+				onEnd(props), // On end, restart electron.
 			],
 			outdir: props.isBuild ?
 				props.buildMainOutputPath :
@@ -41,12 +41,12 @@ export async function runEsbuildForMainProcess(
 			minifyIdentifiers: props.isBuild,
 			tsconfig: props.mainTSconfigPath,
 			minifyWhitespace: props.isBuild,
-			outExtension: { ".js": ".cjs" }, // Electron, currently, only accepts cjs!
+			outExtension: { ".js": ".cjs" }, // Electron currently only accepts cjs.
 			minifySyntax: props.isBuild,
 			minify: props.isBuild,
 			sourcesContent: false,
-			sourcemap: "external",
 			legalComments: "none",
+			sourcemap: "external",
 			treeShaking: true,
 			logLevel: "info",
 			platform: "node",
@@ -62,15 +62,13 @@ export async function runEsbuildForMainProcess(
 			...props.esbuildConfig,
 		});
 
-		process.on("exit", () => esbuildContext.dispose().then()); // This also stops esbuild watch mode
+		// We have to clean esbuild as it is another independent software:
+		process.on("exit", () => esbuildContext.dispose().then());
 
 		if (!props.isBuild) await esbuildContext.watch();
 	} catch (err) {
 		error(err);
 		exit(1);
-	}
-	finally {
-		console.log("esbuild finished")
 	}
 }
 

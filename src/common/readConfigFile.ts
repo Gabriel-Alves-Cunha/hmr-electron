@@ -1,7 +1,7 @@
 import type { UserProvidedConfigProps } from "types/config";
 
 import { existsSync, rmSync } from "node:fs";
-import { buildSync, version } from "esbuild";
+import { buildSync } from "esbuild";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 

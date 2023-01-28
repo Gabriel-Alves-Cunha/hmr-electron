@@ -111,7 +111,7 @@ type UnionToOvlds<U> = UnionToIntersection<
 	U extends unknown ? (f: U) => void : never
 >;
 type PopUnion<U> = UnionToOvlds<U> extends (a: infer A) => void ? A : never;
-type RollupOptions = NonNullable<BuildOptions["rollupOptions"]>;
 type OutputOptionsOrArray = NonNullable<RollupOptions["output"]>;
+type RollupOptions = NonNullable<BuildOptions["rollupOptions"]>;
 type OutputOptions = PopUnion<OutputOptionsOrArray>[0];
 type Format = NonNullable<OutputOptions["format"]>;
