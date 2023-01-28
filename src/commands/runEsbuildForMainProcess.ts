@@ -1,6 +1,6 @@
 import type { ConfigProps } from "types/config";
 
-import { context } from "esbuild";
+import { type BuildOptions, context, buildSync } from "esbuild";
 import { error } from "node:console";
 import { exit } from "node:process";
 
@@ -29,11 +29,7 @@ export async function runEsbuildForMainProcess(
 	}
 
 	try {
-		const esbuildContext = await context({
-			plugins: [
-				ignoreDirectoriesAndFiles(props.esbuildIgnore),
-				onEnd(props), // On end, restart electron.
-			],
+		const buildOptions: BuildOptions = {
 			outdir: props.isBuild ?
 				props.buildMainOutputPath :
 				props.devBuildMainOutputPath,
@@ -60,12 +56,25 @@ export async function runEsbuildForMainProcess(
 			entryPoints,
 
 			...props.esbuildConfig,
-		});
+		}
+
+		if (props.isBuild) {
+			buildSync(buildOptions);
+
+			return;
+		}
+
+		buildOptions.plugins = [
+			ignoreDirectoriesAndFiles(props.esbuildIgnore),
+			onEnd(props), // On end, restart electron.
+		];
+
+		const esbuildContext = await context(buildOptions);
 
 		// We have to clean esbuild as it is another independent software:
 		process.on("exit", () => esbuildContext.dispose().then());
 
-		if (!props.isBuild) await esbuildContext.watch();
+		await esbuildContext.watch();
 	} catch (err) {
 		error(err);
 		exit(1);

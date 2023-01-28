@@ -43,7 +43,7 @@ export async function parseCliArgs(): Promise<void> {
 		await import("@common/readConfigFile")
 	).readConfigFile(configFilePath);
 
-	const configProps = (await import("@common/config")).makeConfigProps(
+	const configProps = (await import("@common/makeConfigProps")).makeConfigProps(
 		userConfig,
 	);
 

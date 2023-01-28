@@ -10,8 +10,8 @@ export async function runViteFrontendBuild(config: ConfigProps): Promise<void> {
 	await build({
 		esbuild: viteESbuildOptions("browser", "esm", isBuild),
 		build: viteBuildOptions(config, "esm", isBuild),
+		mode: isBuild ? "production" : "development",
 		css: { devSourcemap: true },
-		mode: "production",
 		logLevel: "info",
 
 		configFile: config.viteConfigPath,
