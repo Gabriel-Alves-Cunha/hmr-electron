@@ -4,7 +4,7 @@
 	"author": "Gabriel Alves Cunha <gabriel925486@outlook.com>",
 	"main": "build/bin/hmr-electron.js",
 	"typings": "build/index.d.ts",
-	"version": "0.0.14",
+	"version": "0.1.0",
 	"private": false,
 	"license": "MIT",
 	"type": "module",
@@ -18,16 +18,16 @@
 	},
 	"devDependencies": {
 		"@types/node": "18.11.18",
-		"electron": "22.0.3",
-		"esbuild": "0.17.4",
+		"electron": "22.1.0",
+		"esbuild": "0.17.5",
 		"rome": "11.0.0",
 		"typescript": "^4.9.4",
 		"vite": "^4.0.4",
-		"vitest": "0.27.3"
+		"vitest": "0.28.3"
 	},
 	"peerDependencies": {
-		"electron": "22.0.3",
-		"esbuild": "0.17.4",
+		"electron": "22.1.0",
+		"esbuild": "0.17.5",
 		"vite": "4.0.4"
 	},
 	"engines": {
