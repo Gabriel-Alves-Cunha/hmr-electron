@@ -1,7 +1,7 @@
 import type { TransformOptions } from "node:stream";
 
 export const removeJunkLogs: TransformOptions = {
-	transform(chunk: Buffer, _encoding, doneCb) {
+	transform(chunk: Buffer, _encoding, doneCallback) {
 		const source: string = chunk.toString();
 		const error = null;
 
@@ -13,7 +13,7 @@ export const removeJunkLogs: TransformOptions = {
 		)
 			return;
 
-		doneCb(error, source);
+		doneCallback(error, source);
 	},
 };
 

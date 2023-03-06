@@ -1,4 +1,4 @@
-import type { ConfigProps, UserProvidedConfigProps } from "types/config";
+import type { ConfigProps, UserProvidedConfigProps } from "types/config.js";
 
 import { builtinModules } from "node:module";
 import { join, resolve } from "node:path";
@@ -6,17 +6,17 @@ import { log, error } from "node:console";
 import { existsSync } from "node:fs";
 import { cwd, env } from "node:process";
 
-import { logConfig, stringifyJson } from "@utils/debug";
-import { addEnvToNodeProcessEnv } from "@src/loadEnv";
+import { logConfig, stringifyJson } from "@utils/debug.js";
+import { addEnvToNodeProcessEnv } from "@src/loadEnv.js";
 import {
 	defaultPathsForViteConfigFile,
 	findPathOrExit,
-} from "./findPathOrExit";
+} from "./findPathOrExit.js";
 import {
 	viteConfigFileNotFound,
 	throwPrettyError,
 	fileNotFound,
-} from "@common/logs";
+} from "@common/logs.js";
 
 export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 	const {
@@ -68,7 +68,12 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 
 	///////////////////////////////////////////////
 
-	const hmr_electron_path = join(root, "node_modules", "hmr-electron", "user-dev-build");
+	const hmr_electron_path = join(
+		root,
+		"node_modules",
+		"hmr-electron",
+		"user-dev-build",
+	);
 
 	const devOutputPath = resolve(props.devOutputPath ?? hmr_electron_path);
 
@@ -143,7 +148,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 
 	makeSureFilesExists(newConfig);
 
-	logConfig("Resolved config:", stringifyJson(newConfig));
+	logConfig("Resolved config:", newConfig);
 
 	return newConfig;
 }
@@ -157,11 +162,7 @@ function makeSureFilesExists(config: ConfigProps): void {
 	let doExit = false;
 
 	for (const [key, filePath] of Object.entries(config)) {
-		if (
-			!(key && filePath) ||
-			typeof filePath !== "string" ||
-			except.includes(key)
-		)
+		if (!(key && filePath) || typeof filePath !== "string" || except.has(key))
 			continue;
 
 		if (!existsSync(filePath)) {
@@ -181,7 +182,7 @@ function makeSureFilesExists(config: ConfigProps): void {
 ///////////////////////////////////////////////
 // Constants:
 
-const except = [
+const except = new Set([
 	"devBuildElectronEntryFilePath",
 	"devBuildRendererOutputPath",
 	"preloadSourceMapFilePath",
@@ -191,13 +192,13 @@ const except = [
 	"buildOutputPath",
 	"viteConfigPath",
 	"devOutputPath",
-];
+]);
 
 ///////////////////////////////////////////
 
-const allBuiltinModules = builtinModules
-	.map((module) => `node:${module}`)
-	.concat(builtinModules);
+const allBuiltinModules: string[] = [...builtinModules];
+
+for (const module of builtinModules) allBuiltinModules.push(`node:${module}`);
 
 ///////////////////////////////////////////////
 

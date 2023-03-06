@@ -1,13 +1,13 @@
-import type { ConfigProps } from "types/config";
+import type { ConfigProps } from "types/config.js";
 
 import { type ChildProcess, spawn } from "node:child_process";
 import { exit, kill } from "node:process";
 import { Transform } from "node:stream";
 
-import { prettyPrintStringArray } from "@common/logs";
-import { hmrElectronLog } from "@common/logs";
-import { removeJunkLogs } from "@utils/removeJunkLogs";
-import { dbg } from "@utils/debug";
+import { prettyPrintStringArray } from "@common/logs.js";
+import { hmrElectronLog } from "@common/logs.js";
+import { removeJunkLogs } from "@utils/removeJunkLogs.js";
+import { dbg } from "@utils/debug.js";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -91,7 +91,7 @@ function killPreviousElectronProcesses(): void {
 
 			kill(pid);
 		} catch (e) {
-			hmrElectronLog("Error when killing Electron process:", e);
+			hmrElectronLog("Error killing Electron process:", e);
 		}
 }
 

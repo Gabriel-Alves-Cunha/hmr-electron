@@ -1,5 +1,5 @@
-import { borderY, cyan, gray, red, yellow } from "@utils/cli-colors";
-import { getPrettyDate } from "@utils/getPrettyDate";
+import { borderY, cyan, gray, red, yellow } from "@utils/cli-colors.js";
+import { getPrettyDate } from "@utils/getPrettyDate.js";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////

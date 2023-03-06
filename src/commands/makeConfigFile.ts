@@ -1,13 +1,15 @@
 import { existsSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-
-import { throwPrettyError } from "@common/logs";
+import { exit } from "node:process";
+import { log } from "node:console";
 
 export function makeConfigFile(): void {
 	const path = resolve("hmr-electron.config.ts");
 
-	if (existsSync(path))
-		throwPrettyError("There already exists a config file for hmr-electron.");
+	if (existsSync(path)) {
+		log("There already exists a config file for hmr-electron.");
+		exit(0);
+	}
 
 	try {
 		writeFileSync(path, dataToFillFileWith);

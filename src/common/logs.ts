@@ -1,6 +1,6 @@
 import { log } from "node:console";
 
-import { getPrettyDate } from "@utils/getPrettyDate";
+import { getPrettyDate } from "@utils/getPrettyDate.js";
 import {
 	underline,
 	bgYellow,
@@ -11,7 +11,7 @@ import {
 	blue,
 	bold,
 	red,
-} from "@utils/cli-colors";
+} from "@utils/cli-colors.js";
 
 export const viteConsoleMessagePrefix = bgGreen(bold(black("[VITE]")));
 export const hmrElectronConsoleMessagePrefix = bgYellow(
@@ -41,10 +41,12 @@ ${red(borderY)}
 	throw new Error(msg);
 }
 
-export function prettyPrintStringArray<T>(arr: readonly T[]): string {
-	const arrayItems = arr.map((item) => green(`"${item}"`)).join(", ");
+export function prettyPrintStringArray<T>(array: readonly T[]): string {
+	const prettyItems: string[] = [];
 
-	return `[ ${arrayItems} ]`;
+	for (const item of array) prettyItems.push(green(`"${item}"`));
+
+	return `[ ${prettyItems.join(", ")} ]`;
 }
 
 export const hmrElectronLog = (...args: unknown[]): void =>

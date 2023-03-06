@@ -1,7 +1,7 @@
-import type { ConfigProps } from "types/config";
+import type { ConfigProps } from "types/config.js";
 
-import { runEsbuildForMainProcess } from "./runEsbuildForMainProcess";
-import { runViteFrontendBuild } from "./runViteFrontendBuild";
+import { runEsbuildForMainProcess } from "./runEsbuildForMainProcess.js";
+import { runViteFrontendBuild } from "./runViteFrontendBuild.js";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////

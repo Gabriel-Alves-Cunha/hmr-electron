@@ -8,12 +8,12 @@ import { resolve } from "node:path";
 
 export function findPathOrExit(
 	defaultPaths: () => Generator<string>,
-	notFoundMessage: () => never,
+	throwFileNotFoundError: () => never,
 ): string {
 	for (const fullPath of defaultPaths())
 		if (existsSync(fullPath)) return fullPath;
 
-	notFoundMessage();
+	throwFileNotFoundError();
 }
 
 ///////////////////////////////////////////

@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { env, exit } from "node:process";
 
-import { hmrElectronLog } from "@common/logs";
+import { hmrElectronLog } from "@common/logs.js";
+import { dbg } from "@utils/debug.js";
 
 // All this is from the package 'dotenv' at https://github.com/motdotla/dotenv
 
@@ -19,6 +20,8 @@ export function addEnvToNodeProcessEnv(dotenvPath: string): void {
 						`"${key}" is already defined in \`process.env\` and was __NOT__ overwritten!`,
 				  )
 				: (env[key] = parsed[key]);
+
+		dbg("Parsed enviroment variables =", env);
 	} catch (error) {
 		hmrElectronLog(`Failed to load ${dotenvPath} ${(error as Error).message}`);
 
@@ -26,8 +29,7 @@ export function addEnvToNodeProcessEnv(dotenvPath: string): void {
 	}
 }
 
-// Parse into a Record<string, string>
-function parseEnvFile(src: string) {
+function parseEnvFile(src: string): Record<string, string> {
 	const obj: Record<string, string> = {};
 
 	// Convert line breaks to same format:

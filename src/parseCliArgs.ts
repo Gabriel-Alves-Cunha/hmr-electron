@@ -2,11 +2,12 @@ import { resolve } from "node:path";
 import { argv } from "node:process";
 import { log } from "node:console";
 
-import { configFilePathNotFound, hmrElectronLog } from "@common/logs";
-import { defaultPathsForConfig, findPathOrExit } from "@common/findPathOrExit";
-import { blue, bold, green, yellow } from "@utils/cli-colors";
-import { dbg, stringifyJson } from "@utils/debug";
-import { cleanCache } from "@commands/cleanCache";
+import { configFilePathNotFound, hmrElectronLog } from "@common/logs.js";
+import { defaultPathsForConfig, findPathOrExit } from "@common/findPathOrExit.js";
+import { blue, bold, green, yellow } from "@utils/cli-colors.js";
+import { dbg, stringifyJson } from "@utils/debug.js";
+import { getObjectLength } from "@utils/getObjectLength.js";
+import { cleanCache } from "@commands/cleanCache.js";
 
 import { name, version } from "../package.json";
 
@@ -21,14 +22,14 @@ export async function parseCliArgs(): Promise<void> {
 	//////////////////////////////////////////
 	// If only "hmr-electron" was passed:
 
-	if (Object.keys(args).length === 0) return printHelpMsg();
+	if (getObjectLength(args) === 0) return printHelpMsg();
 
 	//////////////////////////////////////////
 	//////////////////////////////////////////
 	// Init command:
 
 	if (args["init"])
-		return (await import("@commands/makeConfigFile")).makeConfigFile();
+		return (await import("@commands/makeConfigFile.js")).makeConfigFile();
 
 	//////////////////////////////////////////
 	//////////////////////////////////////////
@@ -40,10 +41,10 @@ export async function parseCliArgs(): Promise<void> {
 		: findPathOrExit(defaultPathsForConfig, configFilePathNotFound);
 
 	const userConfig = await (
-		await import("@common/readConfigFile")
+		await import("@common/readConfigFile.js")
 	).readConfigFile(configFilePath);
 
-	const configProps = (await import("@common/makeConfigProps")).makeConfigProps(
+	const configProps = (await import("@common/makeConfigProps.js")).makeConfigProps(
 		userConfig,
 	);
 
@@ -54,7 +55,7 @@ export async function parseCliArgs(): Promise<void> {
 	if (args["dev"]) {
 		if (args["--clean-cache"]) cleanCache(configProps);
 
-		return await (await import("@commands/runDev")).runDev(configProps);
+		return await (await import("@commands/runDev.js")).runDev(configProps);
 	}
 
 	//////////////////////////////////////////
@@ -64,7 +65,7 @@ export async function parseCliArgs(): Promise<void> {
 	if (args["build"]) {
 		cleanCache(configProps);
 
-		return await (await import("@commands/runBuild")).runBuild(configProps);
+		return await (await import("@commands/runBuild.js")).runBuild(configProps);
 	}
 
 	//////////////////////////////////////////

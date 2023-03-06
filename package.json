@@ -4,12 +4,12 @@
 	"author": "Gabriel Alves Cunha <gabriel925486@outlook.com>",
 	"main": "build/bin/hmr-electron.js",
 	"typings": "build/index.d.ts",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"private": false,
 	"license": "MIT",
 	"type": "module",
 	"scripts": {
-		"ts:check": "tsc --noEmit --pretty --extendedDiagnostics",
+		"ts:check": "tsc --extendedDiagnostics",
 		"fmt": "rome format . --write",
 		"prepack": "yarn build",
 		"lint": "rome check .",
@@ -17,18 +17,18 @@
 		"test": "vitest"
 	},
 	"devDependencies": {
-		"@types/node": "18.11.18",
-		"electron": "22.1.0",
-		"esbuild": "0.17.5",
+		"@types/node": "18.14.6",
+		"electron": "23.1.2",
+		"esbuild": "0.17.11",
 		"rome": "11.0.0",
-		"typescript": "^4.9.4",
-		"vite": "^4.0.4",
-		"vitest": "0.28.3"
+		"typescript": "^4.9.5",
+		"vite": "^4.1.4",
+		"vitest": "0.29.2"
 	},
 	"peerDependencies": {
-		"electron": "22.1.0",
-		"esbuild": "0.17.5",
-		"vite": "4.0.4"
+		"electron": "23.1.2",
+		"esbuild": "0.17.11",
+		"vite": "4.1.4"
 	},
 	"engines": {
 		"node": ">=16"

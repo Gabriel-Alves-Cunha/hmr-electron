@@ -1,10 +1,10 @@
-import type { CompileError } from "@common/formatCompileError";
-import type { BuildProps } from "@commands/runEsbuildForMainProcess";
+import type { CompileError } from "@common/formatCompileError.js";
+import type { BuildProps } from "@commands/runEsbuildForMainProcess.js";
 import type { Plugin } from "esbuild";
 
-import { stopPreviousElectronAndStartANewOne } from "@commands/stopPreviousElectronAndStartANewOne";
-import { diagnoseErrors } from "@common/diagnoseErrors";
-import { hmrElectronLog } from "@common/logs";
+import { stopPreviousElectronAndStartANewOne } from "@commands/stopPreviousElectronAndStartANewOne.js";
+import { displayErrors } from "@common/diagnoseErrors.js";
+import { hmrElectronLog } from "@common/logs.js";
 
 export const onEnd = (props: BuildProps): Plugin =>
 	({
@@ -17,7 +17,7 @@ export const onEnd = (props: BuildProps): Plugin =>
 				hmrElectronLog(`Build nº ${count++}:`);
 
 				result.errors.length &&
-					diagnoseErrors(
+					displayErrors(
 						result.errors.map(
 							(e) =>
 								({

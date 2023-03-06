@@ -32,8 +32,9 @@ export const dbg = (...args: unknown[]): void =>
 
 /////////////////////////////////////////////////
 
-export const logConfig = (...args: unknown[]): void =>
-	(doLogConfig && dir(args, options)) as void;
+export const logConfig = (firstMessage: string, ...args: unknown[]): void =>
+	(doLogConfig &&
+		dir(`${firstMessage} ${stringifyJson(args)}`, options)) as void;
 
 /////////////////////////////////////////////////
 

@@ -1,12 +1,12 @@
-import type { ConfigProps } from "types/config";
+import type { ConfigProps } from "types/config.js";
 
 import { type BuildOptions, context, buildSync } from "esbuild";
 import { error } from "node:console";
 import { exit } from "node:process";
 
-import { ignoreDirectoriesAndFiles } from "@plugins/ignoreDirectoriesAndFiles";
-import { hmrElectronLog } from "@common/logs";
-import { onEnd } from "@plugins/onEnd";
+import { ignoreDirectoriesAndFiles } from "@plugins/ignoreDirectoriesAndFiles.js";
+import { hmrElectronLog } from "@common/logs.js";
+import { onEnd } from "@plugins/onEnd.js";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////

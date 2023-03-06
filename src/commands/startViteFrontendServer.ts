@@ -1,9 +1,12 @@
-import type { ConfigProps } from "types/config";
+import type { ConfigProps } from "types/config.js";
 
 import { createServer } from "vite";
 
-import { viteESbuildOptions, viteBuildOptions } from "./runViteFrontendBuild";
-import { logConfig, stringifyJson } from "@utils/debug";
+import { logConfig } from "@utils/debug.js";
+import {
+	viteESbuildOptions,
+	viteBuildOptions,
+} from "./runViteFrontendBuild.js";
 
 export async function startViteFrontendServer(
 	config: ConfigProps,
@@ -22,7 +25,7 @@ export async function startViteFrontendServer(
 		})
 	).listen();
 
-	logConfig("Vite server config =", stringifyJson(server.config));
+	logConfig("Vite server config =", server.config);
 
 	server.printUrls();
 }

@@ -1,4 +1,4 @@
-import { parseCliArgs } from "./parseCliArgs";
+import { parseCliArgs } from "./parseCliArgs.js";
 
 process.title = "hmr-electron";
 

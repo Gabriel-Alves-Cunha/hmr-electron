@@ -1,29 +1,30 @@
 import { error } from "node:console";
 
+import { hmrElectronConsoleMessagePrefix } from "./logs.js";
+import { borderY, magenta } from "@utils/cli-colors.js";
 import {
 	type CompileError,
 	formatCompileError,
-} from "@common/formatCompileError";
-import { hmrElectronConsoleMessagePrefix } from "./logs";
-import { borderY, magenta } from "@utils/cli-colors";
+} from "@common/formatCompileError.js";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 // Main function:
 
-export const diagnoseErrors = (errors: CompileError[]): void =>
-	error(formatDiagnosticsMessage(errors));
+export const displayErrors = (errors: CompileError[]): void =>
+	error(formatErrorMessages(errors));
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 // Helper function:
 
-function formatDiagnosticsMessage(errors: CompileError[]): string {
+function formatErrorMessages(errors: CompileError[]): string {
 	const errorMessage = `Found ${errors.length} errors. Watching for file changes...`;
-	const messages = errors.map((err) => formatCompileError(err));
-	const length = messages.length;
+	const messages: string[] = [];
+	for (const err of errors) messages.push(formatCompileError(err));
+	const { length } = messages;
 
 	let diagnosticsDetails = "";
 	let index = 0;

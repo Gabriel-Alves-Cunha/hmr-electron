@@ -1,4 +1,4 @@
-import { bgBlue, bold, black } from "./cli-colors";
+import { bgBlue, bold, black } from "./cli-colors.js";
 
 export function getPrettyDate(): string {
 	const date = new Date();

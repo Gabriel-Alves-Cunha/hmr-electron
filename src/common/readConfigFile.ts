@@ -1,12 +1,12 @@
-import type { UserProvidedConfigProps } from "types/config";
+import type { UserProvidedConfigProps } from "types/config.js";
 
 import { existsSync, rmSync } from "node:fs";
 import { buildSync } from "esbuild";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { logConfig, stringifyJson } from "@utils/debug";
-import { throwPrettyError } from "@common/logs";
+import { throwPrettyError } from "@common/logs.js";
+import { logConfig } from "@utils/debug.js";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -65,7 +65,7 @@ export async function readConfigFile(
 		.catch(throwPrettyError)
 		.finally(() => hasTranspilationHappened && rmSync(outfile));
 
-	logConfig(`User config = ${stringifyJson(userConfig)}`);
+	logConfig("User config =", userConfig);
 
 	if (!userConfig) throwPrettyError("Config file is required!");
 	if (!userConfig.electronEntryFilePath)

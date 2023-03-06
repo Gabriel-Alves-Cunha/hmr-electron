@@ -1,6 +1,6 @@
 import type { Plugin } from "esbuild";
 
-import { hmrElectronLog } from "@common/logs";
+import { hmrElectronLog } from "@common/logs.js";
 
 // TODO: I still don't even know if this is working...
 export function ignoreDirectoriesAndFiles(regexOfDirs: RegExp[]): Plugin {
