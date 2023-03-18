@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Readable, Transform } from "node:stream";
 
-import { removeJunkLogs } from "@utils/removeJunkLogs";
+import { removeJunkLogs } from "@utils/removeJunkLogs.js";
 
 describe("test remove junk", () => {
 	it("should remove junk log from stream", async () => {

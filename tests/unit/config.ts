@@ -1,4 +1,4 @@
-import type { ConfigProps } from "types/config";
+import type { ConfigProps } from "types/config.js";
 
 export const config: ConfigProps = {
 	electronEsbuildExternalPackages: [],

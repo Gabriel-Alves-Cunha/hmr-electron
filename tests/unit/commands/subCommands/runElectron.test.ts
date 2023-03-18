@@ -2,10 +2,10 @@ import type { ChildProcess } from "node:child_process";
 
 import { describe, expect, it } from "vitest";
 
-import { stopPreviousElectronAndStartANewOne } from "@commands/stopPreviousElectronAndStartANewOne";
-import { doesProcessExists } from "@tests/unit/doesProcessExists";
-import { config } from "@tests/unit/config";
-import { sleep } from "@tests/unit/sleep";
+import { stopPreviousElectronAndStartANewOne } from "@commands/stopPreviousElectronAndStartANewOne.js";
+import { doesProcessExists } from "@tests/unit/doesProcessExists.js";
+import { config } from "@tests/unit/config.js";
+import { sleep } from "@tests/unit/sleep.js";
 
 const times = 5;
 

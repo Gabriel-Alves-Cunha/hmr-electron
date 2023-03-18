@@ -7,7 +7,7 @@ import { existsSync } from "node:fs";
 import { cwd, env } from "node:process";
 
 import { logConfig, stringifyJson } from "@utils/debug.js";
-import { addEnvToNodeProcessEnv } from "@src/loadEnv.js";
+import { addEnvToNodeProcessEnv } from "@utils/loadEnv.js";
 import {
 	defaultPathsForViteConfigFile,
 	findPathOrExit,

@@ -27,8 +27,8 @@ export const viteBuildOptions = (
 	config: ConfigProps,
 	format: Format,
 	isBuild: boolean,
-): BuildOptions => {
-	const buildOptions: BuildOptions = {
+): BuildOptions =>
+	({
 		outDir: isBuild
 			? config.buildRendererOutputPath
 			: config.devBuildRendererOutputPath,
@@ -61,10 +61,7 @@ export const viteBuildOptions = (
 				},
 			},
 		},
-	};
-
-	return buildOptions;
-};
+	}) satisfies BuildOptions;
 
 ///////////////////////////////////////////
 
@@ -87,14 +84,14 @@ export const viteESbuildOptions = (
 	color: true,
 	platform,
 	format,
-});
+} satisfies ESBuildOptions);
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 // Types:
 
-// This is a hack I found to get the type of `format`...
+// This is a hack I found to get the type of `format`... :|
 
 type UnionToIntersectionHelper<U> = (
 	U extends unknown

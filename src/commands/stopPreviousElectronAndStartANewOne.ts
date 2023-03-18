@@ -5,8 +5,8 @@ import { exit, kill } from "node:process";
 import { Transform } from "node:stream";
 
 import { prettyPrintStringArray } from "@common/logs.js";
-import { hmrElectronLog } from "@common/logs.js";
 import { removeJunkLogs } from "@utils/removeJunkLogs.js";
+import { hmrElectronLog } from "@common/logs.js";
 import { dbg } from "@utils/debug.js";
 
 ///////////////////////////////////////////

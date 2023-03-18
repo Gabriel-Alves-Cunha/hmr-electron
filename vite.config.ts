@@ -1,5 +1,4 @@
 /// <reference types="vitest" />
-/// <reference types="vite/client" />
 
 import { configDefaults } from "vitest/config";
 import { builtinModules } from "node:module";
@@ -10,9 +9,9 @@ const allBuiltinModules = builtinModules
 	.map((mod) => `node:${mod}`)
 	.concat(builtinModules);
 
-export default defineConfig(() => {
-	const minify = true;
+const minify = true;
 
+export default defineConfig(() => {
 	return {
 		build: {
 			rollupOptions: {
@@ -34,8 +33,8 @@ export default defineConfig(() => {
 					minifyInternalExports: minify,
 					// entryFileNames: "[name].mjs", // This cannot be set! It overrides the entry name.
 					chunkFileNames: "[name].mjs",
+					dir: "./build/cli-build",
 					sourcemap: false,
-					dir: "./build",
 					format: "esm",
 				},
 			},
@@ -43,7 +42,7 @@ export default defineConfig(() => {
 			lib: { entry: "src/main.ts", formats: ["es"] },
 			chunkSizeWarningLimit: 1_000,
 			reportCompressedSize: false,
-			emptyOutDir: false,
+			emptyOutDir: true,
 			sourcemap: false,
 			target: "esnext",
 			minify,
@@ -52,12 +51,13 @@ export default defineConfig(() => {
 		esbuild: {
 			minifyIdentifiers: minify,
 			minifyWhitespace: minify,
+			ignoreAnnotations: true,
 			minifySyntax: minify,
 			treeShaking: true,
 			sourcemap: false,
 			target: "esnext",
-			platform: "node",
 			logLevel: "info",
+			platform: "node",
 			charset: "utf8",
 			format: "esm",
 			logLimit: 10,
