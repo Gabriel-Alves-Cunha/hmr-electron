@@ -1,10 +1,9 @@
-import { buildSync as b, context as v } from "esbuild";
+import { buildSync as v, context as b } from "esbuild";
 import { error as y } from "node:console";
 import { exit as x, kill as P } from "node:process";
-import { h as s, p as S, g as k, b as w } from "./parseCliArgs.mjs";
-import { spawn as O } from "node:child_process";
-import { Transform as m } from "node:stream";
-import { h as L, i as R, y as g, j as C, r as d, e as $, m as l } from "./main.mjs";
+import { h as s, d as S, p as k, c as w, y as m, g as O, r as d, e as L, i as $, j as R, m as l } from "./main.mjs";
+import { spawn as C } from "node:child_process";
+import { Transform as g } from "node:stream";
 import { build as F } from "vite";
 function j(e) {
   return {
@@ -31,19 +30,19 @@ function I({
   isTest: t = !1
 }) {
   z();
-  const n = O(
+  const n = C(
     "electron",
     t ? [""] : [...o, e]
   ).on("exit", () => x(0)).on("spawn", () => {
     u.set(
       n.pid,
       n
-    ), s("Electron reloaded"), L(
-      `Electron child process has been spawned with args: ${S(
+    ), s("Electron reloaded"), S(
+      `Electron child process has been spawned with args: ${k(
         n.spawnargs
       )}`
     );
-  }), r = new m(p), i = new m(p);
+  }), r = new g(p), i = new g(p);
   return n.stdout.pipe(r).pipe(process.stdout), n.stderr.pipe(i).pipe(process.stderr), n;
 }
 const u = /* @__PURE__ */ new Map();
@@ -59,12 +58,12 @@ const N = d("[ERROR]"), h = d($);
 function W(e) {
   if (!e.location)
     return e.message;
-  const o = `file: ${R(`"${e.location.file}"`)}
-line: ${g(e.location.line)}
-column: ${g(e.location.column)}
-`, t = `${C(`${e.location.line} |`)}  ${e.location.lineText}
+  const o = `file: ${w(`"${e.location.file}"`)}
+line: ${m(e.location.line)}
+column: ${m(e.location.column)}
+`, t = `${O(`${e.location.line} |`)}  ${e.location.lineText}
 ${" ".repeat(e.location.column + `${e.location.line}`.length + 4)}${d("~".repeat(e.location.length))}`;
-  return `${k()} ${N}
+  return `${L()} ${N}
 ${h}
 ${o}
 ${e.message}
@@ -84,7 +83,7 @@ function T(e) {
     r += `  • ${a}.`, i + 1 !== n && (r += `
 `);
   return `${E}
-${w} ${l(
+${R} ${l(
     "Some typescript compilation errors occurred:"
   )}
 
@@ -109,7 +108,7 @@ const E = l($), H = (e) => ({
     });
   }
 });
-async function te(e) {
+async function ee(e) {
   const o = [e.electronEntryFilePath];
   e.preloadFilePath && (o.push(e.preloadFilePath), s(
     `Using preload file: "${e.preloadFilePath.substring(e.root.length)}".`
@@ -142,7 +141,7 @@ async function te(e) {
       ...e.esbuildConfig
     };
     if (e.isBuild) {
-      b(t);
+      v(t);
       return;
     }
     t.plugins = [
@@ -150,13 +149,13 @@ async function te(e) {
       H(e)
       // On end, restart electron.
     ];
-    const n = await v(t);
+    const n = await b(t);
     process.on("exit", () => n.dispose().then()), await n.watch();
   } catch (t) {
     y(t), x(1);
   }
 }
-async function ne(e) {
+async function te(e) {
   await F({
     esbuild: V("browser", "esm", !0),
     build: U(e, "esm", !0),
@@ -212,7 +211,7 @@ const U = (e, o, t) => ({
 });
 export {
   U as a,
-  ne as b,
-  te as r,
+  te as b,
+  ee as r,
   V as v
 };

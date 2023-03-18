@@ -1,10 +1,11 @@
 {
 	"name": "hmr-electron",
+	"description": "`hmr-electron` is a package to ease the development of an app with Electron + Vite by enabling transparent module reloading.",
 	"repository": "https://github.com/Gabriel-Alves-Cunha/hmr-electron.git",
 	"author": "Gabriel Alves Cunha <gabriel925486@outlook.com>",
-	"main": "build/bin/hmr-electron.mjs",
+	"main": "build/hmr-electron.js",
 	"typings": "build/index.d.ts",
-	"version": "0.1.4",
+	"version": "0.1.5",
 	"private": false,
 	"license": "MIT",
 	"type": "module",
@@ -13,7 +14,6 @@
 		"prepack": "yarn build",
 		"lint": "rome check .",
 		"build": "vite build",
-		"ts:check": "tsc",
 		"test": "vitest"
 	},
 	"devDependencies": {
@@ -44,7 +44,7 @@
 		"vue"
 	],
 	"bin": {
-		"hmr-electron": "build/bin/hmr-electron.mjs"
+		"hmr-electron": "build/hmr-electron.js"
 	},
 	"files": [
 		"build/**/*"

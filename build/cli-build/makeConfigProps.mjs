@@ -3,9 +3,7 @@ import { join as a, resolve as i } from "node:path";
 import { error as S, log as _ } from "node:console";
 import { readFileSync as k, existsSync as $ } from "node:fs";
 import { env as d, exit as j, cwd as N } from "node:process";
-import { h as T, l as L, s as I } from "./main.mjs";
-import { h as v, f as J, a as Q, t as V, v as q, d as z } from "./parseCliArgs.mjs";
-import "process";
+import { h as v, d as T, f as L, l as I, a as J, s as Q, t as V, v as q, b as z } from "./main.mjs";
 function A(t) {
   try {
     const n = D(
@@ -34,7 +32,7 @@ function D(t) {
   return n;
 }
 const G = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/gm;
-function at(t) {
+function nt(t) {
   const {
     electronOptions: n = [
       "--disallow-code-generation-from-strings",
@@ -60,17 +58,17 @@ function at(t) {
     "esbuild",
     "vite"
   ), u.push(/node_modules/);
-  const f = i(t.srcPath ?? "src"), m = t.mainPath ? i(t.mainPath) : a(f, P), F = a(
+  const f = i(t.srcPath ?? "src"), g = t.mainPath ? i(t.mainPath) : a(f, P), F = a(
     l,
     "node_modules",
     "hmr-electron",
     "user-dev-build"
-  ), s = i(t.devOutputPath ?? F), g = t.devBuildMainOutputPath ? i(t.devBuildMainOutputPath) : a(s, P), y = a(s, O), p = t.devBuildElectronEntryFilePath ? i(t.devBuildElectronEntryFilePath) : a(g, "index.cjs"), w = t.preloadFilePath ? i(t.preloadFilePath) : void 0, x = t.mainTSconfigPath ? i(t.mainTSconfigPath) : a(m, U), C = t.viteConfigPath ? i(t.viteConfigPath) : J(z, q), c = i(t.buildOutputPath ?? "build"), B = t.buildRendererOutputPath ? i(t.buildRendererOutputPath) : a(c, O), M = t.buildMainOutputPath ? i(t.buildMainOutputPath) : a(c, P), R = i(t.electronEntryFilePath), h = {
+  ), s = i(t.devOutputPath ?? F), m = t.devBuildMainOutputPath ? i(t.devBuildMainOutputPath) : a(s, P), y = a(s, O), p = t.devBuildElectronEntryFilePath ? i(t.devBuildElectronEntryFilePath) : a(m, "index.cjs"), w = t.preloadFilePath ? i(t.preloadFilePath) : void 0, x = t.mainTSconfigPath ? i(t.mainTSconfigPath) : a(g, U), C = t.viteConfigPath ? i(t.viteConfigPath) : L(z, q), c = i(t.buildOutputPath ?? "build"), B = t.buildRendererOutputPath ? i(t.buildRendererOutputPath) : a(c, O), M = t.buildMainOutputPath ? i(t.buildMainOutputPath) : a(c, P), R = i(t.electronEntryFilePath), h = {
     electronEsbuildExternalPackages: e,
     devBuildElectronEntryFilePath: p,
     devBuildRendererOutputPath: y,
     buildRendererOutputPath: B,
-    devBuildMainOutputPath: g,
+    devBuildMainOutputPath: m,
     electronEntryFilePath: R,
     viteExternalPackages: o,
     buildMainOutputPath: M,
@@ -82,17 +80,17 @@ function at(t) {
     devOutputPath: s,
     esbuildConfig: r,
     esbuildIgnore: u,
-    mainPath: m,
+    mainPath: g,
     srcPath: f,
     root: l
   };
-  return H(h), L("Resolved config:", h), h;
+  return H(h), I("Resolved config:", h), h;
 }
 function H(t) {
   let n = !1;
   for (const [e, o] of Object.entries(t))
-    !(e && o) || typeof o != "string" || K.has(e) || $(o) || (S(Q(e, o)), n = !0);
-  n && (_("Resolved config:", I(t)), V("Resolve the errors above and try again."));
+    !(e && o) || typeof o != "string" || K.has(e) || $(o) || (S(J(e, o)), n = !0);
+  n && (_("Resolved config:", Q(t)), V("Resolve the errors above and try again."));
 }
 const K = /* @__PURE__ */ new Set([
   "devBuildElectronEntryFilePath",
@@ -109,5 +107,5 @@ for (const t of b)
   E.push(`node:${t}`);
 const U = "tsconfig.json", O = "renderer", P = "main";
 export {
-  at as makeConfigProps
+  nt as makeConfigProps
 };

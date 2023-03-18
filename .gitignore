@@ -12,5 +12,5 @@ node_modules
 build/hmr-electron.js
 tests/full/demo/dev-build
 tests/full/demo/build
-**/build/*.mjs
+build/cli-build/
 

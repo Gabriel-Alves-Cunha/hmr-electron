@@ -4,9 +4,9 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
-		"build": "../../../build/bin/hmr-electron.mjs build",
-		"clean": "../../../build/bin/hmr-electron.mjs clean",
-		"dev": "../../../build/bin/hmr-electron.mjs dev"
+		"build": "../../../build/hmr-electron.mjs build",
+		"clean": "../../../build/hmr-electron.mjs clean",
+		"dev": "../../../build/hmr-electron.mjs dev"
 	},
 	"devDependencies": {
 		"@types/node": "18.15.3",

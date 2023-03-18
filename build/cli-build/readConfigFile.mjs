@@ -1,20 +1,18 @@
-import { existsSync as f, rmSync as m } from "node:fs";
-import { buildSync as s } from "esbuild";
+import { existsSync as f, rmSync as s } from "node:fs";
+import { buildSync as m } from "esbuild";
 import { tmpdir as a } from "node:os";
 import { join as l } from "node:path";
-import { t as i } from "./parseCliArgs.mjs";
-import { l as p } from "./main.mjs";
+import { t as i, l as c } from "./main.mjs";
 import "node:console";
-import "process";
 import "node:process";
-async function C(e) {
+async function w(e) {
   f(e) || i(
     `There must be a config file! Received: "${e}"`
   );
   let o = !1, r = "";
   [".ts", ".mts", ".cts"].some(
     (n) => e.endsWith(n)
-  ) && (r = l(a(), "config-file-hmr-electron.mjs"), o = !0, s({
+  ) && (r = l(a(), "config-file-hmr-electron.mjs"), o = !0, m({
     entryPoints: [e],
     minifyIdentifiers: !1,
     minifyWhitespace: !1,
@@ -34,9 +32,9 @@ async function C(e) {
     // https://github.com/vitejs/vite/blob/main/packages/vite/src/node/config.ts#L931
     // at plugins.
   }));
-  const { default: t } = await (o ? import(r) : import(e)).catch(i).finally(() => o && m(r));
-  return p("User config =", t), t || i("Config file is required!"), t.electronEntryFilePath || i("`config.electronEntryFilePath` is required!"), t;
+  const { default: t } = await (o ? import(r) : import(e)).catch(i).finally(() => o && s(r));
+  return c("User config =", t), t || i("Config file is required!"), t.electronEntryFilePath || i("`config.electronEntryFilePath` is required!"), t;
 }
 export {
-  C as readConfigFile
+  w as readConfigFile
 };
