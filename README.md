@@ -1,6 +1,6 @@
 # hmr-electron
 
-__hmr-electron__ is a Typescript package to ease the development of an app with *__Electron + Vite__* by enabling module reloading.
+__hmr-electron__ is a package to ease the development of an app with *__Electron + Vite__* by enabling transparent module reloading.
 
 This project is based on [elecrun](https://github.com/jctaoo/elecrun). I was bored and liked it.
 

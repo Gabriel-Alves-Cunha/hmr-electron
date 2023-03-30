@@ -36,14 +36,16 @@ export function stopPreviousElectronAndStartANewOne({
 		"electron",
 		isTest ? [""] : [...electronOptions, devBuildElectronEntryFilePath],
 	)
-		.on("exit", () => exit(0)) // This will kill "hmr-electron".
+		.on("exit", exit) // This will kill "hmr-electron".
 		.on("spawn", () => {
+			const isFirstTime = previousElectronProcesses.size === 0;
+
 			previousElectronProcesses.set(
 				electron_process.pid as number,
 				electron_process,
 			);
 
-			hmrElectronLog("Electron reloaded");
+			hmrElectronLog(`Electron ${isFirstTime ? "loaded" : "reloaded"}.`);
 
 			dbg(
 				`Electron child process has been spawned with args: ${prettyPrintStringArray(

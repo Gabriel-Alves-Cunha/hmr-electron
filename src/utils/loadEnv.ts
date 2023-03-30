@@ -34,9 +34,10 @@ function parseEnvFile(src: string): Record<string, string> {
 
 	// Convert line breaks to same format:
 	let match: RegExpExecArray | null | undefined;
-	let lines = src.replace(/\r\n?/gm, "\n");
+	const lines = src.replace(/\r\n?/gm, "\n");
 
 	while ((match = LINE.exec(lines)) !== null) {
+		// rome-ignore lint/style/noNonNullAssertion: the while expression makes sure that the match is not null.
 		const key = match[1]!;
 
 		// Default undefined or null to empty string.

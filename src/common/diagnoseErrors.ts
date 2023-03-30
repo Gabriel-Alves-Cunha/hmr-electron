@@ -1,18 +1,17 @@
+import type { Message } from "esbuild";
+
 import { error } from "node:console";
 
 import { hmrElectronConsoleMessagePrefix } from "./logs.js";
+import { formatCompileError } from "@common/formatCompileError.js";
 import { borderY, magenta } from "@utils/cli-colors.js";
-import {
-	type CompileError,
-	formatCompileError,
-} from "@common/formatCompileError.js";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 // Main function:
 
-export const displayErrors = (errors: CompileError[]): void =>
+export const displayErrors = (errors: Message[]): void =>
 	error(formatErrorMessages(errors));
 
 ///////////////////////////////////////////
@@ -20,7 +19,7 @@ export const displayErrors = (errors: CompileError[]): void =>
 ///////////////////////////////////////////
 // Helper function:
 
-function formatErrorMessages(errors: CompileError[]): string {
+function formatErrorMessages(errors: Message[]): string {
 	const errorMessage = `Found ${errors.length} errors. Watching for file changes...`;
 	const messages: string[] = [];
 	for (const err of errors) messages.push(formatCompileError(err));
@@ -33,11 +32,13 @@ function formatErrorMessages(errors: CompileError[]): string {
 		diagnosticsDetails += `  • ${msg}.`;
 
 		if (index + 1 !== length) diagnosticsDetails += "\n";
+
+		++index;
 	}
 
 	return `${magentaBorder}
 ${hmrElectronConsoleMessagePrefix} ${magenta(
-		"Some typescript compilation errors occurred:",
+		"Some TypeScript compilation errors occurred:",
 	)}
 
 ${diagnosticsDetails}

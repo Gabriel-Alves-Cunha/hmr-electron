@@ -1,16 +1,13 @@
+import type { Message } from "esbuild";
+
 import { borderY, cyan, gray, red, yellow } from "@utils/cli-colors.js";
 import { getPrettyDate } from "@utils/getPrettyDate.js";
-
-///////////////////////////////////////////
-///////////////////////////////////////////
-///////////////////////////////////////////
-// Main function:
 
 const categoryMessage = red("[ERROR]");
 const border = red(borderY);
 
-export function formatCompileError(err: CompileError): string {
-	if (!err.location) return err.message;
+export function formatCompileError(err: Message): string {
+	if (!err.location) return err.text;
 
 	const pathMessage = `\
 file: ${cyan(`"${err.location.file}"`)}
@@ -27,28 +24,9 @@ ${red("~".repeat(err.location.length))}`;
 ${getPrettyDate()} ${categoryMessage}
 ${border}
 ${pathMessage}
-${err.message}
+${err.text}
 
 ${code}
 
 ${border}`;
 }
-
-///////////////////////////////////////////
-///////////////////////////////////////////
-///////////////////////////////////////////
-// Types:
-
-export type CompileError = Readonly<{
-	message: string;
-	location:
-		| {
-				lineText: string;
-				column: number;
-				length: number;
-				file: string;
-				line: number;
-		  }
-		| undefined
-		| null;
-}>;

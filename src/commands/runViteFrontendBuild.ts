@@ -69,22 +69,23 @@ export const viteESbuildOptions = (
 	platform: NonNullable<CommonOptions["platform"]>,
 	format: NonNullable<CommonOptions["format"]>,
 	isBuild: boolean,
-): ESBuildOptions => ({
-	minifyIdentifiers: isBuild,
-	minifyWhitespace: isBuild,
-	minifySyntax: isBuild,
-	sourcesContent: false,
-	legalComments: "none",
-	sourcemap: "external",
-	treeShaking: true,
-	target: "esnext",
-	logLevel: "info",
-	charset: "utf8",
-	logLimit: 10,
-	color: true,
-	platform,
-	format,
-} satisfies ESBuildOptions);
+): ESBuildOptions =>
+	({
+		minifyIdentifiers: isBuild,
+		minifyWhitespace: isBuild,
+		minifySyntax: isBuild,
+		sourcesContent: false,
+		legalComments: "none",
+		sourcemap: "external",
+		treeShaking: true,
+		target: "esnext",
+		logLevel: "info",
+		charset: "utf8",
+		logLimit: 10,
+		color: true,
+		platform,
+		format,
+	}) satisfies ESBuildOptions;
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////

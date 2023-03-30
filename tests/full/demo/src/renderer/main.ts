@@ -6,6 +6,7 @@ window.onload = () => {
 
 	btn.addEventListener("click", () => {
 		count += 1;
+
 		counterLabel.textContent = `updated ${count}`;
 	});
 };
