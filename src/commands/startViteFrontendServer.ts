@@ -10,7 +10,7 @@ import {
 } from "./runViteFrontendBuild.js";
 
 export async function startViteFrontendServer(
-	config: ConfigProps
+	config: ConfigProps,
 ): Promise<void> {
 	const server = await (
 		await createViteServer({

@@ -17,7 +17,7 @@ import {
 // Main function:
 
 export async function matchAndRunArgs(
-	args: Record<string, string | boolean>
+	args: Record<string, string | boolean>,
 ): Promise<void> {
 	if (args["init"])
 		return (await import("@commands/makeConfigFile.js")).makeConfigFile();
@@ -63,5 +63,9 @@ export async function matchAndRunArgs(
 	//////////////////////////////////////////
 
 	printHelpMsg();
-	log(`${borderX}\nNo commands matched. You passed: ${stringifyJson(args)}\n${borderX}`);
+	log(
+		`${borderX}\nNo commands matched. You passed: ${stringifyJson(
+			args,
+		)}\n${borderX}`,
+	);
 }

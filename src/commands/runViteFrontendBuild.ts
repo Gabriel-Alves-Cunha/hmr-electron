@@ -26,7 +26,7 @@ export async function runViteFrontendBuild(config: ConfigProps): Promise<void> {
 export const viteBuildOptions = (
 	config: ConfigProps,
 	format: Format,
-	isBuild: boolean
+	isBuild: boolean,
 ): BuildOptions =>
 	({
 		outDir: isBuild
@@ -61,14 +61,14 @@ export const viteBuildOptions = (
 				},
 			},
 		},
-	} satisfies BuildOptions);
+	}) satisfies BuildOptions;
 
 ///////////////////////////////////////////
 
 export const viteESbuildOptions = (
 	platform: NonNullable<CommonOptions["platform"]>,
 	format: NonNullable<CommonOptions["format"]>,
-	isBuild: boolean
+	isBuild: boolean,
 ): ESBuildOptions =>
 	({
 		minifyIdentifiers: isBuild,
@@ -85,7 +85,7 @@ export const viteESbuildOptions = (
 		color: true,
 		platform,
 		format,
-	} satisfies ESBuildOptions);
+	}) satisfies ESBuildOptions;
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -95,7 +95,9 @@ export const viteESbuildOptions = (
 // This is a hack I found to get the type of `format`... :|
 
 type UnionToIntersectionHelper<U> = (
-	U extends unknown ? (k: U) => void : never
+	U extends unknown
+		? (k: U) => void
+		: never
 ) extends (k: infer I) => void
 	? I
 	: never;

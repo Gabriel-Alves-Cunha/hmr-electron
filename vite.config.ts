@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 
 const external = builtinModules
 	.map((mod) => `node:${mod}`)
-	.concat(builtinModules, "esbuild", "electron", "vite",);
+	.concat(builtinModules, "esbuild", "electron", "vite");
 
 const MINIFY = true;
 

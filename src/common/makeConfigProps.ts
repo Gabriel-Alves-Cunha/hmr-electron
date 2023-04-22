@@ -40,7 +40,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 		...allBuiltinModules,
 		"electron",
 		"esbuild",
-		"vite"
+		"vite",
 	);
 
 	///////////////////////////////////////////////
@@ -61,7 +61,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 		root,
 		"node_modules",
 		"hmr-electron",
-		"user-dev-build"
+		"user-dev-build",
 	);
 
 	const devOutputPath = resolve(props.devOutputPath ?? hmr_electron_path);

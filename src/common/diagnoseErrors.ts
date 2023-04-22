@@ -36,7 +36,7 @@ function formatErrorMessages(errors: Message[]): string {
 
 	return `${magentaBorder}
 ${hmrElectronConsoleMessagePrefix} ${magenta(
-		"Some TypeScript compilation errors occurred:"
+		"Some TypeScript compilation errors occurred:",
 	)}
 
 ${diagnosticsDetails}

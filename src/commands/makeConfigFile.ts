@@ -8,7 +8,7 @@ export function makeConfigFile(): void {
 
 	if (existsSync(path)) {
 		log(
-			"There already exists a config file for hmr-electron. I'm not going to overwrite it. Exiting."
+			"There already exists a config file for hmr-electron. I'm not going to overwrite it. Exiting.",
 		);
 		exit(0);
 	}
