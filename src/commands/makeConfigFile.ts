@@ -7,7 +7,9 @@ export function makeConfigFile(): void {
 	const path = resolve("hmr-electron.config.ts");
 
 	if (existsSync(path)) {
-		log("There already exists a config file for hmr-electron.");
+		log(
+			"There already exists a config file for hmr-electron. I'm not going to overwrite it. Exiting."
+		);
 		exit(0);
 	}
 

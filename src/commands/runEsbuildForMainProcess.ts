@@ -1,6 +1,6 @@
 import type { ConfigProps } from "types/config.js";
 
-import { type BuildOptions, context, buildSync } from "esbuild";
+import { type BuildOptions, context, buildSync as ESBuildSync } from "esbuild";
 import { error } from "node:console";
 import { exit } from "node:process";
 
@@ -14,7 +14,8 @@ import { onEnd } from "@plugins/onEnd.js";
 // Main function:
 
 export async function runEsbuildForMainProcess(
-	props: BuildProps,
+	props: ConfigProps,
+	isBuild: boolean
 ): Promise<void> {
 	const entryPoints = [props.electronEntryFilePath];
 
@@ -22,24 +23,23 @@ export async function runEsbuildForMainProcess(
 		entryPoints.push(props.preloadFilePath);
 
 		hmrElectronLog(
-			`Using preload file: "${
-				props.preloadFilePath.substring(props.root.length)
-			}".`,
+			`Using preload file: "${props.preloadFilePath.substring(
+				props.root.length
+			)}".`
 		);
 	}
 
 	try {
 		const buildOptions: BuildOptions = {
-			outdir: props.isBuild ?
-				props.buildMainOutputPath :
-				props.devBuildMainOutputPath,
+			outdir: isBuild
+				? props.buildMainOutputPath
+				: props.devBuildMainOutputPath,
 			external: props.electronEsbuildExternalPackages,
-			minifyIdentifiers: props.isBuild,
 			tsconfig: props.mainTSconfigPath,
-			minifyWhitespace: props.isBuild,
+			minifyIdentifiers: isBuild,
+			minifyWhitespace: isBuild,
 			outExtension: { ".js": ".cjs" }, // Electron currently only accepts cjs.
-			minifySyntax: props.isBuild,
-			minify: props.isBuild,
+			minifySyntax: isBuild,
 			sourcesContent: false,
 			legalComments: "none",
 			sourcemap: "external",
@@ -47,6 +47,7 @@ export async function runEsbuildForMainProcess(
 			logLevel: "info",
 			platform: "node",
 			target: "esnext",
+			minify: isBuild,
 			charset: "utf8",
 			metafile: false,
 			format: "cjs",
@@ -56,10 +57,10 @@ export async function runEsbuildForMainProcess(
 			entryPoints,
 
 			...props.esbuildConfig,
-		}
+		};
 
-		if (props.isBuild) {
-			buildSync(buildOptions);
+		if (isBuild) {
+			ESBuildSync(buildOptions);
 
 			return;
 		}
@@ -80,10 +81,3 @@ export async function runEsbuildForMainProcess(
 		exit(1);
 	}
 }
-
-///////////////////////////////////////////
-///////////////////////////////////////////
-///////////////////////////////////////////
-// Types:
-
-export type BuildProps = Readonly<ConfigProps & { isBuild: boolean; }>;

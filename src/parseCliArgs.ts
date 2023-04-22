@@ -1,7 +1,11 @@
 import { resolve } from "node:path";
+import { log } from "node:console";
 
-import { configFilePathNotFound, hmrElectronLog } from "@common/logs.js";
+import { configFilePathNotFound } from "@common/logs.js";
+import { stringifyJson } from "@utils/debug";
+import { printHelpMsg } from "@utils/printHelpMsg";
 import { cleanCache } from "@commands/cleanCache.js";
+import { borderX } from "@utils/cli-colors";
 import {
 	defaultPathsForConfig,
 	findPathOrExit,
@@ -13,7 +17,7 @@ import {
 // Main function:
 
 export async function matchAndRunArgs(
-	args: Record<string, string | boolean>,
+	args: Record<string, string | boolean>
 ): Promise<void> {
 	if (args["init"])
 		return (await import("@commands/makeConfigFile.js")).makeConfigFile();
@@ -58,5 +62,6 @@ export async function matchAndRunArgs(
 	//////////////////////////////////////////
 	//////////////////////////////////////////
 
-	hmrElectronLog(`No commands matched. Args = ${args}`);
+	printHelpMsg();
+	log(`${borderX}\nNo commands matched. You passed: ${stringifyJson(args)}\n${borderX}`);
 }

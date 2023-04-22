@@ -4,16 +4,16 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
+		"clean": "../../../build/hmr-electron.mjs --clean-cache",
 		"build": "../../../build/hmr-electron.mjs build",
-		"clean": "../../../build/hmr-electron.mjs clean",
 		"dev": "../../../build/hmr-electron.mjs dev"
 	},
 	"devDependencies": {
-		"@types/node": "18.15.3",
-		"typescript": "5.0.2",
-		"vite": "4.2.0"
+		"@types/node": "18.15.13",
+		"typescript": "5.0.4",
+		"vite": "4.3.1"
 	},
 	"dependencies": {
-		"electron": "^23.1.4"
+		"electron": "^24.1.2"
 	}
 }

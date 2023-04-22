@@ -3,21 +3,20 @@ import { builtinModules } from "node:module";
 import { defineConfig } from "vite";
 import { resolve } from "node:path";
 
-const allBuiltinModules = builtinModules
+const external = builtinModules
 	.map((mod) => `node:${mod}`)
-	.concat(builtinModules);
+	.concat(builtinModules, "esbuild", "electron", "vite",);
 
-const minify = true;
+const MINIFY = true;
 
 export default defineConfig(() => {
 	return {
 		build: {
 			rollupOptions: {
-				// make sure to externalize deps that shouldn't be bundled
-				// into your library
-				external: ["esbuild", "electron", "vite", ...allBuiltinModules],
 				preserveEntrySignatures: "strict",
 				strictDeprecations: true,
+				// make sure to externalize deps that shouldn't be bundled into your library
+				external,
 
 				// https://rollupjs.org/guide/en/#big-list-of-options
 				output: {
@@ -28,7 +27,7 @@ export default defineConfig(() => {
 					},
 
 					assetFileNames: "assets/[name].[ext]",
-					minifyInternalExports: minify,
+					minifyInternalExports: MINIFY,
 					// entryFileNames: "[name].mjs", // This cannot be set! It overrides the entry name.
 					chunkFileNames: "[name].mjs",
 					dir: "./build/cli-build",
@@ -43,14 +42,14 @@ export default defineConfig(() => {
 			emptyOutDir: true,
 			sourcemap: false,
 			target: "esnext",
-			minify,
+			minify: MINIFY,
 		},
 
 		esbuild: {
-			minifyIdentifiers: minify,
-			minifyWhitespace: minify,
+			minifyIdentifiers: MINIFY,
+			minifyWhitespace: MINIFY,
 			ignoreAnnotations: true,
-			minifySyntax: minify,
+			minifySyntax: MINIFY,
 			treeShaking: true,
 			sourcemap: false,
 			target: "esnext",

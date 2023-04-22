@@ -2,7 +2,7 @@ import type { ChildProcess } from "node:child_process";
 
 import { describe, expect, it } from "vitest";
 
-import { stopPreviousElectronAndStartANewOne } from "@commands/stopPreviousElectronAndStartANewOne.js";
+import { killPreviousElectronAndStartANewOne } from "@commands/stopPreviousElectronAndStartANewOne.js";
 import { doesProcessExists } from "@tests/unit/doesProcessExists.js";
 import { config } from "@tests/unit/config.js";
 import { sleep } from "@tests/unit/sleep.js";
@@ -14,7 +14,7 @@ describe("testing runElectron()", () => {
 		const processList: ChildProcess[] = [];
 
 		for (let i = 0; i < times; ++i) {
-			const electronProcess = stopPreviousElectronAndStartANewOne({
+			const electronProcess = killPreviousElectronAndStartANewOne({
 				isTest: true,
 				...config,
 			});
@@ -40,7 +40,7 @@ describe("testing runElectron()", () => {
 		const processList: ChildProcess[] = [];
 
 		for (let i = 0; i < times; ++i) {
-			const electronProcess = stopPreviousElectronAndStartANewOne({
+			const electronProcess = killPreviousElectronAndStartANewOne({
 				isTest: true,
 				...config,
 			});

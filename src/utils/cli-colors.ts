@@ -20,5 +20,5 @@ export const gray = ansi(90, 39);
 export const cyan = ansi(36, 39);
 export const red = ansi(31, 39);
 
-export const borderY =
-	"────────────────────────────────────────────────────────────────────────────────";
+export const borderX =
+	"────────────────────────────────────────────────────────────────────";

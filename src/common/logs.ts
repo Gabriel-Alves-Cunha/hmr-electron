@@ -5,7 +5,7 @@ import {
 	underline,
 	bgYellow,
 	bgGreen,
-	borderY,
+	borderX,
 	black,
 	green,
 	blue,
@@ -33,9 +33,9 @@ export const viteConfigFileNotFound = (): never =>
 
 export function throwPrettyError(msg: string): never {
 	msg = `
-${red(borderY)}
+${red(borderX)}
 ${getPrettyDate()} ${msg}
-${red(borderY)}
+${red(borderX)}
 `;
 
 	throw new Error(msg);

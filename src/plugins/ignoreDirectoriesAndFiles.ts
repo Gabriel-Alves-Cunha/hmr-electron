@@ -20,9 +20,7 @@ export function ignoreDirectoriesAndFiles(regexOfDirs: RegExp[]): Plugin {
 				});
 			}
 
-			build.onLoad(options, () => ({
-				contents: "",
-			}));
+			build.onLoad(options, () => ({ contents: "" }));
 		},
 	};
 

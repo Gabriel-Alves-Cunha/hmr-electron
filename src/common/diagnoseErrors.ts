@@ -4,7 +4,7 @@ import { error } from "node:console";
 
 import { hmrElectronConsoleMessagePrefix } from "./logs.js";
 import { formatCompileError } from "@common/formatCompileError.js";
-import { borderY, magenta } from "@utils/cli-colors.js";
+import { borderX, magenta } from "@utils/cli-colors.js";
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -29,16 +29,14 @@ function formatErrorMessages(errors: Message[]): string {
 	let index = 0;
 
 	for (const msg of messages) {
-		diagnosticsDetails += `  • ${msg}.`;
-
-		if (index + 1 !== length) diagnosticsDetails += "\n";
+		diagnosticsDetails += `  • ${msg}.${index + 1 !== length ? "\n" : ""}`;
 
 		++index;
 	}
 
 	return `${magentaBorder}
 ${hmrElectronConsoleMessagePrefix} ${magenta(
-		"Some TypeScript compilation errors occurred:",
+		"Some TypeScript compilation errors occurred:"
 	)}
 
 ${diagnosticsDetails}
@@ -47,4 +45,4 @@ ${magenta(errorMessage)}
 ${magentaBorder}`;
 }
 
-const magentaBorder = magenta(borderY);
+const magentaBorder = magenta(borderX);

@@ -20,18 +20,7 @@ import {
 
 export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 	const {
-		electronOptions = [
-			"--disallow-code-generation-from-strings",
-			"--pending-deprecation",
-			"--enable-source-maps",
-			"--trace-deprecation",
-			"--throw-deprecation",
-			"--trace-uncaught",
-			"--trace-warnings",
-			"--deprecation",
-			"--warnings",
-			"--inspect",
-		],
+		electronOptions = defaultElectronOptions,
 		electronEsbuildExternalPackages = [],
 		viteExternalPackages = [],
 		esbuildIgnore = [],
@@ -43,7 +32,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 
 	addEnvToNodeProcessEnv(join(root, ".env"));
 
-	env["FORCE_COLOR"] = "2";
+	env["FORCE_COLOR"] = "2"; // This is for NodeJS console.
 
 	///////////////////////////////////////////////
 
@@ -51,7 +40,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 		...allBuiltinModules,
 		"electron",
 		"esbuild",
-		"vite",
+		"vite"
 	);
 
 	///////////////////////////////////////////////
@@ -72,7 +61,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 		root,
 		"node_modules",
 		"hmr-electron",
-		"user-dev-build",
+		"user-dev-build"
 	);
 
 	const devOutputPath = resolve(props.devOutputPath ?? hmr_electron_path);
@@ -124,7 +113,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 	///////////////////////////////////////////////
 	///////////////////////////////////////////////
 
-	const newConfig: ConfigProps = {
+	const newConfig: ConfigProps = Object.freeze({
 		electronEsbuildExternalPackages,
 		devBuildElectronEntryFilePath,
 		devBuildRendererOutputPath,
@@ -144,7 +133,7 @@ export function makeConfigProps(props: UserProvidedConfigProps): ConfigProps {
 		mainPath,
 		srcPath,
 		root,
-	};
+	});
 
 	makeSureFilesExists(newConfig);
 
@@ -193,6 +182,19 @@ const except = new Set([
 	"viteConfigPath",
 	"devOutputPath",
 ]);
+
+const defaultElectronOptions = [
+	"--disallow-code-generation-from-strings",
+	"--pending-deprecation",
+	"--enable-source-maps",
+	"--trace-deprecation",
+	"--throw-deprecation",
+	"--trace-uncaught",
+	"--trace-warnings",
+	"--deprecation",
+	"--warnings",
+	"--inspect",
+];
 
 ///////////////////////////////////////////
 

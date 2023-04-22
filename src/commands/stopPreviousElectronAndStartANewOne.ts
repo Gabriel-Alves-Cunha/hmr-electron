@@ -14,7 +14,7 @@ import { dbg } from "@utils/debug.js";
 ///////////////////////////////////////////
 // Main function:
 
-export function stopPreviousElectronAndStartANewOne({
+export function killPreviousElectronAndStartANewOne({
 	devBuildElectronEntryFilePath,
 	electronOptions,
 	isTest = false,
@@ -34,7 +34,7 @@ export function stopPreviousElectronAndStartANewOne({
 
 	const electron_process = spawn(
 		"electron",
-		isTest ? [""] : [...electronOptions, devBuildElectronEntryFilePath],
+		isTest ? [""] : [...electronOptions, devBuildElectronEntryFilePath]
 	)
 		.on("exit", exit) // This will kill "hmr-electron".
 		.on("spawn", () => {
@@ -42,15 +42,15 @@ export function stopPreviousElectronAndStartANewOne({
 
 			previousElectronProcesses.set(
 				electron_process.pid as number,
-				electron_process,
+				electron_process
 			);
 
-			hmrElectronLog(`Electron ${isFirstTime ? "loaded" : "reloaded"}.`);
+			hmrElectronLog(`Electron ${isFirstTime ? "" : "re"}loaded.`);
 
 			dbg(
 				`Electron child process has been spawned with args: ${prettyPrintStringArray(
-					electron_process.spawnargs,
-				)}`,
+					electron_process.spawnargs
+				)}`
 			);
 		});
 

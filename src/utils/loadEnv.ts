@@ -4,7 +4,7 @@ import { env, exit } from "node:process";
 import { hmrElectronLog } from "@common/logs.js";
 import { dbg } from "@utils/debug.js";
 
-// All this is from the package 'dotenv' at https://github.com/motdotla/dotenv
+// All of this is from the package 'dotenv' at https://github.com/motdotla/dotenv
 
 // Populates process.env from .env file
 export function addEnvToNodeProcessEnv(dotenvPath: string): void {

@@ -1,7 +1,7 @@
 import type { BuildProps } from "@commands/runEsbuildForMainProcess.js";
 import type { Plugin } from "esbuild";
 
-import { stopPreviousElectronAndStartANewOne } from "@commands/stopPreviousElectronAndStartANewOne.js";
+import { killPreviousElectronAndStartANewOne } from "@commands/stopPreviousElectronAndStartANewOne.js";
 import { hmrElectronLog } from "@common/logs.js";
 import { displayErrors } from "@common/diagnoseErrors.js";
 
@@ -17,7 +17,7 @@ export const onEnd = (props: BuildProps): Plugin =>
 
 				result.errors.length && displayErrors(result.errors);
 
-				stopPreviousElectronAndStartANewOne(props);
+				killPreviousElectronAndStartANewOne(props);
 			});
 		},
 	}) satisfies Plugin;

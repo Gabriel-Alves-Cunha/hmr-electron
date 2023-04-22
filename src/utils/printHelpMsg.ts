@@ -1,10 +1,10 @@
 import { log } from "node:console";
 
-import { blue, bold, green, yellow } from "@utils/cli-colors.js";
-import { name, version } from "../package.json";
+import { blue, bold, borderX, green, yellow } from "@utils/cli-colors.js";
+import { name, version } from "../../package.json";
 
 export function printHelpMsg() {
-	log(`\
+	log(`${borderX}
 ${bold(blue(name))} version ${version}
 
 ${yellow("⚡")} Start developing your Electron + Vite app.

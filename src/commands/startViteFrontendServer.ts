@@ -1,7 +1,8 @@
 import type { ConfigProps } from "types/config.js";
 
-import { createServer } from "vite";
+import { createServer as createViteServer } from "vite";
 
+import { isBuild, css } from "@utils/utils.js";
 import { logConfig } from "@utils/debug.js";
 import {
 	viteESbuildOptions,
@@ -9,17 +10,15 @@ import {
 } from "./runViteFrontendBuild.js";
 
 export async function startViteFrontendServer(
-	config: ConfigProps,
+	config: ConfigProps
 ): Promise<void> {
-	const isBuild = false;
-
 	const server = await (
-		await createServer({
-			esbuild: viteESbuildOptions("browser", "esm", isBuild),
-			build: viteBuildOptions(config, "esm", isBuild),
-			css: { devSourcemap: true },
+		await createViteServer({
+			esbuild: viteESbuildOptions("browser", "esm", !isBuild),
+			build: viteBuildOptions(config, "esm", !isBuild),
 			mode: "development",
 			logLevel: "info",
+			css,
 
 			configFile: config.viteConfigPath,
 		})
