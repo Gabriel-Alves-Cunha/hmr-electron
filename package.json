@@ -5,7 +5,7 @@
 	"author": "Gabriel Alves Cunha <gabriel925486@outlook.com>",
 	"main": "build/hmr-electron.mjs",
 	"typings": "build/index.d.ts",
-	"version": "0.1.8",
+	"version": "0.1.9",
 	"private": false,
 	"license": "MIT",
 	"type": "module",
