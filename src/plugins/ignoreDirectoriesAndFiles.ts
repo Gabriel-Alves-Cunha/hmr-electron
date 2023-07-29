@@ -2,7 +2,7 @@ import type { Plugin } from "esbuild";
 
 import { hmrElectronLog } from "@common/logs.js";
 
-// TODO: I still don't even know if this is working...
+// TODO: I still don't even know if this is working... :|
 export function ignoreDirectoriesAndFiles(regexOfDirs: RegExp[]): Plugin {
 	const plugin: Plugin = {
 		name: "ignore-directories-and-files",
@@ -10,7 +10,7 @@ export function ignoreDirectoriesAndFiles(regexOfDirs: RegExp[]): Plugin {
 		setup(build) {
 			build.onResolve(options, ({ path }) => ({ path, namespace }));
 
-			for (const regex of regexOfDirs) {
+			for (const regex of regexOfDirs)
 				build.onResolve({ filter: regex }, ({ path }) => {
 					if (path.match(regex)) {
 						hmrElectronLog(`Ignoring "${path}"`);
@@ -18,7 +18,6 @@ export function ignoreDirectoriesAndFiles(regexOfDirs: RegExp[]): Plugin {
 						return { path, namespace };
 					} else return { path };
 				});
-			}
 
 			build.onLoad(options, () => ({ contents: "" }));
 		},

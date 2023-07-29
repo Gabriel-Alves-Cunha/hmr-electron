@@ -15,4 +15,4 @@ export function getPrettyDate(): string {
 }
 
 const pad = (num: number, padding = 2): string =>
-	num.toString().padStart(padding, "0");
+	`${num}`.padStart(padding, "0");
