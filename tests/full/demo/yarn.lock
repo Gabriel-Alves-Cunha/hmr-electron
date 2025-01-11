@@ -166,10 +166,17 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-18.15.11.tgz#b3b790f09cb1696cffcec605de025b088fa4225f"
   integrity sha512-E5Kwq2n4SbMzQOn6wnmBjuK9ouqlURrcZDVfbo9ftDDTFt3nk7ZKK4GMOzoYgnpQJKcxwQw+lGaBvvlMo0qN/Q==
 
-"@types/node@18.15.13", "@types/node@^18.11.18":
+"@types/node@18.15.13":
   version "18.15.13"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-18.15.13.tgz#f64277c341150c979e42b00e4ac289290c9df469"
   integrity sha512-N+0kuo9KgrUQ1Sn/ifDXsvg0TTleP7rIy4zOBGECxAljqvqfqpTfzx0Q1NUedOixRMBfe2Whhb056a42cWs26Q==
+
+"@types/node@^20.9.0":
+  version "20.17.12"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.17.12.tgz#ee3b7d25a522fd95608c1b3f02921c97b93fcbd6"
+  integrity sha512-vo/wmBgMIiEA23A/knMfn/cf37VnuF52nZh5ZoW0GWt4e4sxNquibrMRJ7UQsA06+MBx9r/H1jsI9grYjQCQlw==
+  dependencies:
+    undici-types "~6.19.2"
 
 "@types/responselike@^1.0.0":
   version "1.0.0"
@@ -252,13 +259,13 @@ detect-node@^2.0.4:
   resolved "https://registry.yarnpkg.com/detect-node/-/detect-node-2.1.0.tgz#c9c70775a49c3d03bc2c06d9a73be550f978f8b1"
   integrity sha512-T0NIuQpnTvFDATNuHN5roPwSBG83rFsuO+MXXH9/3N1eFbn4wcPjttvjMLEPWJ0RGUYgQE7cGgS3tNxbqCGM7g==
 
-electron@^24.1.2:
-  version "24.1.2"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-24.1.2.tgz#8dd0b4928a08236be4791d39535d1d35cc05f04b"
-  integrity sha512-V0isWbyLYiXrSCcB4lrSVhS/U56NFGfuqHyc+yEPkyhhvY+h4F85cYGdEiZlXp6XjHT+/CLHmw0ltK54g9lvDw==
+electron@^32.2.8:
+  version "32.2.8"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-32.2.8.tgz#4154e40a8e10cf7e2a892ed7176f849ad88536be"
+  integrity sha512-jaAgBeFKjH6Cd7CnG7XhApZtLz2ewUXLyf1rKh9D+eaFD5XCYQpH77PhmrT5u0IpSP6eSZoHpAQ0sMqOFsh6kA==
   dependencies:
     "@electron/get" "^2.0.0"
-    "@types/node" "^18.11.18"
+    "@types/node" "^20.9.0"
     extract-zip "^2.0.1"
 
 end-of-stream@^1.1.0:
@@ -640,6 +647,11 @@ typescript@5.0.4:
   version "5.0.4"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.0.4.tgz#b217fd20119bd61a94d4011274e0ab369058da3b"
   integrity sha512-cW9T5W9xY37cc+jfEnaUvX91foxtHkza3Nw3wkoF4sSlKn0MONdkdEndig/qPBWXNkmplh3NzayQzCiHM4/hqw==
+
+undici-types@~6.19.2:
+  version "6.19.8"
+  resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-6.19.8.tgz#35111c9d1437ab83a7cdc0abae2f26d88eda0a02"
+  integrity sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==
 
 universalify@^0.1.0:
   version "0.1.2"
